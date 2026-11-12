@@ -34,7 +34,7 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun defaultsAreThoseOfTheSpecs() = runBlocking {
+    fun defaultsAreThoseOfTheSpecs() = runBlocking<Unit> {
         val settings = repository.current()
         assertThat(settings).isEqualTo(SettingsRepository.DEFAULTS)
         assertThat(settings.consent).isNull()
@@ -51,7 +51,7 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun everySettingRoundTrips() = runBlocking {
+    fun everySettingRoundTrips() = runBlocking<Unit> {
         repository.acceptConsent(Consent(version = 2, acceptedAt = 1_000))
         repository.setEnabledFamilies(setOf(AppFamily.BROWSERS, AppFamily.OTHER))
         repository.setPausedUntil(Long.MAX_VALUE)
@@ -78,7 +78,7 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun edgeCases() = runBlocking {
+    fun edgeCases() = runBlocking<Unit> {
         repository.setEnabledFamilies(emptySet())
         assertThat(repository.enabledFamilies.first()).isEmpty() // every family off is a valid choice
         repository.setPausedUntil(5_000)
@@ -95,7 +95,7 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun onlyTheKnownKeysAreEverWritten() = runBlocking {
+    fun onlyTheKnownKeysAreEverWritten() = runBlocking<Unit> {
         repository.acceptConsent(Consent(1, 1_000))
         repository.setEnabledFamilies(setOf(AppFamily.OTHER))
         repository.setPausedUntil(1)
