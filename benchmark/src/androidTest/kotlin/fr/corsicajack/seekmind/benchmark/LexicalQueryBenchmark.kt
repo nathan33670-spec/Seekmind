@@ -29,13 +29,19 @@ class LexicalQueryBenchmark {
     private val random = Random(11)
 
     @Test
-    fun oneWord() = measure { corpus.queryWord(random) }
+    fun oneWord() = measure { phrase(corpus.queryWord(random)) }
 
     @Test
-    fun twoWords() = measure { "${corpus.queryWord(random)} ${corpus.queryWord(random)}" }
+    fun twoWords() = measure { "${phrase(corpus.queryWord(random))} ${phrase(corpus.queryWord(random))}" }
 
     @Test
-    fun prefix() = measure { corpus.queryWord(random).take(3) + "*" }
+    fun prefix() = measure { phrase(corpus.queryWord(random).take(3)) + "*" }
+
+    /**
+     * A term as an FTS5 string, as engine:search will build it: "rendez-vous" would otherwise read as
+     * FTS5 syntax ("no such column: vous").
+     */
+    private fun phrase(term: String) = "\"" + term.replace("\"", "\"\"") + "\""
 
     private fun measure(next: () -> String) {
         val search = handle.search
