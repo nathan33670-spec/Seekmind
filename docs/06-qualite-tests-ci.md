@@ -34,7 +34,7 @@
 
 ## 3. Application de test
 
-Module `:fixtureapp` (identifiant `app.seekmind.fixture`), installé à côté de l'application en CI.
+Module `:fixtureapp` (identifiant `fr.corsicajack.seekmind.fixture`), installé à côté de l'application en CI.
 Chaque activité affiche un contenu fixe, connu des tests.
 
 | Activité | Contenu | Sert à vérifier |
@@ -61,7 +61,7 @@ Configurator.getInstance().uiAutomationFlags =
 ```
 
 - Activation du service par commande shell dans une règle de test :
-  `settings put secure enabled_accessibility_services <appId>/app.seekmind.engine.capture.SeekMindAccessibilityService`
+  `settings put secure enabled_accessibility_services <appId>/fr.corsicajack.seekmind.engine.capture.SeekMindAccessibilityService`
   puis `settings put secure accessibility_enabled 1`.
 - Le test s'exécute dans le processus de l'application : il enregistre le consentement via
   `SettingsRepository`, remplace `CaptureConfig` par une configuration rapide (calme 300 ms, attente
@@ -141,7 +141,7 @@ Workflows et durées : [04 §6](04-prerequis.md#6-intégration-continue). Règle
 - Aucun secret n'est nécessaire aux workflows de développement.
 - Les rapports (tests, lint, évaluation de la recherche) sont publiés en artefacts.
 - Le workflow `device-tests` lance l'émulateur avec l'accélération KVM, installe l'application de test,
-  active le service, puis exécute `connectedDebugAndroidTest`.
+  active le service, puis exécute `connectedAdsDebugAndroidTest`.
 - Un échec de garde-fou (§10.4 de l'architecture) n'est jamais contourné par une exception dans le script :
   on corrige le code, ou on modifie la règle par un ADR.
 

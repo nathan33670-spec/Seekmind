@@ -47,8 +47,9 @@ sécurisées.
 - [ ] Heuristique testée sur des bitmaps de synthèse : noir, presque noir, sombre avec texte, clair.
 - [ ] Cache : pas de seconde sonde dans les 24 h pour une application hors liste (API 30–33) ; toujours une sonde pour un navigateur.
 
-**Validation manuelle** — onglet privé de Chrome et de Firefox sur un téléphone Android 12 ou 13 et sur
-un téléphone Android 14+ : aucune capture ; résultat dans la PR.
+**Validation manuelle** — onglet privé de Chrome et de Firefox sur le téléphone de test (Android 14+) :
+aucune capture ; résultat dans la PR. Le cas Android 11 à 13 n'est vérifiable que sur émulateur à ce
+stade ; il est rejoué par les testeurs du test fermé (M11-05, risque R-14).
 
 ---
 

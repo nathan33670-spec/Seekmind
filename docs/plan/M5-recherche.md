@@ -137,18 +137,21 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **À faire**
 
-1. `tools/eval/gen_corpus.py` : environ 300 captures synthétiques réalistes en français et en anglais,
-   réparties sur une quinzaine d'applications et 60 jours, à partir de gabarits déterministes.
-2. `testdata/eval/queries.jsonl` : environ 60 requêtes annotées, réparties entre exact, code,
-   paraphrase, temporel, application, et bilingue (requête dans une langue, contenu dans l'autre).
-3. Tâche `:engine:search:evalSearch` (JVM, vrai modèle) : Rappel@1, Rappel@5, MRR, par type et pour les
-   trois configurations ; rapport JSON ; échec sous les seuils.
+1. `tools/eval/gen_corpus.py` : environ 300 captures synthétiques réalistes, deux tiers en français et
+   un tiers en anglais, réparties sur une quinzaine d'applications et 60 jours, à partir de gabarits déterministes.
+2. `testdata/eval/queries.jsonl` : environ 80 requêtes annotées par type (exact, code, paraphrase,
+   temporel, application) et par langue (français, anglais, bilingue : requête dans une langue, contenu dans l'autre).
+3. Tâche `:engine:search:evalSearch` (JVM, vrais modèles) : Rappel@1, Rappel@5, MRR, par type, par
+   langue, **pour chaque modèle** (`fr`, `multi`) et pour les trois configurations ; rapport JSON ; échec sous les seuils.
 4. Calibrer `semanticFloor`, les pondérations par profil et `binaryTopK` ; consigner les essais.
 5. Ajouter à `tools/model/build_model.py` le contrôle de non-régression du modèle quantifié sur ce jeu.
 
 **Critères d'acceptation**
 
-- [ ] Hybride : Rappel@5 ≥ 0,85 et MRR ≥ 0,70 ; codes : Rappel@1 ≥ 0,90 ; paraphrases : Rappel@5 ≥ 0,75.
+- [ ] Hybride : Rappel@5 ≥ 0,85 et MRR ≥ 0,70 ; codes : Rappel@1 ≥ 0,90 ; paraphrases : Rappel@5 ≥ 0,75 —
+      en français pour le modèle `fr`, sur tout le jeu pour le modèle `multi`.
+- [ ] Le rapport chiffre ce que perd le modèle `fr` sur les requêtes en anglais et bilingues par rapport
+      à `multi` (risque R-06) ; le porteur du projet en est informé.
 - [ ] L'hybride fait au moins aussi bien que chacune des deux méthodes seules sur le Rappel@5 global.
 - [ ] Si un seuil est hors d'atteinte, le rapport explique pourquoi et propose le seuil révisé — décision du porteur du projet.
 
@@ -170,4 +173,4 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 - [ ] Résultats publiés pour l'émulateur de CI ; cibles ENF-PERF-03 et 04 comparées.
 
-**Validation manuelle** — mêmes bancs sur un téléphone moyen et un téléphone bas de gamme ; tableau dans la PR.
+**Validation manuelle** — mêmes bancs sur le téléphone de test ; tableau dans la PR.

@@ -4,7 +4,7 @@
 sécurité, résister aux pannes.
 
 **Sortie du jalon.** La recette du [cahier des charges §7](../02-cahier-des-charges.md#7-recette-de-la-v1)
-passe sur un appareil bas de gamme et un appareil moyen.
+passe sur le téléphone de test et sur les émulateurs.
 
 Ce jalon repose largement sur des mesures faites par un humain sur appareil ; l'agent prépare le
 protocole et l'outillage, puis corrige d'après les résultats.
@@ -15,18 +15,20 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M3, M4, M9 | `docs/mesures`, modules concernés | [tests §6](../06-qualite-tests-ci.md#6-mesures-de-performance) · ENF-BAT-01, ENF-BAT-02, ENF-MEM-01, ENF-STO-01 |
+| À faire | M3, M4, M8 | `docs/mesures`, modules concernés | [tests §6](../06-qualite-tests-ci.md#6-mesures-de-performance) · ENF-BAT-01, ENF-BAT-02, ENF-MEM-01, ENF-STO-01 |
 
 **À faire**
 
 1. Rédiger le protocole de 24 heures (scénario d'usage, commandes de relevé, grille de résultats).
 2. Ajouter au diagnostic local ce qui manque pour l'interpréter : temps de calcul cumulé par poste
    (lecture de l'arbre, sonde, OCR, embeddings), nombre de réveils.
-3. D'après les relevés, ajuster les réglages (`CaptureConfig`, `OcrConfig`, `IndexConfig`) et corriger les postes excessifs.
+3. Variante `ads` : vérifier que le SDK publicitaire ne consomme rien (processeur, réseau, réveils) en
+   dehors des demandes de publicité.
+4. D'après les relevés, ajuster les réglages (`CaptureConfig`, `OcrConfig`, `IndexConfig`) et corriger les postes excessifs.
 
 **Critères d'acceptation**
 
-- [ ] Rapport dans `docs/mesures/` pour deux appareils : consommation attribuable, temps de calcul par poste, mémoire, croissance du stockage.
+- [ ] Rapport dans `docs/mesures/` pour le téléphone de test et l'émulateur à mémoire réduite : consommation attribuable, temps de calcul par poste, mémoire, croissance du stockage.
 - [ ] ENF-BAT-01 (≤ 3 % par jour) tenu, ou écart documenté avec la mesure corrective retenue.
 - [ ] Aucun travail écran éteint hors lots d'embeddings planifiés.
 
@@ -34,11 +36,11 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 ---
 
-### M10-02 — Mémoire et isolement du moteur
+### M10-02 — Mémoire et isolement des moteurs
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M10-01 | `engine:embedding` | [embeddings §7](../specs/embeddings.md) · ENF-MEM-02 · ENF-REL-01 |
+| À faire | M10-01 | `engine:embedding`, `engine:ads` | [embeddings §8](../specs/embeddings.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) · ENF-MEM-02 · ENF-REL-01 · risque R-15 |
 
 **À faire**
 
@@ -47,10 +49,13 @@ protocole et l'outillage, puis corrige d'après les résultats.
    déplacer le moteur d'embeddings dans un processus dédié (service lié, interface AIDL transportant
    textes et vecteurs ; la base reste dans le processus principal), par un ADR.
 3. Sinon : consigner la décision de ne pas isoler.
+4. **SDK publicitaire** : étudier son exécution dans un processus dédié (activité d'annonce, composant
+   d'initialisation et travaux d'arrière-plan du SDK), pour qu'il ne partage plus le processus du
+   service d'accessibilité. Prototype, mesure de la stabilité, puis décision consignée par un ADR.
 
 **Critères d'acceptation**
 
-- [ ] Décision argumentée par les mesures, consignée (ADR ou rapport).
+- [ ] Deux décisions argumentées et consignées (ADR ou rapport) : moteur d'embeddings, SDK publicitaire.
 - [ ] Si isolement : l'arrêt du processus du moteur n'interrompt pas le service de capture (test).
 
 ---
@@ -99,7 +104,7 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M8, M9 | tous | [sécurité §8](../07-securite-vie-privee.md#8-liste-de-contrôle-de-sécurité-ticket-m10-05) · ENF-SEC-01 |
+| À faire | M8 | tous | [sécurité §8](../07-securite-vie-privee.md#8-liste-de-contrôle-de-sécurité-ticket-m10-05) · ENF-SEC-01 |
 
 **À faire**
 
@@ -107,6 +112,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
 2. Activer la vérification des empreintes des dépendances par Gradle (`gradle/verification-metadata.xml`).
 3. Tests de robustesse de `LinkActivity` (entrées aléatoires).
 4. Recherche de contenu utilisateur dans le journal système pendant la suite de bout en bout (étape de CI).
+5. Inspection du trafic réseau pendant une demande de publicité (proxy sur le téléphone de test) :
+   aucun texte mémorisé, aucune requête de recherche, aucun nom d'application dans les requêtes.
 
 **Critères d'acceptation**
 
@@ -137,22 +144,24 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 ---
 
-### M10-07 — Modèle allégé (optionnel)
+### M10-07 — Modèles allégés et packs par langue (optionnel)
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-07 | `tools/model`, `engine:embedding` | [ADR-0006](../adr/0006-modele-d-embeddings.md) · ENF-STO-02 · risque R-06 |
+| À faire | M5-07 | `tools/model`, `engine:embedding` | [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) · risque R-06 |
 
 **À faire**
 
-1. Évaluer sur le jeu d'évaluation, à qualité et latence comparées : `french-me5-small` quantifié ; et
-   `multilingual-e5-small` dont le vocabulaire est réduit aux jetons utiles au français et à l'anglais.
-2. Si un candidat tient les seuils de EF-SRCH-01 à 03 (y compris les requêtes en anglais et bilingues) :
-   ADR de remplacement, nouveau `modelId`, mise à jour de l'outillage.
+1. Si le rapport de M5-07 montre que le modèle `fr` perd trop sur les contenus en anglais : fabriquer un
+   modèle « français + anglais » en réduisant le vocabulaire du modèle multilingue aux jetons utiles à
+   ces deux langues, et l'évaluer comme modèle embarqué (taille, qualité, latence).
+2. Évaluer des packs par langue (anglais, espagnol, allemand, italien) fabriqués de la même façon, plus
+   légers que le pack multilingue.
+3. En cas d'adoption : ADR, nouvelles entrées du catalogue, mise à jour de l'outillage.
 
 **Critères d'acceptation**
 
-- [ ] Tableau comparatif : taille, Rappel@5 et MRR par type de requête, latence.
+- [ ] Tableau comparatif : taille, Rappel@5 et MRR par type de requête et par langue, latence.
 - [ ] Décision consignée ; en cas d'adoption, taille de téléchargement mesurée.
 
 ---
@@ -176,4 +185,4 @@ protocole et l'outillage, puis corrige d'après les résultats.
 - [ ] Protection avancée active → message explicatif, pas de boucle vers les réglages.
 - [ ] Note `docs/mesures/android-17.md` : points à traiter avant de cibler l'API 37.
 
-**Validation manuelle** — parcours P1 sur un appareil Android 16 ou 17.
+**Validation manuelle** — parcours P1 sur le téléphone de test s'il est sous Android 16 ou 17 ; sinon sur émulateur.

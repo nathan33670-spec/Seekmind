@@ -3,7 +3,7 @@
 **Objectif.** Le service d'accessibilité lit les écrans stables, la porte de confidentialité écarte ce
 qui ne doit pas être mémorisé, et le texte arrive en base.
 
-**Sortie du jalon.** Sur l'application de test, les scénarios E2E-01, 02, 04, 07 à 13 et 18 sont verts.
+**Sortie du jalon.** Sur l'application de test, les scénarios E2E-01, 02, 04, 07 à 13, 18 et 19 sont verts.
 L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 ---
@@ -29,7 +29,7 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 - [ ] Aucun accès à l'arbre, à la base ou au disque sur le thread principal (test avec `StrictMode` en debug).
 - [ ] Les événements des paquets ignorés ne réveillent pas le thread de capture.
 - [ ] `CaptureStatus` reflète : service désactivé, consentement manquant, pause, actif.
-- [ ] `:app:verifyReleaseManifest` vert (capacités du service, composants exportés).
+- [ ] `:app:verifyAdsReleaseManifest` et `:app:verifyOfflineReleaseManifest` verts (capacités du service, composants exportés).
 
 ---
 
@@ -97,22 +97,26 @@ installé sur le téléphone de test ; corriger la table ; consigner le tableau 
 
 ---
 
-### M2-05 — Porte de confidentialité
+### M2-05 — Porte de confidentialité et familles d'applications
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07 |
+| À faire | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
 
 **À faire**
 
-1. `PrivacyGate` : `checkPackage` (règles PG-01 à PG-06), `checkTree` (PG-07, PG-08), `redact` (PG-11 à PG-13).
-2. `sensitive_apps.json` : compléter la liste initiale jusqu'à 150 entrées au moins, chaque identifiant
-   vérifié ; motifs testés contre des faux positifs.
-3. `testdata/sensitive_cases.tsv` et ses tests.
+1. `PrivacyGate` : `checkPackage` (règles PG-01 à PG-06 et PG-14), `checkTree` (PG-07, PG-08), `redact` (PG-11 à PG-13).
+2. `sensitive_apps.json` : compléter la liste initiale jusqu'à 250 entrées au moins pour les sept pays
+   du lancement, chaque identifiant vérifié ; motifs testés contre des faux positifs.
+3. `AppFamilies` : classification d'un paquet en famille (spec §3.4), `app_families.json`, cache,
+   lecture du réglage `enabledFamilies`.
+4. `testdata/sensitive_cases.tsv` et ses tests.
 
 **Critères d'acceptation**
 
-- [ ] Table de décision complète de `checkPackage` (liste × règle utilisateur × catégorie).
+- [ ] Table de décision complète de `checkPackage` (liste × règle utilisateur × catégorie × famille).
+- [ ] Familles : priorité entre familles, application de SMS par défaut classée « messageries », famille
+      désactivée → `APP_FAMILY_DISABLED`, règle « inclure » de l'utilisateur prioritaire.
 - [ ] Carte, IBAN et numéro de sécurité sociale valides masqués ; invalides et numéros de suivi intacts ; `redact` idempotente.
 - [ ] Aucun moyen de désactiver la porte : ni réglage, ni paramètre de configuration.
 
@@ -128,7 +132,7 @@ installé sur le téléphone de test ; corriger la table ; consigner le tableau 
 
 **À faire**
 
-1. `CapturePipeline.onStable()` : étapes 1 à 10 de la spec. L'étape 6 (sonde et OCR) appelle les
+1. `CapturePipeline.onStable()` : étapes 1 à 9 de la spec. L'étape 6 (sonde et OCR) appelle les
    interfaces `SecureWindowProbe` et `OcrPolicy` ; en attendant M3, leurs implémentations rendent
    « non sondé » et « pas d'OCR ».
 2. `PipelineEvent` et compteurs de `metric_daily` pour chaque issue.
@@ -171,13 +175,14 @@ installé sur le téléphone de test ; corriger la table ; consigner le tableau 
 
 **À faire**
 
-1. Compléter l'application de test : `PasswordActivity`, `EditableActivity`, `ScrollActivity`, `SensitiveDataActivity`.
-2. Écrire les scénarios E2E-01, 02, 04, 07 à 13 et 18, synchronisés sur `CapturePipeline.events`.
+1. Compléter l'application de test : `PasswordActivity`, `EditableActivity`, `ScrollActivity`,
+   `SensitiveDataActivity`, `MessagingLikeActivity`.
+2. Écrire les scénarios E2E-01, 02, 04, 07 à 13, 18 et 19, synchronisés sur `CapturePipeline.events`.
 
 **Critères d'acceptation**
 
 - [ ] Les scénarios sont verts sur les émulateurs API 30, 34 et 36, sans attente à durée fixe.
 - [ ] E2E-01 : le mot distinctif est retrouvé par `SearchStore.lexical` moins d'une seconde après `Stored`.
 
-**Validation manuelle** — une heure d'usage normal sur un téléphone réel : relever dans Réglages →
+**Validation manuelle** — une heure d'usage normal sur le téléphone de test : relever dans Réglages →
 Diagnostic le nombre de captures, les rejets par motif et la durée médiane de lecture de l'arbre.

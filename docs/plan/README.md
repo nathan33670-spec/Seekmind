@@ -201,7 +201,7 @@ Les statuts sont tenus dans les fichiers de jalon (un seul endroit, pour limiter
 | M8-04 | Parcours de récompense et feuille de crédits | M8-01, M8-03, M6-03 |
 | M8-05 | Outil de licences et activation | M8-02, M8-01 |
 | M8-06 | Variante `offline` | M8-01, M6-02 |
-| M8-07 | Récompense par le navigateur — hors plan, solution de repli | — |
+| M8-07 | Récompense par le navigateur (hors plan) | — |
 | M8-08 | Tests de bout en bout de la monétisation | M8-04, M8-05, M8-06 |
 | M10-01 | Campagne batterie et thermique | M3, M4, M8 |
 | M10-02 | Mémoire et isolement des moteurs | M10-01 |

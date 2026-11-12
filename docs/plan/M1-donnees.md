@@ -20,8 +20,10 @@ schéma, plein texte, dépôts, purge, effacement.
    (seul point d'accès aux logs ; en `release`, WARN et ERROR ; jamais de contenu utilisateur), `IntRect`.
 2. `core:model` : modèles du domaine (`Capture`, `CaptureSummary`, `ScreenMeta`, `RawCapture`,
    `TreeExtraction`, `TextLine`, `DropReason`, `PipelineEvent`, `SourceRef`, `SearchRequest`,
-   `SearchResults`, `SearchHit`, `Entitlement`, `Entity`…) tels que définis dans les specs.
-3. Interfaces du paquet `port` listées dans l'architecture §3.3, avec leur documentation.
+   `SearchResults`, `SearchHit`, `Entitlement`, `AppFamily`, `ModelSpec`, `RewardReadiness`,
+   `RewardOutcome`…) tels que définis dans les specs.
+3. Interfaces du paquet `port` listées dans l'architecture §3.3, avec leur documentation — dont
+   `RewardProvider`, qui ne doit comporter aucun paramètre de donnée utilisateur.
 4. Objets `*Config` avec les valeurs par défaut des specs.
 
 **Critères d'acceptation**
@@ -106,10 +108,11 @@ schéma, plein texte, dépôts, purge, effacement.
 
 **À faire**
 
-1. `AppRuleStore`, `SecureProbeStore`, `MonetizationStore` (registre, demandes de récompense, licence),
+1. `AppRuleStore`, `SecureProbeStore`, `MonetizationStore` (registre de crédits, licence),
    `SearchHistoryStore`, `MetricsStore` (incrément par jour et par clé).
-2. `SettingsRepository` (DataStore Preferences) : consentement (version, date), pause (`pausedUntil`),
-   rétention, budget de stockage, verrouillage, actions contextuelles, historique. Exposé en `Flow` typés.
+2. `SettingsRepository` (DataStore Preferences) : consentement (version, date), familles d'applications
+   activées, pause (`pausedUntil`), rétention, budget de stockage, verrouillage, modèle actif,
+   historique. Exposé en `Flow` typés.
 
 **Critères d'acceptation**
 

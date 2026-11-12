@@ -1,10 +1,13 @@
-# M9 — Actions contextuelles
+# M9 — Actions contextuelles — reporté en v1.1
+
+> **Hors de la première publication** (décision D-05). Les tickets ci-dessous sont prêts mais ne doivent
+> pas être entrepris avant la sortie de la v1. À leur démarrage : créer le module `engine:actions`,
+> rétablir l'étape de notification du pipeline de capture, passer la divulgation en version 2.
 
 **Objectif.** Proposer, au bon moment et sans jamais agir seul, d'envoyer une date, une adresse ou un
 numéro de suivi vers l'application adéquate.
 
-**Sortie du jalon.** Scénario E2E-16 vert ; parcours P6 réalisable. Ce jalon peut être reporté après la
-première publication sans bloquer le reste.
+**Sortie du jalon.** Scénario E2E-16 vert.
 
 ---
 
@@ -12,7 +15,7 @@ première publication sans bloquer le reste.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `engine:actions` | [actions §2](../specs/actions-intelligentes.md) · EF-ACT-01 |
+| Reporté | M1-01 | `engine:actions` | [actions §2](../specs/actions-intelligentes.md) · EF-ACT-01 |
 
 **À faire**
 
@@ -37,7 +40,7 @@ des exemples réels ; retirer ce qui n'est pas confirmé.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M9-01 | `engine:actions` | [actions §3](../specs/actions-intelligentes.md) · EF-ACT-03 |
+| Reporté | M9-01 | `engine:actions` | [actions §3](../specs/actions-intelligentes.md) · EF-ACT-03 |
 
 **À faire**
 
@@ -56,7 +59,7 @@ des exemples réels ; retirer ce qui n'est pas confirmé.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M9-02, M2-06 | `engine:actions`, `engine:capture` | [actions §1, §4](../specs/actions-intelligentes.md) · EF-ACT-02, 05, 06 · INV-02 |
+| Reporté | M9-02, M2-06 | `engine:actions`, `engine:capture` | [actions §1, §4](../specs/actions-intelligentes.md) · EF-ACT-02, 05, 06 · INV-02 |
 
 **À faire**
 
@@ -83,7 +86,7 @@ gestuelle, et disparaît au changement d'écran.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M9-02, M6-04 | `feature:search` | [actions §4.3](../specs/actions-intelligentes.md) · EF-ACT-04 |
+| Reporté | M9-02, M6-04 | `feature:search` | [actions §4.3](../specs/actions-intelligentes.md) · EF-ACT-04 |
 
 **À faire**
 
@@ -100,7 +103,7 @@ gestuelle, et disparaît au changement d'écran.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M9-03 | `app`, `fixtureapp` | [tests §4](../06-qualite-tests-ci.md#4-tests-de-bout-en-bout) |
+| Reporté | M9-03 | `app`, `fixtureapp` | [tests §4](../06-qualite-tests-ci.md#4-tests-de-bout-en-bout) |
 
 **À faire**
 

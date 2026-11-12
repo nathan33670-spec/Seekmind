@@ -7,8 +7,9 @@
 
 ## Contexte
 
-La v1 prévoit un code d'activation qui supprime la publicité. L'application n'ayant aucun accès réseau
-(ADR-0001), elle ne peut pas interroger un serveur de licences. Deux questions : comment vérifier un
+La v1 prévoit un code d'activation qui supprime la publicité. L'application ne fait aucun appel réseau
+de son propre fait — le réseau est réservé au module publicitaire dans la variante `ads`, et absent de la
+variante `offline` (ADR-0001, ADR-0009) : elle ne peut pas interroger un serveur de licences. Deux questions : comment vérifier un
 code sans réseau, et comment le distribuer sans enfreindre les règles de Google Play.
 
 ## Décision

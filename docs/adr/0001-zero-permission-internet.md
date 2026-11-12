@@ -22,7 +22,7 @@ Mise en œuvre :
 
 - la permission, apportée par des dépendances (ML Kit via `com.google.android.datatransport`), est
   retirée du manifeste fusionné par `tools:node="remove"` ;
-- le build échoue si elle réapparaît (`:app:verifyReleaseManifest`) ;
+- le build échoue si elle réapparaît (`:app:verifyOfflineReleaseManifest`) ;
 - les API réseau sont interdites dans les sources (`scripts/check-forbidden-apis.sh`) ;
 - les dépendances sont limitées à une liste blanche.
 

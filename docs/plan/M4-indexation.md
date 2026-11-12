@@ -1,10 +1,10 @@
-# M4 — Indexation et embeddings
+# M4 — Indexation, embeddings et packs de langue
 
-**Objectif.** Normaliser, dédupliquer et découper les captures, puis calculer leurs vecteurs en
-arrière-plan sans gêner l'utilisateur.
+**Objectif.** Normaliser, dédupliquer et découper les captures, calculer leurs vecteurs en
+arrière-plan sans gêner l'utilisateur, et permettre de changer de modèle (pack de langue).
 
-**Sortie du jalon.** Scénarios E2E-08 et E2E-17 verts ; tokenizer à parité avec la référence ; lots
-d'embeddings soumis au gouverneur.
+**Sortie du jalon.** Scénarios E2E-08, E2E-17 et E2E-21 verts ; tokenizer à parité avec la référence
+pour les deux vocabulaires ; lots d'embeddings soumis au gouverneur.
 
 M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuvent démarrer dès la fin de M0.
 
@@ -63,13 +63,16 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 **À faire**
 
-1. Lecteur de `vocab.bin` vers des structures compactes (budget mémoire : 16 Mo).
+1. Lecteur de `vocab.bin` vers des structures compactes (budget mémoire : 16 Mo pour le plus grand
+   vocabulaire). Le tokenizer ne suppose rien du modèle : il charge le vocabulaire qu'on lui donne.
 2. Normalisation, pré-découpage, segmentation de Viterbi, jetons spéciaux, troncature.
-3. Test de parité sur `testdata/tokenizer_golden.jsonl`, avec rapport des phrases divergentes.
+3. Tests de parité sur `testdata/tokenizer_golden_fr.jsonl` et `tokenizer_golden_multi.jsonl`, avec
+   rapport des phrases divergentes.
 
 **Critères d'acceptation**
 
-- [ ] Parité exacte sur au moins 99,5 % des 1 000 phrases ; les divergences sont listées et expliquées dans la PR.
+- [ ] Parité exacte sur au moins 99,5 % des 1 000 phrases, **pour chacun des deux vocabulaires** ; les
+      divergences sont listées et expliquées dans la PR.
 - [ ] Cas limites : chaîne vide, espaces seules, émojis, caractères inconnus consécutifs (un seul jeton inconnu), texte plus long que la limite.
 - [ ] Tokenisation d'un passage de 800 caractères en moins de 5 ms sur JVM ; mémoire du vocabulaire mesurée.
 
@@ -86,18 +89,19 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 **À faire**
 
-1. `OrtEmbeddingEngine` (chemin de chargement retenu par le prototype S4) : préfixes, lots, agrégation, normalisation.
+1. `OrtEmbeddingEngine` (chemin de chargement retenu par le prototype S4) : préfixes, lots, agrégation,
+   normalisation ; chargement depuis un asset (modèle embarqué) ou depuis un chemin de fichier (pack).
 2. `EmbeddingEngineProvider` : partage, fermeture après inactivité et sous pression mémoire, sérialisation des appels.
 3. `VectorCodec` : int8 à échelle fixe et code binaire.
-4. Constante `modelId`.
+4. `modelId` fourni par la description du modèle chargé (`ModelSpec`).
 
 **Critères d'acceptation**
 
-- [ ] Cosinus ≥ 0,99 avec chaque vecteur de `testdata/embedding_golden.json` (test instrumenté).
+- [ ] Cosinus ≥ 0,99 avec chaque vecteur de `testdata/embedding_golden_fr.json` (test instrumenté).
 - [ ] Les préfixes `query: ` et `passage: ` sont appliqués par le moteur (test : deux vecteurs différents pour le même texte).
 - [ ] `VectorCodec` : aller-retour, écrêtage, correspondance bit à bit du code binaire.
 - [ ] La session se ferme après le délai d'inactivité ; un nouvel appel la recharge.
-- [ ] Mesures de la spec §7 relevées sur émulateur et consignées.
+- [ ] Mesures de la spec §8 relevées sur émulateur et consignées.
 
 ---
 
@@ -105,7 +109,7 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M4-04, M4-02, M3-04 | `engine:index` | [indexation §7](../specs/indexation.md) · EF-IDX-02 · ENF-BAT-01 |
+| À faire | M4-04, M4-02, M3-04 | `engine:index` | [indexation §7](../specs/indexation.md) · [embeddings §6](../specs/embeddings.md) · EF-IDX-02 · ENF-BAT-01 |
 
 **À faire**
 
@@ -125,20 +129,56 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 ---
 
-### M4-06 — Empaquetage du modèle
+### M4-06 — Empaquetage des modèles
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M4-04 | `engine:embedding`, `app`, CI | [embeddings §2](../specs/embeddings.md) · [architecture §9](../03-architecture.md) · ENF-STO-02 |
+| À faire | M4-04 | `engine:embedding`, `modelpack_multi`, `app`, CI | [embeddings §2, §5.2](../specs/embeddings.md) · [architecture §9](../03-architecture.md) · ENF-STO-02 |
 
 **À faire**
 
-1. Le build `release` échoue si le modèle manque ou ne correspond pas à `model.lock.json`.
-2. Vérification de l'intégrité du modèle au premier lancement après installation ou mise à jour.
-3. Mesure de la taille de téléchargement de l'AAB (`bundletool get-size total`) dans la CI.
+1. Modèle `fr` : asset non compressé de `engine:embedding`. Le build `release` échoue s'il manque ou ne
+   correspond pas à `model.lock.json`.
+2. Module `:modelpack_multi` : pack d'assets à livraison à la demande contenant le jeu `multi` ; ajouté
+   à `settings.gradle.kts` et au lot d'application.
+3. Vérification de l'intégrité du modèle embarqué au premier lancement après installation ou mise à jour.
+4. Mesure de la taille de téléchargement du lot (`bundletool get-size total`) dans la CI.
 
 **Critères d'acceptation**
 
-- [ ] L'AAB `release` contient le modèle non compressé ; taille de téléchargement mesurée et ≤ 200 Mo.
+- [ ] Le lot `release` contient le modèle `fr` non compressé et le pack `multi` séparé ; taille de
+      téléchargement de base mesurée et ≤ 100 Mo.
 - [ ] Modèle absent ou altéré : la recherche par mots-clés fonctionne, la recherche sémantique se
       déclare indisponible, sans plantage.
+
+---
+
+### M4-07 — Catalogue de modèles et packs de langue
+
+| Statut | Dépend de | Modules | Référence |
+|---|---|---|---|
+| À faire | M4-05, M4-06 | `engine:embedding`, `fixtureapp` | [embeddings §5](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) · EF-LANG-01 à 04 |
+
+**À faire**
+
+1. `ModelCatalog` : entrées `fr` et `multi`, modèle actif (réglage), états des packs.
+2. `FileModelPackInstaller` : import d'une archive `.smpack` par le sélecteur de fichiers, vérification
+   des empreintes, copie dans le stockage privé, suppression.
+3. `PlayModelPackInstaller` : pack d'assets à la demande (`asset-delivery`), suivi d'état, confirmation
+   système pour les données mobiles, emplacement des fichiers, suppression. Sélection de l'installateur
+   selon la provenance de l'installation.
+4. `activate(id)` : vérification, changement du modèle actif, fermeture de la session, remise à zéro des vecteurs.
+5. Petit pack de test (`testdata/`) pour les tests automatisés : mêmes fichiers que `fr` sous un autre identifiant de modèle.
+
+**Critères d'acceptation**
+
+- [ ] Avec un installateur factice : états `NotInstalled → Downloading → Installed`, échec, suppression
+      du pack actif (retour à `fr`).
+- [ ] Archive valide importée ; empreinte incorrecte ou archive incomplète refusée, rien n'est copié.
+- [ ] E2E-21 : après activation du pack de test, les vecteurs portent le nouvel identifiant de modèle ;
+      la recherche par mots-clés répond pendant le recalcul.
+- [ ] Aucun téléchargement n'est lancé sans action de l'utilisateur (test : aucun appel à l'installateur au démarrage).
+- [ ] Les listes blanches de permissions des deux variantes admettent `FOREGROUND_SERVICE_DATA_SYNC` et rien d'autre de nouveau.
+
+**Validation manuelle** — sur la piste de test interne de Google Play : téléchargement du pack
+multilingue, activation, recherche dans une autre langue, suppression.

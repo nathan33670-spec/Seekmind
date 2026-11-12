@@ -15,13 +15,13 @@
 ## Vérifications exécutées
 
 - [ ] `./gradlew spotlessCheck lint` — OK
-- [ ] `./gradlew testDebugUnitTest` — OK
-- [ ] `./gradlew :app:verifyReleaseManifest` et `scripts/check-forbidden-apis.sh` — OK
+- [ ] `./gradlew testAdsDebugUnitTest` — OK
+- [ ] Les deux variantes compilent ; `:app:verifyAdsReleaseManifest`, `:app:verifyOfflineReleaseManifest` et `scripts/check-forbidden-apis.sh` — OK
 - [ ] Tests sur appareil (CI `device-tests`) — OK / non concerné
 
 ## Invariants (AGENTS.md §2)
 
-- [ ] Aucune API réseau, aucune permission ajoutée, aucune dépendance hors liste blanche
+- [ ] Aucune API réseau hors de `engine:ads`, aucune donnée de l'utilisateur passée à ce module, aucune permission ajoutée, aucune dépendance hors liste blanche
 - [ ] Aucune action automatisée sur l'interface d'autres applications
 - [ ] Aucun contenu utilisateur dans les logs, aucun fichier image écrit
 - [ ] Chaînes visibles par l'utilisateur en ressources FR + EN
@@ -33,3 +33,7 @@
 ## Statut du plan
 
 - [ ] Statut du ticket mis à jour dans `docs/plan/`
+
+## Revue
+
+<!-- Rempli par l'agent relecteur : constats, ou « Aucun constat bloquant ». Accord du porteur du projet si le ticket l'exige (docs/plan/README.md §1.4). -->

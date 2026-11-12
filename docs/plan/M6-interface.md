@@ -31,25 +31,31 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 ---
 
-### M6-02 — Accueil, divulgation, activation
+### M6-02 — Accueil, divulgation, familles, activation
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-01, M2-01 | `feature:onboarding` | [ui-ux §3.1](../specs/ui-ux.md) · [conformité §4](../05-conformite-play-store.md#4-écran-de-divulgation) · EF-ONB-01 à 05 |
+| À faire | M6-01, M2-01, M2-05 | `feature:onboarding` | [ui-ux §3.1](../specs/ui-ux.md) · [conformité §4](../05-conformite-play-store.md#4-écran-de-divulgation) · [confidentialite §3.4](../specs/confidentialite.md) · EF-ONB-01 à 05, 07 |
 
 **À faire**
 
 1. Trois pages de présentation.
 2. Écran de divulgation : texte de la version 1 (FR et EN), constante `DISCLOSURE_VERSION`, bouton
    « J'accepte » actif une fois le bas du texte atteint, refus par « Non merci » ou retour arrière.
-3. Enregistrement du consentement (version, date) à l'acceptation, avant la redirection.
-4. Écran d'activation : étapes illustrées, ouverture des réglages d'accessibilité, détection au retour, confirmation.
-5. Parcours de refus : mode limité et bandeau permanent qui rouvre la divulgation.
-6. Reconsentement quand `DISCLOSURE_VERSION` dépasse la version enregistrée.
+3. Enregistrement du consentement (version, date) à l'acceptation.
+4. Écran des familles d'applications : quatre cases cochées par défaut, icônes de quelques applications
+   installées par famille, rappel des exclusions d'office ; choix enregistré avant toute redirection.
+5. Écran d'activation : étapes illustrées, ouverture des réglages d'accessibilité, détection au retour, confirmation.
+6. Parcours de refus : mode limité et bandeau permanent qui rouvre la divulgation.
+7. Reconsentement quand `DISCLOSURE_VERSION` dépasse la version enregistrée.
+8. Texte de divulgation de la variante `ads` (celui de la variante `offline` arrive avec M8-06).
+9. Emplacement pour la proposition du pack de langue en fin de parcours (branchée par M6-06).
 
 **Critères d'acceptation**
 
-- [ ] Aucune redirection vers les réglages système sans consentement enregistré.
+- [ ] Aucune redirection vers les réglages système sans consentement **et** choix des familles enregistrés.
+- [ ] Une famille décochée à l'accueil ne produit aucune capture (avec E2E-19).
+- [ ] Aucune fenêtre de consentement publicitaire dans ce parcours.
 - [ ] « J'accepte » est inactif tant que le texte n'a pas été entièrement affiché ; le retour arrière vaut refus.
 - [ ] Après refus, le bandeau rouvre la divulgation.
 - [ ] Incrément de version → la capture s'arrête jusqu'à la nouvelle acceptation (avec E2E-09).
@@ -93,7 +99,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 1. Écran de détail : métadonnées, texte complet sélectionnable et surligné, mention d'origine OCR.
 2. Actions : copier (presse-papiers marqué sensible), partager, supprimer avec confirmation.
-3. Emplacements pour le bouton de retour à la source (M7-03) et les actions contextuelles (M9-04).
+3. Emplacement pour le bouton de retour à la source (M7-03).
 
 **Critères d'acceptation**
 
@@ -125,20 +131,25 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-01, M2-07, M1-06 | `feature:settings` | [ui-ux §3.5](../specs/ui-ux.md) · EF-SET · EF-PRIV-05, 08, 09 |
+| À faire | M6-01, M2-07, M1-06, M4-07 | `feature:settings`, `feature:onboarding` | [ui-ux §3.5](../specs/ui-ux.md) · [embeddings §5](../specs/embeddings.md) · EF-SET · EF-PRIV-05, 08, 09, 12 · EF-LANG-02 à 04 |
 
 **À faire**
 
-1. Rubriques Mémorisation, Applications, Données, Sécurité, Actions contextuelles, Recherche, Diagnostic, À propos.
+1. Rubriques Mémorisation, Applications, Données, Sécurité, Langues de recherche, Recherche, Diagnostic, À propos.
    La rubrique Activation arrive avec M8-04 et M8-05.
-2. Applications : liste des applications lançables, état effectif et son origine, recherche, liste stricte verrouillée, confirmation pour la liste souple.
+2. Applications : les quatre familles avec interrupteur ; liste des applications lançables, famille,
+   état effectif et son origine, recherche, liste stricte verrouillée, confirmation pour la liste souple.
 3. Données : rétention, budget, statistiques, suppressions par période et par application, « Tout effacer » avec saisie de confirmation.
 4. Diagnostic : compteurs du jour et des 7 derniers jours ; partage d'un texte sans contenu.
 5. Retrait du consentement : arrête la capture et propose d'effacer les données.
+6. Langues de recherche : modèle actif, packs (état, progression), utiliser, supprimer, importer un
+   fichier de pack, avancement de la reconstruction de l'index ; confirmation avant de changer de modèle.
+7. Proposition du pack multilingue à la fin de l'accueil quand aucune langue du téléphone n'est le français.
 
 **Critères d'acceptation**
 
-- [ ] Exclure une application prend effet à la capture suivante (avec E2E-11).
+- [ ] Exclure une application ou désactiver une famille prend effet à la capture suivante (avec E2E-11 et E2E-19).
+- [ ] Changer de modèle demande une confirmation et affiche l'avancement de la reconstruction.
 - [ ] Changer la rétention est pris en compte par la maintenance suivante.
 - [ ] « Tout effacer » appelle `WipeService` et ramène à la première utilisation.
 - [ ] Le texte de diagnostic partagé ne contient aucun contenu capturé, titre, URL ni requête.
