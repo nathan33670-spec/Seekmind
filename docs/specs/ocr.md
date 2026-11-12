@@ -120,17 +120,22 @@ data class OcrLine(val text: String, val bounds: IntRect, val confidence: Float?
   dépendance supplémentaire).
 - Filtrage : lignes d'au moins 3 caractères alphanumériques ; confiance ≥ 0,45 lorsqu'elle est fournie.
 
-### 4.1 ML Kit sans permission réseau
+### 4.1 Télémétrie de ML Kit
 
 ML Kit dépend de `com.google.android.datatransport`, qui déclare `INTERNET` et planifie l'envoi de
-statistiques d'usage. La permission est retirée du manifeste fusionné (INV-01). Le prototype **M0-07**
-établit lequel de ces deux réglages est retenu, avec la preuve (100 reconnaissances en mode avion sur
-installation neuve, aucun plantage, aucune erreur fatale dans le journal système) :
+statistiques d'usage à Google. SeekMind n'en veut dans aucune variante :
 
-- **Option A** — retirer seulement la permission ; l'envoi échoue silencieusement.
-- **Option B** — retirer aussi du manifeste les composants de transport
+- variante `offline` : la permission est retirée du manifeste fusionné (INV-01) ;
+- variante `ads` : la permission existe pour la publicité ; laisser ML Kit s'en servir romprait le
+  silence réseau (EF-MON-10) et l'absence de télémétrie (INV-08).
+
+Le prototype **M0-07** établit le réglage retenu, avec la preuve (100 reconnaissances sur installation
+neuve, aucun plantage, aucune erreur fatale dans le journal système, aucun octet émis) :
+
+- **Option A** — variante `offline` seulement : retirer la permission ; l'envoi échoue silencieusement.
+- **Option B** — les deux variantes : retirer du manifeste les composants de transport
   (`JobInfoSchedulerService`, `AlarmManagerSchedulerBroadcastReceiver`, `TransportBackendDiscovery`)
-  par `tools:node="remove"`, pour qu'aucun envoi ne soit même planifié.
+  par `tools:node="remove"`, pour qu'aucun envoi ne soit même planifié. C'est l'option attendue.
 
 Si aucune option n'est stable (risque R-11), le moteur de repli est un modèle de reconnaissance exécuté
 par ONNX Runtime, déjà embarqué ; `OcrEngine` isole ce choix.

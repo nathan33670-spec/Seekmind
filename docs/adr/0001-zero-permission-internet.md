@@ -37,7 +37,7 @@ Mise en œuvre :
 - Un canal résiduel existe : une application peut faire ouvrir une URL par le navigateur. Les seules
   URL ouvertes vers le site de l'éditeur ne portent qu'un nonce aléatoire (modèle de menace, T2).
 - `ACCESS_NETWORK_STATE` (connaître l'état du réseau, sans pouvoir émettre) reste tolérée tant que
-  WorkManager ou ML Kit en dépendent ; objectif : la retirer (architecture §10.2).
+  WorkManager ou ML Kit en dépendent ; objectif : la retirer (architecture §10.3).
 
 ## Alternatives écartées
 

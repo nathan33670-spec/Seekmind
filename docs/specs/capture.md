@@ -218,7 +218,7 @@ sealed interface PipelineEvent {
 
 enum class DropReason {
     CONSENT_MISSING, PAUSED, DEVICE_LOCKED, NO_ROOT, NOT_APP_WINDOW,
-    APP_IGNORED, APP_EXCLUDED, APP_SENSITIVE, APP_CATEGORY,
+    APP_IGNORED, APP_EXCLUDED, APP_FAMILY_DISABLED, APP_SENSITIVE, APP_CATEGORY,
     PASSWORD_FIELD, PRIVATE_BROWSING, SECURE_WINDOW,
     TREE_TIMEOUT, TOO_SHORT, ERROR,
 }
@@ -230,14 +230,15 @@ enum class DropReason {
 |---|---|---|
 | 1 | Consentement courant, mémorisation non en pause, appareil déverrouillé (`KeyguardManager.isKeyguardLocked`) | `CONSENT_MISSING`, `PAUSED`, `DEVICE_LOCKED` |
 | 2 | Racine et type de fenêtre | `NO_ROOT`, `NOT_APP_WINDOW` |
-| 3 | `PrivacyGate.checkPackage(meta)` — **avant toute lecture du contenu** | `APP_*` |
+| 3 | `PrivacyGate.checkPackage(meta)` — **avant toute lecture du contenu** : paquets ignorés, listes sensibles, règles de l'utilisateur, familles désactivées | `APP_*` |
 | 4 | `TreeExtractor.extract(root)` | `TREE_TIMEOUT` |
 | 5 | `PrivacyGate.checkTree(meta, extraction)` | `PASSWORD_FIELD`, `PRIVATE_BROWSING` |
 | 6 | Sonde de fenêtre sécurisée et, si `OcrPolicy` le décide, OCR — une seule capture d'écran sert aux deux ([ocr §3](ocr.md)) | `SECURE_WINDOW` |
 | 7 | Fusion des lignes de l'arbre et de l'OCR, URL, `PrivacyGate.redact(text)` | — |
 | 8 | Longueur minimale (`minTextChars` = 20) | `TOO_SHORT` |
 | 9 | `CaptureSink.ingest(RawCapture)` | — → `Stored` ou `Deduplicated` |
-| 10 | `CaptureListener.onCapture(...)` pour les actions contextuelles | — |
+
+En v1.1, une dixième étape notifiera le module des actions contextuelles ; elle n'existe pas en v1.
 
 Toute exception est interceptée au niveau de `onStable()`, comptée (`ERROR`) et n'atteint jamais le
 service. Chaque issue incrémente un compteur de `metric_daily`.

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.0 — 12 novembre 2026 |
+| **Version** | 1.1 — 12 novembre 2026 (variantes, familles d'applications, packs de langue) |
 | **Principe** | Un agent IA ne « voit » pas l'application : un critère d'acceptation n'existe que s'il est vérifié par un test automatisé ou par une procédure manuelle consignée |
 
 ## 1. Niveaux de test
@@ -15,8 +15,8 @@
 | **Bout en bout** | UI Automator + application de test | `app/src/androidTest` | Le service réel face à des écrans connus (§4) |
 | **Interface** | Compose UI Test | `feature/*/src/androidTest` | Écrans, états, accessibilité |
 | **Performance** | Microbenchmark, Macrobenchmark | `benchmark/` | Cibles ENF mesurables sur émulateur ou appareil (§6) |
-| **Outils** | pytest ; Vitest | `tools/`, `reward-web/` | Jetons, modèle, Worker |
-| **Manuel** | Procédure écrite | PR | Ce qui exige un vrai téléphone : surcouches constructeur, batterie, applications tierces |
+| **Outils** | pytest | `tools/` | Jetons, modèles |
+| **Manuel** | Procédure écrite | PR | Ce qui exige un vrai téléphone : batterie, applications tierces, annonce récompensée, téléchargement d'un pack de langue |
 
 ## 2. Conventions
 
@@ -47,9 +47,8 @@ Chaque activité affiche un contenu fixe, connu des tests.
 | `ImageTextActivity` | Image contenant un texte dessiné, sans description | OCR |
 | `SensitiveDataActivity` | Numéro de carte et IBAN de test valides, numéro de suivi | Masquage EF-PRIV-07 |
 | `WebActivity` | Vue web chargeant du HTML local, avec une barre d'adresse factice identifiée `url_bar` | Extraction d'URL |
-| `EntitiesActivity` | Date, adresse, téléphone, numéro de suivi | Actions contextuelles |
 | `DeepLinkActivity` | Répond à `https://fixture.seekmind.test/item/{id}` et affiche l'identifiant | Retour à la source |
-| `FakeBrowserActivity` | Répond aux URL de récompense et renvoie un jeton signé par la clé de test | Parcours de récompense sans réseau |
+| `MessagingLikeActivity` | Répond à `smsto:` : l'application de test est alors classée « messageries » | Familles d'applications |
 
 ## 4. Tests de bout en bout
 
@@ -89,29 +88,33 @@ Configurator.getInstance().uiAutomationFlags =
 | E2E-12 | Ouvrir `SensitiveDataActivity` | Carte et IBAN remplacés par le marqueur de masquage ; numéro de suivi intact |
 | E2E-13 | Ouvrir `WebActivity` | L'URL est enregistrée dans la capture |
 | E2E-14 | Retour à la source vers `DeepLinkActivity` | L'activité s'ouvre sur le bon identifiant |
-| E2E-15 | Récompense via `FakeBrowserActivity` | Solde +5 ; le même jeton rejoué est refusé |
-| E2E-16 | Ouvrir `EntitiesActivity`, pastille active | La pastille apparaît ; un tap émet l'Intent d'agenda attendu |
+| E2E-15 | Récompense avec un fournisseur de publicité factice (liaison Hilt de test) | Annonce vue : solde +5 ; annonce fermée avant la fin : solde inchangé ; aucune annonce : +1 de courtoisie |
+| E2E-16 | *(reporté en v1.1)* Pastille d'action contextuelle | — |
 | E2E-17 | Lancer le lot d'embeddings (pilote de test WorkManager) | Fragments vectorisés ; une paraphrase retrouve `PlainTextActivity` |
 | E2E-18 | Tuer le processus puis rouvrir un écran | Le service reprend et capture |
+| E2E-19 | Famille « messageries » désactivée, puis ouvrir `MessagingLikeActivity` | `Dropped(APP_FAMILY_DISABLED)` ; famille réactivée : `Stored` |
+| E2E-20 | Variante `ads` : démarrer l'application, capturer un écran, lancer une recherche | Aucun octet émis par l'application (`NetworkSilenceTest`) |
+| E2E-21 | Importer un pack de test (`FileModelPackInstaller`) et l'activer | Vecteurs recalculés avec le nouveau modèle ; recherche lexicale disponible pendant le recalcul |
 
-Matrice : API 30, 34 et 36. E2E-03 s'appuie sur le code d'erreur système à partir de l'API 34 et sur
-l'heuristique d'image noire en API 30 (ADR-0008).
+Matrice : API 30, 34 et 36, variante `ads`. E2E-03 s'appuie sur le code d'erreur système à partir de
+l'API 34 et sur l'heuristique d'image noire en API 30 (ADR-0008). La variante `offline` exécute E2E-01,
+02 et 15 (sans publicité : crédits quotidiens) sur l'API 34.
 
 ## 5. Jeux de référence
 
 | Fichier (`testdata/`) | Produit par | Utilisé par |
 |---|---|---|
-| `tokenizer_golden.jsonl` — 1 000 phrases FR/EN et leurs identifiants de jetons | `tools/model/gen_tokenizer_golden.py` | Tests du tokenizer Kotlin : parité exacte ≥ 99,5 % |
-| `embedding_golden.json` — 50 textes et leurs vecteurs de référence (modèle quantifié, exécuté en Python) | `tools/model/gen_embedding_golden.py` | Tests instrumentés du moteur : cosinus ≥ 0,995 |
+| `tokenizer_golden_fr.jsonl`, `tokenizer_golden_multi.jsonl` — 1 000 phrases FR/EN et leurs identifiants de jetons, pour chaque modèle | `tools/model/gen_tokenizer_golden.py` | Tests du tokenizer Kotlin : parité exacte ≥ 99,5 % |
+| `embedding_golden_fr.json`, `embedding_golden_multi.json` — 50 textes et leurs vecteurs de référence (modèle quantifié, exécuté en Python) | `tools/model/gen_embedding_golden.py` | Tests instrumentés du moteur : cosinus ≥ 0,99 |
 | `eval/corpus.jsonl` — environ 300 captures synthétiques réalistes (applications, dates, textes) | `tools/eval/gen_corpus.py` (gabarits déterministes) | Évaluation de la recherche |
-| `eval/queries.jsonl` — environ 60 requêtes annotées (type : exact, code, paraphrase, temporel, application) | Rédigées, versionnées | Rappel@k, MRR |
-| `tokens/` — jetons de récompense et de licence valides, altérés, expirés, mal typés | `tools/license/gen_test_vectors.py` | Tests du vérificateur Kotlin et du Worker |
+| `eval/queries.jsonl` — environ 80 requêtes annotées (type : exact, code, paraphrase, temporel, application ; langue : français, anglais, bilingue) | Rédigées, versionnées | Rappel@k, MRR, par modèle |
+| `tokens/` — jetons de licence valides, altérés, expirés, mal typés | `tools/license/gen_test_vectors.py` | Tests du vérificateur Kotlin |
 | `temporal_cases.tsv` — expression, date de référence, intervalle attendu | Rédigé, versionné | Tests de l'analyseur temporel |
 | `sensitive_cases.tsv` — texte, résultat de masquage attendu | Rédigé, versionné | Tests du masquage |
 
-L'évaluation de la recherche tourne sur JVM en CI avec le vrai modèle (ONNX Runtime existe pour JVM de
-bureau) : `./gradlew :engine:search:evalSearch` écrit `build/reports/search-eval.json` et échoue sous
-les seuils de EF-SRCH-01 à 03.
+L'évaluation de la recherche tourne sur JVM en CI avec les vrais modèles (ONNX Runtime existe pour JVM
+de bureau) : `./gradlew :engine:search:evalSearch` écrit `build/reports/search-eval.json` et échoue
+sous les seuils de EF-SRCH-01 à 03 (en français pour le modèle `fr`, sur tout le jeu pour `multi`).
 
 ## 6. Mesures de performance
 
@@ -133,12 +136,13 @@ Les résultats sont consignés dans `docs/mesures/` (un fichier par campagne : a
 
 Workflows et durées : [04 §6](04-prerequis.md#6-intégration-continue). Règles :
 
-- `ci` et `device-tests` sont **requis** pour fusionner dans `main`.
+- `ci` et `device-tests` sont **requis** pour fusionner dans `main` ; `ci` construit et vérifie les
+  deux variantes (`ads` et `offline`).
 - Aucun secret n'est nécessaire aux workflows de développement.
 - Les rapports (tests, lint, évaluation de la recherche) sont publiés en artefacts.
 - Le workflow `device-tests` lance l'émulateur avec l'accélération KVM, installe l'application de test,
   active le service, puis exécute `connectedDebugAndroidTest`.
-- Un échec de garde-fou (§10.3 de l'architecture) n'est jamais contourné par une exception dans le script :
+- Un échec de garde-fou (§10.4 de l'architecture) n'est jamais contourné par une exception dans le script :
   on corrige le code, ou on modifie la règle par un ADR.
 
 ## 8. Validation manuelle

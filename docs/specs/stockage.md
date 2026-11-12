@@ -92,15 +92,8 @@ CREATE TABLE credit_ledger (
   id     INTEGER PRIMARY KEY AUTOINCREMENT,
   at     INTEGER NOT NULL,
   delta  INTEGER NOT NULL,
-  reason TEXT    NOT NULL,                 -- WELCOME, REWARD, SEARCH, REFUND
-  ref    TEXT                              -- nonce ou clé de requête
-);
-
-CREATE TABLE reward_request (
-  nonce       TEXT PRIMARY KEY,
-  created_at  INTEGER NOT NULL,
-  state       INTEGER NOT NULL,            -- 0 en attente, 1 utilisée, 2 expirée
-  redeemed_at INTEGER
+  reason TEXT    NOT NULL,                 -- WELCOME, REWARD, COURTESY, DAILY, SEARCH
+  ref    TEXT                              -- clé de requête, le cas échéant
 );
 
 CREATE TABLE license (
@@ -130,7 +123,7 @@ CREATE TABLE metric_daily (
 
 CREATE TABLE meta (
   key   TEXT PRIMARY KEY,
-  value TEXT NOT NULL                      -- schema_version, model_id, index_generation
+  value TEXT NOT NULL                      -- schema_version, model_id (modèle actif), index_generation
 );
 ```
 
@@ -199,7 +192,7 @@ interface VectorStore {
     suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow>
     suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row>
     suspend fun pendingCount(): Int
-    suspend fun resetForModel(modelId: Int)                                   // vide embedding, remet chunk.state à 0
+    suspend fun resetForModel(modelId: Int)                                   // vide embedding, remet chunk.state à 0, écrit meta.model_id
 }
 
 interface WipeService { suspend fun wipeEverything() }                        // base, clé, alias Keystore
@@ -238,7 +231,7 @@ l'ingestion, donc ne peuvent pas apparaître dans une capture.
 2. **Budget** : tant que la taille de la base dépasse `storageBudgetBytes`, supprimer les 500 captures
    les plus anciennes.
 3. **Annexes** : `metric_daily` de plus de 30 jours, `search_history` de plus de 90 jours,
-   `reward_request` de plus de 24 h, `secure_probe` périmées.
+   `secure_probe` périmées.
 4. **Compactage** : si `freelist_count / page_count > 0,25` et que l'appareil est en charge,
    `PRAGMA wal_checkpoint(TRUNCATE)` puis `VACUUM`.
 5. **Optimisation** : `INSERT INTO capture_fts(capture_fts) VALUES ('optimize')` une fois par semaine.

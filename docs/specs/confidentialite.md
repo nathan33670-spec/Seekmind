@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Exigences** | EF-PRIV-01 à 07, INV-05 |
+| **Exigences** | EF-PRIV-01 à 07, EF-PRIV-12, EF-ONB-07, INV-05 |
 | **Tickets** | M2-05 (règles, listes, masquage), M3-02 (fenêtres sécurisées) |
 | **Voir aussi** | [07 — Sécurité](../07-securite-vie-privee.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) |
 
@@ -41,6 +41,7 @@ data class Redaction(val text: String, val maskedCount: Int)
 | PG-04 | Paquet | Règle utilisateur « inclure » | `Allow` — prime sur PG-05 et PG-06 |
 | PG-05 | Paquet | Paquet de la liste **souple** (banque, paiement, santé, administration) ou correspondant à un motif | `APP_SENSITIVE` |
 | PG-06 | Paquet | `ApplicationInfo.category == CATEGORY_GAME` | `APP_CATEGORY` |
+| PG-14 | Paquet | Famille d'applications désactivée par l'utilisateur (§3.4) | `APP_FAMILY_DISABLED` |
 | PG-07 | Arbre | `extraction.hasPasswordField` | `PASSWORD_FIELD` |
 | PG-08 | Arbre | Navigateur connu et identifiant de vue correspondant à un marqueur de navigation privée (§4) | `PRIVATE_BROWSING` |
 | PG-09 | Fenêtre | Fenêtre sécurisée détectée par la sonde ([ocr §3](ocr.md)) | `SECURE_WINDOW` |
@@ -49,7 +50,8 @@ data class Redaction(val text: String, val maskedCount: Int)
 | PG-12 | Texte | IBAN valide | Remplacé par le marqueur |
 | PG-13 | Texte | Numéro de sécurité sociale français valide | Remplacé par le marqueur |
 
-Ordre d'évaluation de `checkPackage` : PG-01, PG-02, PG-03, PG-04, PG-05, PG-06.
+Ordre d'évaluation de `checkPackage` : PG-01, PG-02, PG-03, PG-04, PG-05, PG-06, PG-14. Une règle
+utilisateur « inclure » (PG-04) prime donc aussi sur une famille désactivée.
 
 Android applique de lui-même une quatorzième protection : à partir d'Android 14, les vues marquées
 `accessibilityDataSensitive` ne sont pas exposées aux services qui ne sont pas des outils d'accessibilité.
@@ -79,8 +81,10 @@ est fait une fois ; la décision par paquet est mise en cache.
 
 ### 3.2 Contenu initial
 
-À compléter et à **vérifier identifiant par identifiant** au ticket M2-05 (objectif : au moins 150
-entrées, couvrant les principales banques françaises et européennes).
+À compléter et à **vérifier identifiant par identifiant** au ticket M2-05. Marché de lancement
+(décision D-12) : France, Belgique, Suisse, Luxembourg, Espagne, Allemagne, Italie. Objectif : au moins
+250 entrées, dont les principales banques de détail, néobanques et applications de paiement de chacun
+de ces pays.
 
 | Liste | Exemples d'identifiants |
 |---|---|
@@ -88,7 +92,8 @@ entrées, couvrant les principales banques françaises et européennes).
 | Stricte — authentification | `com.google.android.apps.authenticator2`, `com.azure.authenticator`, `com.authy.authy`, `com.beemdevelopment.aegis` |
 | Souple — banque (France) | `com.boursorama.android.clients`, `fr.creditagricole.androidapp`, `net.bnpparibas.mescomptes`, `mobi.societegenerale.mobile.lappli`, `fr.lcl.android.customerarea`, `com.caisseepargne.android.mobilebanking`, `fr.banquepopulaire.cyberplus`, `com.fullsix.android.labanquepostale.accountaccess`, `com.cm_prod.bad`, `com.cic_prod.bad`, `com.fortuneo.android` |
 | Souple — paiement et néobanques | `com.revolut.revolut`, `de.number26.android`, `com.paypal.android.p2pmobile`, `com.lydia`, `com.transferwise.android`, `com.google.android.apps.walletnfcrel`, `com.samsung.android.spay` |
-| Souple — santé et administration | À établir au ticket (assurance maladie, impôts, identité numérique, prise de rendez-vous médicaux) |
+| Souple — banque (six autres pays du lancement) | À établir au ticket, pays par pays |
+| Souple — santé et administration | À établir au ticket, pour chaque pays (assurance maladie, impôts, identité numérique, prise de rendez-vous médicaux) |
 | Souple — système | `com.android.settings` |
 
 ### 3.3 Règles de l'utilisateur
@@ -97,6 +102,29 @@ Table `app_rule(package_name, mode, updated_at)` avec `mode ∈ {EXCLUDED, INCLU
 Applications liste les applications lançables avec leur état effectif et son origine (« exclue par
 défaut : application bancaire »). Réintégrer une application de la liste souple demande une
 confirmation. Les applications de la liste stricte sont affichées verrouillées.
+
+### 3.4 Familles d'applications
+
+À l'installation, avant d'activer le service, l'utilisateur choisit ce que SeekMind mémorise (EF-ONB-07).
+Le choix est modifiable dans Réglages → Applications.
+
+| Famille (`AppFamily`) | Appartenance, dans cet ordre de priorité |
+|---|---|
+| `MESSAGING` — messageries et e-mails | Application de SMS par défaut ; applications répondant à `mailto:` ou `smsto:` ; liste intégrée (`app_families.json` : WhatsApp, Messenger, Telegram, Signal, Discord, Gmail, Outlook…) |
+| `BROWSERS` — navigateurs | Paquets de `BrowserProfiles` ; applications répondant à un Intent `VIEW` sur `https` sans hôte particulier |
+| `SOCIAL_MEDIA` — réseaux sociaux et vidéo | `ApplicationInfo.category` valant `CATEGORY_SOCIAL` ou `CATEGORY_VIDEO` ; liste intégrée (Instagram, TikTok, YouTube, X, Facebook, Reddit, Snapchat, LinkedIn, Pinterest…) |
+| `OTHER` — autres applications | Tout le reste : achats, actualités, cartes, productivité… |
+
+- Une application appartient à une seule famille : la première qui correspond.
+- Les applications des listes sensibles (§3.1) ne relèvent d'aucune famille : elles restent exclues.
+- **État initial : les quatre familles sont cochées** ; l'utilisateur décoche ce qu'il ne veut pas
+  (décision D-13 ; la valeur est `PrivacyConfig.defaultEnabledFamilies`). L'écran rappelle que banques,
+  mots de passe et navigation privée ne sont jamais mémorisés, et montre pour chaque famille les icônes
+  de quelques applications installées qui en font partie.
+- Réglage : `enabledFamilies` (DataStore). La classification d'un paquet est mise en cache et recalculée
+  à l'installation ou à la désinstallation d'une application.
+- Le choix est enregistré **avant** la redirection vers les réglages d'accessibilité : aucune capture ne
+  peut précéder ce choix.
 
 ## 4. Navigation privée
 
@@ -160,14 +188,15 @@ data class PrivacyConfig(
     val redactionMark: String = "[•••]",
     val excludeGames: Boolean = true,
     val privateMarkers: List<String> = listOf("incognito", "private_browsing", "private_mode", "secret_mode"),
+    val defaultEnabledFamilies: Set<AppFamily> = AppFamily.entries.toSet(),
 )
 ```
 
 ## 7. Tests attendus
 
 - **JVM** : table de décision de `checkPackage` (toutes les combinaisons liste × règle utilisateur ×
-  catégorie) ; motifs sur des noms de paquets positifs et négatifs ; `checkTree` ; masquage sur
+  catégorie × famille) ; classification en familles (priorités, application de SMS par défaut, listes) ; motifs sur des noms de paquets positifs et négatifs ; `checkTree` ; masquage sur
   `testdata/sensitive_cases.tsv` (numéros valides masqués, numéros invalides et numéros de suivi intacts) ;
   propriété : `redact` est idempotente.
-- **Bout en bout** : E2E-02, 03, 11, 12.
+- **Bout en bout** : E2E-02, 03, 11, 12, 19.
 - **Manuel** : protocole des écrans sensibles ([06 §8](../06-qualite-tests-ci.md#8-validation-manuelle)).

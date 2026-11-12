@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Exigences** | EF-ONB, EF-SRCH-05 à 09, EF-JRN, EF-SET, EF-PRIV-10, EF-PRIV-11, ENF-A11Y-01, ENF-I18N-01, ENF-PERF-06 |
+| **Exigences** | EF-ONB, EF-SRCH-05 à 09, EF-LANG, EF-JRN, EF-SET, EF-PRIV-10 à 12, ENF-A11Y-01, ENF-I18N-01, ENF-PERF-06 |
 | **Tickets** | M6-01 à M6-09, M8-04 |
 
 ## 1. Principes
@@ -26,7 +26,7 @@ flowchart TD
   lock -- non --> first{Première utilisation ?}
   gate --> first
   first -- oui --> onb[Présentation] --> disc[Divulgation]
-  disc -- "J'accepte" --> enable[Activer le service] --> ok[Confirmation] --> lockopt[Proposition de verrouillage] --> search
+  disc -- "J'accepte" --> fam[Familles d'applications] --> enable[Activer le service] --> ok[Confirmation] --> lockopt[Proposition de verrouillage] --> search
   disc -- "Non merci" --> search
   first -- non --> search[Recherche]
   search <--> journal[Journal]
@@ -48,15 +48,20 @@ Barre inférieure à trois destinations : **Recherche**, **Journal**, **Réglage
 |---|---|---|
 | Présentation (3 pages) | « Retrouvez tout ce que vous avez vu » ; « Tout reste sur votre téléphone » ; « Vous gardez le contrôle » | Suivant, Passer |
 | **Divulgation** | Texte de [05 §4](../05-conformite-play-store.md#4-écran-de-divulgation), défilant | « Non merci », « J'accepte » — ce dernier actif une fois le bas du texte atteint |
+| Familles d'applications | « Que voulez-vous mémoriser ? » : navigateurs ; messageries et e-mails ; réseaux sociaux et vidéo ; autres applications. Quatre cases cochées par défaut, avec les icônes de quelques applications installées par famille. Rappel : banques, mots de passe et navigation privée ne sont jamais mémorisés. | Continuer (le choix est enregistré) |
 | Activer le service | Trois étapes illustrées : ouvrir les réglages, choisir « SeekMind », activer | « Ouvrir les réglages » → `Settings.ACTION_ACCESSIBILITY_SETTINGS` |
 | Confirmation | « La mémorisation est active » | Continuer |
 | Verrouillage | « Protéger SeekMind par votre empreinte ou votre code » | Activer (par défaut), Plus tard |
+| Pack de langue — seulement si aucune langue du téléphone n'est le français | « La recherche par mots-clés fonctionne dans toutes les langues. Pour chercher aussi par le sens dans votre langue, ajoutez le pack multilingue (118 Mo). » | Télécharger, Plus tard |
 
 Au retour des réglages système (`onResume`), l'état du service est relu : actif → confirmation ; inactif
 → l'écran reste, avec un lien « Je n'y arrive pas » (aide par constructeur).
 
-Le consentement est enregistré (`version`, `date`) à l'instant du tap sur « J'accepte », avant la
-redirection.
+Le consentement est enregistré (`version`, `date`) à l'instant du tap sur « J'accepte », et le choix
+des familles à la validation de son écran : tous deux avant la redirection vers les réglages système.
+
+Le consentement **publicitaire** n'apparaît pas dans ce parcours : la fenêtre de Google s'affiche à la
+première demande de publicité ([monetisation §3.3](monetisation.md)).
 
 ### 3.2 Recherche (`feature:search`)
 
@@ -89,7 +94,7 @@ source au libellé exact ([retour-source §1](retour-source.md)). Un tap sur la 
 
 Application, dates de première et dernière vue, nombre de vues, titre, URL ; texte complet sélectionnable
 avec les termes de la recherche surlignés ; actions : retour à la source, copier, partager, supprimer
-(avec confirmation) ; pastilles d'actions contextuelles ; liens détectés.
+(avec confirmation) ; liens détectés.
 
 ### 3.4 Journal (`feature:journal`)
 
@@ -102,12 +107,12 @@ journée ». Chargement par pages de 50 (curseur sur la date). Jamais soumis aux
 | Rubrique | Contenu |
 |---|---|
 | Mémorisation | État ; pause (1 h, jusqu'à demain, sans limite) ; reprise ; relire la divulgation ; retirer le consentement |
-| Applications | Liste des applications lançables avec interrupteur ; état par défaut expliqué ; recherche ; liste stricte verrouillée |
+| Applications | Les quatre familles, avec interrupteur ; puis la liste des applications lançables avec interrupteur, famille et état par défaut expliqués ; recherche ; liste stricte verrouillée |
 | Données | Durée de conservation ; budget de stockage ; espace utilisé, nombre de captures, plus ancienne ; supprimer par période, par application, tout effacer |
 | Sécurité | Verrouillage de l'application ; délai de grâce |
-| Actions contextuelles | Interrupteur de la pastille |
+| Langues de recherche | Modèle actif ; packs disponibles (taille, état, progression du téléchargement) ; utiliser, supprimer ; import d'un fichier de pack ; avancement de la reconstruction de l'index |
 | Recherche | Historique : activer, effacer |
-| Activation | Solde ou licence ; coller un code ; retirer l'activation |
+| Activation | Solde ou licence ; coller un code ; retirer l'activation ; « Confidentialité des publicités » lorsque la réglementation l'exige (variante `ads`) |
 | Diagnostic | Compteurs du jour et des 7 derniers jours (captures, rejets par motif, OCR, vecteurs en attente) ; « Partager le diagnostic » (texte sans contenu) |
 | À propos | Version ; politique de confidentialité (ouvre le navigateur) ; licences tierces |
 
@@ -126,7 +131,6 @@ Toutes les activités posent `FLAG_SECURE` (EF-PRIV-11).
 
 | Lien | Succès | Échec |
 |---|---|---|
-| Récompense | « +5 recherches » puis écran de recherche | « Cette récompense n'est pas valable » |
 | Activation | Confirmation « Activer SeekMind sur ce téléphone ? » → « SeekMind est activé » | Message précis ([monetisation §5.2](monetisation.md)) |
 
 `LinkActivity` respecte le verrouillage : un lien reçu application verrouillée est traité après
@@ -179,7 +183,8 @@ déverrouillage.
   enchaînement `authorize` → recherche → `commit`.
 - **Compose UI** : divulgation (bouton inactif avant la fin du texte, retour arrière = refus) ; parcours
   de refus et réouverture ; carte de résultat (libellés du bouton par niveau de retour) ; verrouillage
-  (aucun contenu composé avant authentification) ; réglages (pause, exclusion d'une application).
+  (aucun contenu composé avant authentification) ; réglages (pause, famille désactivée, exclusion
+  d'une application, changement de modèle) ; écran des familles (quatre cases cochées, choix enregistré).
 - **Accessibilité** : contrôles automatiques d'accessibilité activés dans les tests Compose ; passage
   manuel avec TalkBack (M6-08).
 - **Captures d'écran de référence** : facultatif en v1.

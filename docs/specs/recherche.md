@@ -261,7 +261,10 @@ data class SearchConfig(
 `./gradlew :engine:search:evalSearch` (JVM, modèle réel) charge `testdata/eval/corpus.jsonl` dans une
 base en mémoire, exécute `testdata/eval/queries.jsonl` et calcule Rappel@1, Rappel@5 et MRR, globalement
 et par type de requête, pour trois configurations : mots-clés seuls, sémantique seule, hybride.
-La tâche échoue sous les seuils de EF-SRCH-01 à 03 et publie `build/reports/search-eval.json`.
+L'évaluation est faite **pour chaque modèle du catalogue**. La tâche échoue si le modèle `fr` est sous
+les seuils de EF-SRCH-01 à 03 sur les requêtes en français, ou si le modèle `multi` l'est sur l'ensemble
+des requêtes. Les résultats du modèle `fr` sur les requêtes en anglais et bilingues sont publiés à titre
+d'information (risque R-06). Rapport : `build/reports/search-eval.json`.
 Tout changement de `SearchConfig`, du tokenizer ou du modèle joint le rapport à la PR.
 
 ## 12. Tests attendus

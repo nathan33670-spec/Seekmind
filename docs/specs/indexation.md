@@ -127,7 +127,9 @@ libérer le moteur
 
 ### 7.3 Changement de modèle
 
-`EmbeddingEngine.modelId` est comparé à `meta.model_id` au démarrage. S'ils diffèrent :
+Le modèle actif change dans deux cas : une mise à jour de l'application qui remplace le modèle
+embarqué, ou l'activation d'un pack de langue par l'utilisateur ([embeddings §5.3](embeddings.md)).
+`EmbeddingEngine.modelId` est comparé à `meta.model_id` au démarrage et à chaque activation. S'ils diffèrent :
 `VectorStore.resetForModel(modelId)` vide la table des vecteurs et remet tous les fragments en attente.
 La recherche par mots-clés n'est pas affectée ; la recherche sémantique revient à mesure que les lots passent.
 

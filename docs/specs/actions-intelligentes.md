@@ -4,6 +4,11 @@
 |---|---|
 | **Exigences** | EF-ACT-01 à 06, INV-02 |
 | **Tickets** | M9-01 à M9-05 |
+| **Statut** | **Reporté en v1.1** (décision D-05) — non réalisé dans la première publication |
+
+> Cette spécification est prête mais hors du périmètre de la v1. À sa réalisation : le module
+> `engine:actions` est créé, l'étape de notification est ajoutée au pipeline de capture, et le texte de
+> la divulgation passe en version 2 (nouvelle finalité : proposer des actions sur ce qui est affiché).
 
 ## 1. Principe
 
