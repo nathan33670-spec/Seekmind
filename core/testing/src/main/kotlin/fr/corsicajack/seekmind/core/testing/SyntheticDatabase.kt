@@ -61,6 +61,7 @@ class SyntheticCorpus(
 
     private companion object {
         const val DAY = 86_400_000L
+
         // Both braces escaped: Android's ICU regex engine rejects a bare "}".
         val SLOT = Regex("\\{[a-z]+\\}")
         val NAMES = listOf("Camille", "Alex", "Sacha", "Léa", "Hugo", "Inès", "Noah", "Emma", "Lucas", "Chloé")
