@@ -6,4 +6,10 @@
     <uses-permission
         android:name="android.permission.INTERNET"
         tools:node="remove" />
+
+    <!-- Declared by ML Kit's transport library and WorkManager; neither needs it here (prototype S2):
+         ML Kit's uploads are removed and SeekMind's workers have no network constraint. -->
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"
+        tools:node="remove" />
 </manifest>

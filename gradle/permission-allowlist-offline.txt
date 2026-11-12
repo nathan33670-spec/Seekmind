@@ -7,4 +7,3 @@ android.permission.WAKE_LOCK                                # WorkManager
 android.permission.RECEIVE_BOOT_COMPLETED                   # WorkManager
 android.permission.FOREGROUND_SERVICE                       # WorkManager
 android.permission.FOREGROUND_SERVICE_DATA_SYNC             # Play Asset Delivery (M4-07)
-android.permission.ACCESS_NETWORK_STATE                     # tolerated, to be removed if possible (M0-07)
