@@ -20,6 +20,7 @@ class MaintenanceSchedulingTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val works = WorkManager.getInstance(context).getWorkInfosForUniqueWork(MaintenanceScheduler.UNIQUE_NAME).get()
         assertThat(works).hasSize(1)
-        assertThat(works.single().state).isEqualTo(WorkInfo.State.ENQUEUED)
+        // A periodic work without initial delay may already run when the test looks at it.
+        assertThat(works.single().state).isAnyOf(WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING)
     }
 }

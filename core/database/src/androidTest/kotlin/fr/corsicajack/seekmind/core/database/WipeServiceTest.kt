@@ -34,7 +34,7 @@ class WipeServiceTest {
     }
 
     @Test
-    fun afterWipeNothingRemainsAndTheNextOpeningIsANewDatabase() = runBlocking {
+    fun afterWipeNothingRemainsAndTheNextOpeningIsANewDatabase() = runBlocking<Unit> {
         test.delete()
         val handle = test.handle()
         handle.captures.insert(
