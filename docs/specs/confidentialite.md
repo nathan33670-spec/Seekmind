@@ -71,13 +71,18 @@ Android applique de lui-même une quatorzième protection : à partir d'Android 
   },
   "soft": {
     "packages": ["com.boursorama.android.clients", "com.paypal.android.p2pmobile"],
-    "patterns": ["(^|\\.)bank", "banque", "banking", "\\.wallet(\\.|$)", "\\.pay(ment)?s?(\\.|$)", "crypto", "credit"]
+    "patterns": ["bank", "banque", "banking", "\\.wallet(\\.|$)", "\\.pay(ment)?s?(\\.|$)", "crypto", "credit"]
   }
 }
 ```
 
 Les motifs sont des expressions régulières appliquées au nom de paquet en minuscules. Le chargement
 est fait une fois ; la décision par paquet est mise en cache.
+
+Le motif `bank` s'applique n'importe où dans le nom : la forme `(^|\.)bank` envisagée d'abord manquait
+`hu.otpbank.mobile` et tout nom où « bank » suit un autre mot. Faux positifs acceptés : un nom qui
+contient « bank » ou « crypto » sans être une application financière (jeu de cryptogrammes, banque
+d'images) est exclu ; l'utilisateur peut l'inclure.
 
 ### 3.2 Contenu initial
 

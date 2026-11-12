@@ -101,7 +101,7 @@ installé sur le téléphone de test ; corriger la table ; consigner le tableau 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
+| En cours | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
 
 **À faire**
 
@@ -114,13 +114,17 @@ installé sur le téléphone de test ; corriger la table ; consigner le tableau 
 
 **Critères d'acceptation**
 
-- [ ] Table de décision complète de `checkPackage` (liste × règle utilisateur × catégorie × famille).
-- [ ] Familles : priorité entre familles, application de SMS par défaut classée « messageries », famille
+- [x] Table de décision complète de `checkPackage` (liste × règle utilisateur × catégorie × famille).
+- [x] Familles : priorité entre familles, application de SMS par défaut classée « messageries », famille
       désactivée → `APP_FAMILY_DISABLED`, règle « inclure » de l'utilisateur prioritaire.
-- [ ] Carte, IBAN et numéro de sécurité sociale valides masqués ; invalides et numéros de suivi intacts ; `redact` idempotente.
-- [ ] Aucun moyen de désactiver la porte : ni réglage, ni paramètre de configuration.
+- [x] Carte, IBAN et numéro de sécurité sociale valides masqués ; invalides et numéros de suivi intacts ; `redact` idempotente.
+- [x] Aucun moyen de désactiver la porte : ni réglage, ni paramètre de configuration.
 
 **Validation manuelle** — marqueurs de navigation privée observés sur Chrome et Firefox ; table mise à jour.
+
+**Reste à faire** — `sensitive_apps.json` compte 87 identifiants, plus les motifs. Il faut atteindre au
+moins 250 entrées pour les sept pays, en vérifiant chaque identifiant sur le Play Store. S'y ajoute la
+validation manuelle ci-dessus.
 
 ---
 
