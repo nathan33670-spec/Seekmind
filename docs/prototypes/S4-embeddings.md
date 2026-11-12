@@ -5,8 +5,8 @@
 | **Ticket** | [M0-09](../plan/M0-fondations.md#m0-09--prototype-s4--embeddings-sur-appareil) |
 | **Date** | 12 novembre 2026 |
 | **Code** | `engine/embedding/src/main/…/OrtModelLoader.kt` · `engine/embedding/src/androidTest/…/prototype/EmbeddingPrototypeTest.kt` · `tools/model/eval_pairs.py`, `tools/model/data/quality_pairs.jsonl` |
-| **Exécution** | GitHub Actions, émulateurs `google_apis` x86_64, API 30, 34 et 36 (exécution `device-tests` 43228969713) ; qualité : Python, ONNX Runtime 1.31.1, modèles quantifiés |
-| **Résultat** | 15 tests sur 15 verts (5 par niveau d'API) ; cosinus ≥ 0,997 avec les vecteurs de référence pour les deux modèles |
+| **Exécution** | GitHub Actions, émulateurs `google_apis` x86_64, API 30, 34 et 36 (mesures : exécution `device-tests` 43228969713 ; chargeur définitif : exécution 43254696099) ; qualité : Python, ONNX Runtime 1.31.1, modèles quantifiés |
+| **Résultat** | 18 tests sur 18 verts (6 par niveau d'API) ; cosinus ≥ 0,997 avec les vecteurs de référence pour les deux modèles |
 
 ## 1. Questions posées
 
@@ -141,6 +141,11 @@ l'aéroport » place le passage anglais du même sujet devant le passage frança
 | Threads | 2 par défaut, confirmé ; 4 en charge à valider sur téléphone (validation manuelle), sinon 2 partout. |
 | Cibles de la spec §8 | Atteignables ; aucune ne justifie un processus dédié (M10-02). |
 | Modèle `fr` (R-06) | Conservé comme modèle par défaut. |
+
+Le chargeur (`OrtModelLoader`) applique cette décision ; l'exécution 43254696099 la confirme : par le
+chemin par défaut, la session `fr` ajoute 27 à 35 Mo de PSS, contre 62 à 70 Mo par la projection, avec
+les mêmes vecteurs. Le test `theCopyIsReusedWhileTheManifestIsUnchanged` vérifie que la copie est réutilisée
+tant que le manifeste ne change pas, et refaite sinon.
 
 ## 6. Validation manuelle (téléphone du porteur du projet)
 
