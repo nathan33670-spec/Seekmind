@@ -411,8 +411,11 @@ publicitaires inutiles retirées :
 </application>
 ```
 
-Dans les deux variantes, les composants de télémétrie de ML Kit sont neutralisés selon la conclusion du
-prototype M0-07 ([ocr §4.1](specs/ocr.md)).
+Dans les deux variantes, le manifeste commun retire les trois composants de transport de ML Kit
+(`TransportBackendDiscovery`, `JobInfoSchedulerService`, `AlarmManagerSchedulerBroadcastReceiver`) :
+aucune statistique d'usage n'est planifiée ni émise ([ocr §4.1](specs/ocr.md),
+[prototype S2](prototypes/S2-mlkit-sans-telemetrie.md)). La variante `offline` retire aussi
+`ACCESS_NETWORK_STATE`.
 
 ### 10.3 Permissions admises dans le manifeste fusionné `release`
 
@@ -422,7 +425,7 @@ prototype M0-07 ([ocr §4.1](specs/ocr.md)).
 | `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` | WorkManager | Admises | Admises |
 | `FOREGROUND_SERVICE_DATA_SYNC` | Play Asset Delivery (packs de langue) | Admise | Admise |
 | `<applicationId>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | `androidx.core` | Admise | Admise |
-| `ACCESS_NETWORK_STATE` | WorkManager, datatransport, SDK publicitaire | Tolérée ; objectif : la retirer (M0-07) | Admise |
+| `ACCESS_NETWORK_STATE` | WorkManager, datatransport, SDK publicitaire | **Interdite** (retirée, prototype S2) | Admise |
 | `INTERNET` | SDK publicitaire | **Interdite — build en échec** | Admise |
 | `com.google.android.gms.permission.AD_ID`, `ACCESS_ADSERVICES_AD_ID` | SDK publicitaire | Interdites | Admises |
 | `ACCESS_ADSERVICES_ATTRIBUTION`, `ACCESS_ADSERVICES_TOPICS` | SDK publicitaire | Interdites | **Interdites** (retirées) |

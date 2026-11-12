@@ -148,7 +148,7 @@ requise) et autorise la fusion automatique.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01, M0-08 | `core:database` | [stockage §1 à §3, §5](../specs/stockage.md) · [ADR-0004](../adr/0004-stockage-room-sqlcipher-fts5.md) |
+| Fait | M0-01, M0-08 | `core:database` | [stockage §1 à §3, §5](../specs/stockage.md) · [ADR-0004](../adr/0004-stockage-room-sqlcipher-fts5.md) |
 
 **À faire**
 
@@ -161,8 +161,9 @@ requise) et autorise la fusion automatique.
 
 **Critères d'acceptation**
 
-- [ ] Tests verts sur les émulateurs API 30, 34 et 36.
-- [ ] Le rapport conclut explicitement : pile confirmée, ou alternative proposée par un ADR.
+- [x] Tests verts sur les émulateurs API 30, 34 et 36.
+- [x] Le rapport conclut explicitement : pile confirmée, ou alternative proposée par un ADR.
+      ([rapport S1](../prototypes/S1-sqlcipher-fts5.md) : pile confirmée ; requête lexicale corrigée.)
 
 ---
 
@@ -170,7 +171,7 @@ requise) et autorise la fusion automatique.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-04, M0-08 | `engine:ocr`, `app` | [ocr §4](../specs/ocr.md) · [architecture §10.2, §10.3](../03-architecture.md) · risque R-11 |
+| En revue — validation manuelle en attente | M0-04, M0-08 | `engine:ocr`, `app` | [ocr §4](../specs/ocr.md) · [architecture §10.2, §10.3](../03-architecture.md) · risque R-11 |
 
 **À faire**
 
@@ -186,9 +187,10 @@ requise) et autorise la fusion automatique.
 
 **Critères d'acceptation**
 
-- [ ] `:app:verifyOfflineReleaseManifest` et `:app:verifyAdsReleaseManifest` verts avec ML Kit dans le build.
-- [ ] Aucune erreur fatale dans le journal système pendant les 100 reconnaissances, sur les trois émulateurs.
-- [ ] Variante `ads` : aucun octet émis par l'application pendant et après les reconnaissances.
+- [x] `:app:verifyOfflineReleaseManifest` et `:app:verifyAdsReleaseManifest` verts avec ML Kit dans le build.
+- [x] Aucune erreur fatale dans le journal système pendant les 100 reconnaissances, sur les trois émulateurs.
+- [x] Variante `ads` : aucun octet émis par l'application pendant et après les reconnaissances.
+      ([rapport S2](../prototypes/S2-mlkit-sans-telemetrie.md) : option B retenue.)
 
 **Validation manuelle** — sur le téléphone de test, installation neuve, mode avion : 20 reconnaissances
 réussies ; résultat consigné dans la PR.
