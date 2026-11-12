@@ -43,11 +43,11 @@ else
     || fail "local.properties (sdk.dir)" "echo sdk.dir=$sdk > local.properties"
 fi
 
-# Python 3.11+ for tools/ (docs/04-prerequis.md §4).
-if command -v python3 >/dev/null 2>&1 && python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; then
+# Python 3.13+ for tools/: the versions of tools/model/requirements.txt are pinned for it (docs/04-prerequis.md §4).
+if command -v python3 >/dev/null 2>&1 && python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 13) else 1)'; then
   ok "Python $(python3 -c 'import platform; print(platform.python_version())')"
 else
-  fail "Python 3.11+" "install Python 3.11 or newer"
+  fail "Python 3.13+" "install Python 3.13 or newer"
 fi
 
 # Binary tools used by the guard scripts.
@@ -55,7 +55,7 @@ for tool in objdump unzip; do
   command -v "$tool" >/dev/null 2>&1 && ok "$tool" || fail "$tool (scripts/check-elf-alignment.sh)" "install binutils / unzip"
 done
 
-# Embedding model, produced by tools/model (ticket M0-10); only release builds need it.
+# Embedding model, produced by tools/model (ticket M0-10); builds without -PskipModel need it.
 model="$repo/engine/embedding/src/main/assets/model/fr"
 if [ -f "$model/model.onnx" ] && [ -f "$model/vocab.bin" ]; then
   ok "embedding model (fr)"

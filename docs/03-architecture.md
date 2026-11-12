@@ -289,7 +289,7 @@ retient la combinaison stable la plus récente qui compile et corrige le tableau
 | Tests | JUnit 4.13.2 · Truth 1.4.5 · Turbine 1.2.1 · MockK 1.14.12 · Robolectric 4.17 | |
 | | AndroidX Test runner 1.7.0 · ext-junit 1.3.0 · UI Automator 2.4.1 · Benchmark 1.5.0 | |
 | Qualité | Spotless + ktlint, Android Lint | dernières stables à M0-02 |
-| Outils | Python 3.11+ (`tools/`) | |
+| Outils | Python 3.13+ (`tools/`, versions figées dans `tools/model/requirements.txt`) | |
 
 Bibliothèques **exclues** par décision : tout client HTTP et tout SDK en ligne hors de `engine:ads`,
 Firebase, Play Billing (v2), `sqlite-vec` ([ADR-0005](adr/0005-recherche-vectorielle-en-memoire.md)),

@@ -266,7 +266,7 @@ réussies ; résultat consigné dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01 | `tools/model`, `testdata`, `engine:embedding` | [embeddings §2, §3.2, §5.2](../specs/embeddings.md) · [tests §5](../06-qualite-tests-ci.md#5-jeux-de-référence) |
+| Fait | M0-01 | `tools/model`, `testdata`, `engine:embedding` | [embeddings §2, §3.2, §5.2](../specs/embeddings.md) · [tests §5](../06-qualite-tests-ci.md#5-jeux-de-référence) |
 
 **À faire**
 
@@ -284,8 +284,10 @@ réussies ; résultat consigné dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] `python tools/model/build_model.py --model fr --install` et `--model multi` produisent des
+- [x] `python tools/model/build_model.py --model fr --install` et `--model multi` produisent des
       artefacts conformes à `model.lock.json` ; tailles relevées (cibles : environ 36 Mo et 118 Mo).
-- [ ] Le contrôle de cosinus de la spec §2 passe pour les deux modèles (celui sur le jeu d'évaluation
+      (36,4 Mo et 118,1 Mo ; [spec §2](../specs/embeddings.md).)
+- [x] Le contrôle de cosinus de la spec §2 passe pour les deux modèles (celui sur le jeu d'évaluation
       arrive avec M5-07) ; les fichiers de référence sont committés avec leurs empreintes.
-- [ ] Aucun fichier de modèle, de vocabulaire binaire ni d'archive `.smpack` n'est suivi par git.
+      (0,9887 et 0,9888.)
+- [x] Aucun fichier de modèle, de vocabulaire binaire ni d'archive `.smpack` n'est suivi par git.

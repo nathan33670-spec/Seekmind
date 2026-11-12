@@ -49,6 +49,10 @@ gradlePlugin {
             id = "seekmind.root"
             implementationClass = "fr.corsicajack.seekmind.buildlogic.RootConventionPlugin"
         }
+        register("modelAssets") {
+            id = "seekmind.model.assets"
+            implementationClass = "fr.corsicajack.seekmind.buildlogic.ModelAssetsConventionPlugin"
+        }
         register("androidTest") {
             id = "seekmind.android.test"
             implementationClass = "fr.corsicajack.seekmind.buildlogic.AndroidTestConventionPlugin"

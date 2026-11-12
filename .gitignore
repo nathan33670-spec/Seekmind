@@ -38,6 +38,8 @@ secrets.properties
 *.tflite
 engine/embedding/src/main/assets/model/
 tools/model/out/
+*.smpack
+vocab.bin
 
 # --- Node (reward-web) ---
 node_modules/

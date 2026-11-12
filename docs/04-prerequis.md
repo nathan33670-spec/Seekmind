@@ -69,7 +69,7 @@ d'aucun secret.
 | JDK | 17 minimum, 21 recommandé | Gradle, AGP |
 | SDK Android | `platforms;android-37.0`, `build-tools;37.0.0`, `platform-tools` | Compilation — installé par `scripts/setup-android-sdk.sh` |
 | Gradle | 9.9.1, via le wrapper (créé en M0-01) | Build |
-| Python | 3.11+ | `tools/model` (modèles, vocabulaires, jeux de référence), `tools/license` |
+| Python | 3.13+ | `tools/model` (modèles, vocabulaires, jeux de référence), `tools/license` |
 | Android Studio | Dernière stable — facultatif | Débogage sur appareil par un humain |
 
 Versions des bibliothèques : [03 §8](03-architecture.md#8-pile-technique-et-versions).
@@ -80,7 +80,7 @@ Les développements sont réalisés par des agents dans des environnements cloud
 
 ### 5.1 Ce que l'environnement doit fournir
 
-- **JDK 17+ et Python 3.11+.**
+- **JDK 17+ et Python 3.13+.**
 - **Le SDK Android.** Le dépôt fournit `scripts/setup-android-sdk.sh` (idempotent, non interactif,
   environ 500 Mo, une minute). Vérifié le 12 novembre 2026 dans un environnement cloud vierge.
   Il lit les versions de la plateforme et des build-tools dans `gradle/libs.versions.toml`.
@@ -130,11 +130,13 @@ Créée par les tickets M0-02 à M0-04 et M0-08. GitHub Actions, exécuteurs `ub
 |---|---|---|---|
 | `ci` | Chaque PR et `main` | Compilation des **deux variantes**, `spotlessCheck`, `lint`, tests JVM, garde-fous (§10.4 de l'architecture), tests des outils Python | ≤ 12 min |
 | `device-tests` | Chaque PR et `main` | Émulateurs API 30, 34 et 36 (x86_64, accélération KVM) : tests instrumentés et de bout en bout avec l'application de test, variante `ads` ; contrôle de fumée de la variante `offline` sur l'API 34 | ≤ 25 min |
-| `model` | Manuel et hebdomadaire | Reconstruit les modèles et les jeux de référence, vérifie les empreintes | ≤ 30 min |
+| `model` | Manuel, hebdomadaire, et sur les PR qui touchent `tools/model` ou `model.lock.json` | Reconstruit les deux modèles depuis leurs sources figées, vérifie les empreintes, régénère les jeux de référence et échoue s'ils changent, alimente le cache | ≤ 30 min |
 | `pages` | Modification de `site/` sur `main` | Publie le site statique | ≤ 2 min |
 | `release` | Étiquette `v*` | AAB signé de la variante `ads` **et** de la variante `offline`, artefacts à téléverser | ≤ 20 min |
 
-Les modèles sont mis en cache par GitHub Actions, avec leurs empreintes comme clé.
+Les modèles sont mis en cache par GitHub Actions (action `.github/actions/model-artifacts`), avec pour clé
+`model.lock.json` et l'outillage : `ci` et `device-tests` restaurent le jeu `fr`, ou le reconstruisent
+et le vérifient en cas d'absence.
 Dépôt privé : surveiller le quota de minutes ; `device-tests` est le poste principal.
 
 ## 7. Matériel de test **[Humain]**

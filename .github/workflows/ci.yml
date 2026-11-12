@@ -35,10 +35,17 @@ jobs:
       - name: Install Android SDK packages
         run: bash scripts/setup-android-sdk.sh
 
-      # -PskipModel: these tasks do not need the embedding model (docs/specs/embeddings.md §2).
+      # The bundled `fr` model, from the cache or rebuilt and checked against model.lock.json
+      # (docs/specs/embeddings.md §2): the release builds below embed it and :engine:embedding:verifyModel
+      # checks it.
+      - name: Embedding model
+        uses: ./.github/actions/model-artifacts
+        with:
+          models: fr
+
       - name: Formatting, lint, JVM tests and build of both variants
         run: >
-          ./gradlew --continue -PskipModel
+          ./gradlew --continue
           spotlessCheck
           lint
           test
