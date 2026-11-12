@@ -12,5 +12,6 @@
         <activity android:name=".PlainTextActivity" android:exported="true" />
         <activity android:name=".SecureActivity" android:exported="true" />
         <activity android:name=".ImageTextActivity" android:exported="true" />
+        <activity android:name=".WebActivity" android:exported="true" />
     </application>
 </manifest>

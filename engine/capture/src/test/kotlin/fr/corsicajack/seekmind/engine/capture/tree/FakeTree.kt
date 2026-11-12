@@ -67,6 +67,17 @@ class FakeNode internal constructor(private val tree: FakeTree, private val spec
         return tree.node(spec.children[index])
     }
 
+    override fun findByViewId(viewId: String): List<UiNode> {
+        check(!released) { "findByViewId() on a released node" }
+        val found = mutableListOf<UiNode>()
+        fun visit(spec: FakeTree.Spec) {
+            if (spec.viewId == viewId) found += tree.node(spec)
+            spec.children.forEach(::visit)
+        }
+        visit(spec)
+        return found
+    }
+
     override fun release() {
         check(!released) { "released twice" }
         released = true

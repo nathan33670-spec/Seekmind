@@ -10,6 +10,12 @@ import fr.corsicajack.seekmind.core.common.Outcome
 import fr.corsicajack.seekmind.core.model.DropReason
 
 /**
+ * The active window of an application, as read at the start of a capture (docs/specs/capture.md §4.2
+ * steps 1 and 2, §5.1). [title] is `root.window?.title`. The caller releases [root].
+ */
+class ActiveWindow(val root: UiNode, val packageName: String, val windowId: Int, val title: CharSequence?)
+
+/**
  * [UiNode] over AccessibilityNodeInfo (docs/specs/capture.md §4.1). From API 33, children are fetched
  * with the hybrid prefetch strategy, which groups the inter-process calls; [release] recycles the node
  * before API 33 and does nothing afterwards.
@@ -39,6 +45,9 @@ class A11yUiNode(private val info: AccessibilityNodeInfo) : UiNode {
         return child?.let(::A11yUiNode)
     }
 
+    override fun findByViewId(viewId: String): List<UiNode> =
+        info.findAccessibilityNodeInfosByViewId(viewId).map(::A11yUiNode)
+
     @Suppress("DEPRECATION")
     override fun release() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) info.recycle()
@@ -46,25 +55,31 @@ class A11yUiNode(private val info: AccessibilityNodeInfo) : UiNode {
 
     companion object {
         /**
-         * The root of the active window (steps 1 and 2 of §4.2): [DropReason.NO_ROOT] without root,
+         * The active window (steps 1 and 2 of §4.2): [DropReason.NO_ROOT] without root,
          * [DropReason.NOT_APP_WINDOW] when the window is not an application's.
          */
-        fun activeRoot(service: AccessibilityService): Outcome<UiNode, DropReason> {
+        fun activeWindow(service: AccessibilityService): Outcome<ActiveWindow, DropReason> {
             val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 service.getRootInActiveWindow(AccessibilityNodeInfo.FLAG_PREFETCH_DESCENDANTS_HYBRID)
             } else {
                 service.rootInActiveWindow
             } ?: return Outcome.Failure(DropReason.NO_ROOT)
             val root = A11yUiNode(info)
+            val packageName = info.packageName?.toString()
             val window = info.window
             val type = window?.type
+            val title = window?.title?.toString()
             @Suppress("DEPRECATION")
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) window?.recycle()
+            if (packageName == null) {
+                root.release()
+                return Outcome.Failure(DropReason.NO_ROOT)
+            }
             if (type != AccessibilityWindowInfo.TYPE_APPLICATION) {
                 root.release()
                 return Outcome.Failure(DropReason.NOT_APP_WINDOW)
             }
-            return Outcome.Success(root)
+            return Outcome.Success(ActiveWindow(root, packageName, info.windowId, title))
         }
     }
 }

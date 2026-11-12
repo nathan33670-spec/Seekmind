@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "pageTitleClass": "android.webkit.WebView",
+  "browsers": [
+    {
+      "packages": [
+        "com.android.chrome",
+        "com.chrome.beta",
+        "com.chrome.dev",
+        "com.brave.browser",
+        "com.microsoft.emmx",
+        "com.vivaldi.browser",
+        "com.kiwibrowser.browser"
+      ],
+      "urlBarId": "url_bar"
+    },
+    {
+      "packages": ["org.mozilla.firefox", "org.mozilla.fenix", "org.mozilla.focus"],
+      "urlBarId": "mozac_browser_toolbar_url_view"
+    },
+    {
+      "packages": ["com.sec.android.app.sbrowser"],
+      "urlBarId": "location_bar_edit_text"
+    },
+    {
+      "packages": ["com.opera.browser", "com.opera.mini.native"],
+      "urlBarId": "url_field"
+    },
+    {
+      "packages": ["com.duckduckgo.mobile.android"],
+      "urlBarId": "omnibarTextInput"
+    }
+  ]
+}

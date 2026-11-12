@@ -95,6 +95,7 @@ interface UiNode {
     val bounds: IntRect            // en coordonnées écran
     val childCount: Int
     fun child(index: Int): UiNode?
+    fun findByViewId(viewId: String): List<UiNode>   // "<paquet>:id/<nom>", dans le sous-arbre (§5.2)
     fun release()                  // recycle() avant l'API 33, sans effet ensuite
 }
 
@@ -111,6 +112,7 @@ data class TreeExtraction(
     val textCoverage: Float,           // aire cumulée des lignes de texte / aire de la fenêtre, bornée à 1
     val windowBounds: IntRect,
     val durationMs: Long,
+    val pageTitle: String? = null,     // titre de la page d'un navigateur (§5.2), 200 caractères au plus
 )
 ```
 
@@ -120,7 +122,7 @@ Parcours en profondeur, préfixe, itératif (pile explicite), sur le thread `sm-
 
 1. Racine : `service.rootInActiveWindow`. À partir de l'API 33, utiliser la surcharge avec
    `AccessibilityNodeInfo.FLAG_PREFETCH_DESCENDANTS_HYBRID`, et la même stratégie pour `getChild`,
-   afin de regrouper les appels inter-processus. Racine nulle → rejet `NO_ROOT`.
+   afin de regrouper les appels inter-processus. Racine nulle, ou sans nom de paquet → rejet `NO_ROOT`.
 2. Fenêtre : si `root.window?.type != AccessibilityWindowInfo.TYPE_APPLICATION` → rejet `NOT_APP_WINDOW`.
 3. Pour chaque nœud :
    - non visible (`!isVisibleToUser`) → ignoré, sous-arbre compris ;
@@ -143,7 +145,10 @@ Parcours en profondeur, préfixe, itératif (pile explicite), sur le thread `sm-
    | `hardBudgetMs` | 400 | Abandon, rejet `TREE_TIMEOUT` |
    | `maxTextChars` | 12 000 | Arrêt, `truncated = true` |
 
-6. Chaque nœud est libéré (`release()`) dès qu'il n'est plus utile, y compris sur abandon (`try/finally`).
+6. Chaque nœud obtenu est libéré (`release()`) dès qu'il n'est plus utile, y compris sur abandon
+   (`try/finally`). La racine reste à l'appelant : il y lit encore la barre d'adresse (§5.2) puis la libère.
+7. Titre de la page : le texte (à défaut, la description) du premier nœud visible dont la classe est
+   celle du titre de page d'un navigateur (`BrowserProfiles`, §5.2) devient `pageTitle`.
 
 L'ordre préfixe correspond à l'ordre de lecture dans la grande majorité des mises en page ; aucun tri
 géométrique n'est appliqué en v1.
@@ -171,8 +176,12 @@ data class ScreenMeta(
 
 ### 5.2 URL des navigateurs
 
-Table de configuration `BrowserProfiles` (ressource JSON du module). Valeurs initiales, **à vérifier sur
-appareil** au ticket M2-04 :
+Table de configuration `BrowserProfiles` (ressource `res/raw/browser_profiles.json` du module, lue par
+`org.json`). Chaque entrée donne les paquets, l'identifiant de la barre d'adresse et, si elle diffère de la
+valeur commune `android.webkit.WebView`, la classe du nœud qui porte le titre de la page. Le nom de
+cette classe est une donnée de la table : le code ne la nomme pas, le garde-fou `network-webview`
+refusant toute mention de `WebView` dans les sources. Valeurs initiales, **à vérifier sur appareil** au
+ticket M2-04 :
 
 | Paquets | Identifiant de la barre d'adresse |
 |---|---|
@@ -185,14 +194,21 @@ appareil** au ticket M2-04 :
 Algorithme (`UrlExtractor`) :
 
 1. Si le paquet n'a pas de profil → pas d'URL.
-2. `root.findAccessibilityNodeInfosByViewId("<paquet>:id/<identifiant>")`. Le nœud est lu directement,
-   bien qu'il soit éditable ; s'il a le focus (l'utilisateur tape), l'URL est ignorée.
-3. Normalisation : espaces retirés ; rejet si la chaîne contient une espace ou aucun point ; préfixe
-   `https://` si aucun schéma ; analyse par `Uri` ; seuls `http` et `https` sont acceptés ; 2 048
-   caractères au plus.
-4. Barre d'adresse masquée par le défilement : `UrlTracker` garde la dernière URL lue par
-   `(paquet, titre de la page)`, le titre de la page étant le texte du premier nœud de classe `WebView`.
-   Si ce titre est inchangé depuis moins de 10 min, l'URL mémorisée est réutilisée ; sinon aucune URL.
+2. `root.findByViewId("<paquet>:id/<identifiant>")` (`findAccessibilityNodeInfosByViewId`), avant la
+   lecture de l'arbre, sur la racine que l'appelant détient encore. Le premier nœud visible est lu
+   directement, bien qu'il soit éditable ; s'il a le focus (l'utilisateur tape), l'URL est ignorée.
+   Aucun nœud visible : barre masquée (étape 4).
+3. Normalisation (`UrlNormalizer`, sans `android.net.Uri` pour être testable sur la JVM) : espaces de
+   début et de fin retirés ; rejet si la chaîne contient un blanc, un caractère de contrôle ou aucun
+   point (les adresses IPv6 littérales, sans point, sont donc rejetées) ; préfixe `https://` si aucun
+   schéma ; seuls `http` et `https` sont acceptés ; hôte non vide, fait de lettres, chiffres, tirets et
+   points, sans point en tête, en fin ni doublé ; port de 1 à 5 chiffres ; schéma et hôte en minuscules ;
+   informations d'utilisateur (`nom:mot-de-passe@`) retirées ; rejet au-delà de 2 048 caractères.
+4. Barre d'adresse masquée par le défilement : `UrlTracker` garde en mémoire, par paquet, la dernière
+   URL lue et le titre de la page (`TreeExtraction.pageTitle`, §4.2) qui l'accompagnait. Si la barre est
+   masquée, que le titre est le même et que l'URL a été lue il y a moins de `urlMemoryMs` (10 min),
+   l'URL mémorisée est réutilisée ; sinon aucune URL. Une URL lue sans titre de page n'est pas mémorisée
+   et efface la précédente. Barre ayant le focus ou texte rejeté : aucune URL, même mémorisée.
 
 L'URL affichée par le navigateur peut être abrégée : le retour à la source est alors approximatif
 (risque R-10).
@@ -293,6 +309,7 @@ data class CaptureConfig(
     val hardBudgetMs: Long = 400,
     val maxTextChars: Int = 12_000,
     val minTextChars: Int = 20,
+    val urlMemoryMs: Long = 600_000,   // §5.2 : réutilisation de la dernière URL lue
 )
 ```
 

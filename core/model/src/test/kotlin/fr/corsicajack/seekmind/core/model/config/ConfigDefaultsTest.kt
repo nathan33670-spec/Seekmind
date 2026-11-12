@@ -15,7 +15,7 @@ class ConfigDefaultsTest {
             CaptureConfig(
                 quietMs = 1_500, maxWaitMs = 8_000, maxWaitCeilingMs = 60_000, minIntervalMs = 1_000,
                 dedupStreakForBackoff = 3, maxNodes = 1_500, maxDepth = 40, softBudgetMs = 150,
-                hardBudgetMs = 400, maxTextChars = 12_000, minTextChars = 20,
+                hardBudgetMs = 400, maxTextChars = 12_000, minTextChars = 20, urlMemoryMs = 600_000,
             ),
         )
     }
