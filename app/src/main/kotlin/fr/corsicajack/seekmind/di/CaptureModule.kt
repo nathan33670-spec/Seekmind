@@ -10,9 +10,11 @@ import dagger.hilt.components.SingletonComponent
 import fr.corsicajack.seekmind.core.common.Clock
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
 import fr.corsicajack.seekmind.core.model.config.CaptureConfig
+import fr.corsicajack.seekmind.engine.capture.PauseTileService
 import fr.corsicajack.seekmind.engine.capture.StableScreenHandler
 import fr.corsicajack.seekmind.engine.capture.meta.ActivityTracker
 import fr.corsicajack.seekmind.engine.capture.meta.PackageManagerActivityLookup
+import fr.corsicajack.seekmind.engine.capture.pause.PauseController
 import fr.corsicajack.seekmind.engine.capture.routing.AndroidCaptureEnvironment
 import fr.corsicajack.seekmind.engine.capture.routing.CaptureLoop
 import fr.corsicajack.seekmind.engine.capture.routing.CaptureThread
@@ -21,6 +23,7 @@ import fr.corsicajack.seekmind.engine.capture.routing.IgnoredPackages
 import fr.corsicajack.seekmind.engine.capture.status.AccessibilityServiceState
 import fr.corsicajack.seekmind.engine.capture.status.CaptureStatusRepository
 import fr.corsicajack.seekmind.engine.capture.status.ServiceConnection
+import java.time.ZoneId
 import java.util.Optional
 import javax.inject.Singleton
 
@@ -81,6 +84,13 @@ object CaptureModule {
         clock: Clock,
     ): CaptureStatusRepository =
         CaptureStatusRepository(AccessibilityServiceState(context, connection).enabled, settings.settings, clock)
+
+    @Provides
+    @Singleton
+    fun pause(@ApplicationContext context: Context, settings: SettingsRepository, clock: Clock): PauseController =
+        PauseController(settings, clock, zone = ZoneId::systemDefault, onChanged = {
+            PauseTileService.refresh(context)
+        })
 
     /** The pipeline binds it (M2-06); until then a stable screen reads nothing. */
     @Module
