@@ -185,13 +185,14 @@ class AccessibilityPrototypeTest {
      */
     private fun open(activity: String, marker: String?): AccessibilityNodeInfo {
         val className = "$FIXTURE_PACKAGE.$activity"
-        ProbeAccessibilityService.lastWindowClass = null
+        ProbeAccessibilityService.seenWindowClasses.clear()
         shell("am start -W -S -n $FIXTURE_PACKAGE/$className")
         var root: AccessibilityNodeInfo? = null
         waitUntil("$activity on screen") {
             root = service().rootInActiveWindow
-                ?.takeIf { ProbeAccessibilityService.lastWindowClass == className }
-                ?.takeIf { it.packageName == FIXTURE_PACKAGE && it.childCount > 0 }
+                ?.takeIf { className in ProbeAccessibilityService.seenWindowClasses }
+                ?.takeIf { it.packageName == FIXTURE_PACKAGE }
+                // A screen without marker (the image screen) may expose no child node at all.
                 ?.takeIf { node -> marker == null || readTree(node).text.any { it.contains(marker) } }
             root != null
         }

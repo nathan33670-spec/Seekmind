@@ -11,7 +11,7 @@ class ProbeAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            lastWindowClass = event.className?.toString()
+            event.className?.toString()?.let(seenWindowClasses::add)
         }
     }
 
@@ -26,8 +26,10 @@ class ProbeAccessibilityService : AccessibilityService() {
         @Volatile
         var instance: ProbeAccessibilityService? = null
 
-        /** Class name carried by the last TYPE_WINDOW_STATE_CHANGED event (the activity on screen). */
-        @Volatile
-        var lastWindowClass: String? = null
+        /**
+         * Class names carried by TYPE_WINDOW_STATE_CHANGED events since the tests last cleared it.
+         * Several events follow an activity start, and the last one may name a view container.
+         */
+        val seenWindowClasses: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
     }
 }
