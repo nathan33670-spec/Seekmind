@@ -9,7 +9,11 @@ class ProbeAccessibilityService : AccessibilityService() {
         instance = this
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            lastWindowClass = event.className?.toString()
+        }
+    }
 
     override fun onInterrupt() = Unit
 
@@ -21,5 +25,9 @@ class ProbeAccessibilityService : AccessibilityService() {
     companion object {
         @Volatile
         var instance: ProbeAccessibilityService? = null
+
+        /** Class name carried by the last TYPE_WINDOW_STATE_CHANGED event (the activity on screen). */
+        @Volatile
+        var lastWindowClass: String? = null
     }
 }

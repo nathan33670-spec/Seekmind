@@ -2,11 +2,11 @@ package fr.corsicajack.seekmind.engine.capture.prototype
 
 import android.accessibilityservice.AccessibilityService
 import android.app.UiAutomation
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Rect
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.util.Log
 import android.view.Display
@@ -36,24 +36,28 @@ class AccessibilityPrototypeTest {
         instrumentation.getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES)
     private val executor = Executors.newSingleThreadExecutor()
 
+    /**
+     * The service is enabled once for the whole class: disabling it between tests races with the
+     * next test, which could see the previous, dying instance.
+     */
     @Before
     fun enableService() {
-        val component = "${instrumentation.context.packageName}/${ProbeAccessibilityService::class.java.name}"
-        shell("settings put secure enabled_accessibility_services $component")
-        shell("settings put secure accessibility_enabled 1")
+        if (ProbeAccessibilityService.instance == null) {
+            val component = "${instrumentation.context.packageName}/${ProbeAccessibilityService::class.java.name}"
+            shell("settings put secure enabled_accessibility_services $component")
+            shell("settings put secure accessibility_enabled 1")
+        }
         waitUntil("service connected") { ProbeAccessibilityService.instance != null }
     }
 
     @After
-    fun disableService() {
-        shell("settings delete secure enabled_accessibility_services")
+    fun releaseExecutor() {
         executor.shutdown()
     }
 
     @Test
     fun readsTheTextOfAPlainScreen() {
-        open("PlainTextActivity")
-        val root = waitForFixtureRoot()
+        val root = open("PlainTextActivity", marker = PLAIN_MARKER)
         val start = SystemClock.elapsedRealtimeNanos()
         val tree = readTree(root)
         val durationMs = (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000.0
@@ -67,12 +71,12 @@ class AccessibilityPrototypeTest {
 
     @Test
     fun takesAScreenshotInMemory() {
-        open("PlainTextActivity")
-        val root = waitForFixtureRoot()
+        val root = open("PlainTextActivity", marker = PLAIN_MARKER)
         settle()
         val start = SystemClock.elapsedRealtimeNanos()
         val shot = screenshot(root.windowId)
         measure("screenshot_ms", (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000.0)
+        measure("screenshot_error_code", (shot.errorCode ?: 0).toDouble())
 
         assertThat(shot.errorCode).isNull()
         val result = shot.result!!
@@ -91,8 +95,7 @@ class AccessibilityPrototypeTest {
 
     @Test
     fun recognisesASecureWindow() {
-        open("SecureActivity")
-        val root = waitForFixtureRoot()
+        val root = open("SecureActivity", marker = SECURE_MARKER)
         settle()
         // The tree of a secure window stays readable: only the screenshot reveals FLAG_SECURE (ADR-0008).
         assertThat(readTree(root).text.joinToString()).contains("SEEKMIND_FIXTURE_SECURE")
@@ -123,8 +126,7 @@ class AccessibilityPrototypeTest {
     @Test
     fun aPlainScreenIsNotDark() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
-        open("PlainTextActivity")
-        val root = waitForFixtureRoot()
+        val root = open("PlainTextActivity", marker = PLAIN_MARKER)
         settle()
         val result = screenshot(root.windowId).result!!
         try {
@@ -140,8 +142,7 @@ class AccessibilityPrototypeTest {
 
     @Test
     fun imageTextIsInvisibleToTheTree() {
-        open("ImageTextActivity")
-        val root = waitForFixtureRoot()
+        val root = open("ImageTextActivity", marker = null)
         val tree = readTree(root)
         measure("image_tree_text_chars", tree.text.sumOf { it.length }.toDouble())
         assertThat(tree.text.joinToString()).doesNotContain("4821")
@@ -149,23 +150,22 @@ class AccessibilityPrototypeTest {
 
     @Test
     fun measuresTheMinimalScreenshotInterval() {
-        open("PlainTextActivity")
-        val root = waitForFixtureRoot()
+        val root = open("PlainTextActivity", marker = PLAIN_MARKER)
         settle()
-        screenshot(root.windowId).result?.hardwareBuffer?.close()
-        val delays = listOf(0L, 100L, 250L, 500L, 750L, 1_000L, 1_500L)
         var accepted: Long? = null
-        for (delay in delays) {
+        for (delay in listOf(0L, 250L, 500L, 750L, 1_000L, 1_500L, 2_000L, 3_000L)) {
+            SystemClock.sleep(RESET_MS)
+            val baseline = screenshot(root.windowId)
+            baseline.result?.hardwareBuffer?.close()
             SystemClock.sleep(delay)
             val shot = screenshot(root.windowId)
             shot.result?.hardwareBuffer?.close()
-            if (shot.errorCode == null) {
+            measure("interval_${delay}ms_baseline_error", (baseline.errorCode ?: 0).toDouble())
+            measure("interval_${delay}ms_error", (shot.errorCode ?: 0).toDouble())
+            if (baseline.errorCode == null && shot.errorCode == null) {
                 accepted = delay
                 break
             }
-            measure("interval_rejected_after_ms", delay.toDouble())
-            SystemClock.sleep(1_500)
-            screenshot(root.windowId).result?.hardwareBuffer?.close()
         }
         measure("interval_first_accepted_ms", (accepted ?: -1L).toDouble())
         assertThat(accepted).isNotNull()
@@ -179,16 +179,20 @@ class AccessibilityPrototypeTest {
 
     private fun service() = checkNotNull(ProbeAccessibilityService.instance) { "service not connected" }
 
-    private fun open(activity: String) {
-        val intent = Intent().setClassName(FIXTURE_PACKAGE, "$FIXTURE_PACKAGE.$activity")
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        instrumentation.context.startActivity(intent)
-    }
-
-    private fun waitForFixtureRoot(): AccessibilityNodeInfo {
+    /**
+     * Cold-starts a fixture activity through the shell (`am start -W` returns once it is displayed),
+     * then waits until the service sees that very activity and, when given, its marker text.
+     */
+    private fun open(activity: String, marker: String?): AccessibilityNodeInfo {
+        val className = "$FIXTURE_PACKAGE.$activity"
+        ProbeAccessibilityService.lastWindowClass = null
+        shell("am start -W -S -n $FIXTURE_PACKAGE/$className")
         var root: AccessibilityNodeInfo? = null
-        waitUntil("fixture window") {
-            root = service().rootInActiveWindow?.takeIf { it.packageName == FIXTURE_PACKAGE && it.childCount > 0 }
+        waitUntil("$activity on screen") {
+            root = service().rootInActiveWindow
+                ?.takeIf { ProbeAccessibilityService.lastWindowClass == className }
+                ?.takeIf { it.packageName == FIXTURE_PACKAGE && it.childCount > 0 }
+                ?.takeIf { node -> marker == null || readTree(node).text.any { it.contains(marker) } }
             root != null
         }
         return root!!
@@ -264,8 +268,11 @@ class AccessibilityPrototypeTest {
         return dark.toDouble() / (GRID * GRID)
     }
 
+    /** Runs a shell command and waits for it to finish (its output is read to the end). */
     private fun shell(command: String) {
-        uiAutomation.executeShellCommand(command).close()
+        uiAutomation.executeShellCommand(command).use { descriptor ->
+            ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { it.readBytes() }
+        }
     }
 
     private fun waitUntil(what: String, condition: () -> Boolean) {
@@ -282,9 +289,12 @@ class AccessibilityPrototypeTest {
 
     private companion object {
         const val FIXTURE_PACKAGE = "fr.corsicajack.seekmind.fixture"
+        const val PLAIN_MARKER = "SEEKMIND_FIXTURE_PLAIN"
+        const val SECURE_MARKER = "SEEKMIND_FIXTURE_SECURE"
         const val TAG = "SeekMindProto"
         const val TIMEOUT_MS = 15_000L
         const val SETTLE_MS = 1_000L
+        const val RESET_MS = 3_000L
         const val GRID = 24
     }
 }
