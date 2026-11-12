@@ -1,0 +1,51 @@
+# --- Gradle / Android ---
+.gradle/
+build/
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof
+.kotlin/
+
+# --- IDE / OS ---
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# --- Secrets et signature : ne JAMAIS committer (docs/04-prerequis.md §3) ---
+*.jks
+*.keystore
+*.pem
+*.p8
+*.p12
+keystore.properties
+secrets.properties
+.env
+.env.*
+!.env.example
+.dev.vars
+
+# --- Modèles ML : produits par tools/model, jamais committés (docs/specs/embeddings.md §3) ---
+*.onnx
+*.ort
+*.tflite
+engine/embedding/src/main/assets/model/
+tools/model/out/
+
+# --- Node (reward-web) ---
+node_modules/
+.wrangler/
+dist/
+
+# --- Python (tools) ---
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
