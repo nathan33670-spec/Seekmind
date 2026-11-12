@@ -67,6 +67,7 @@ com.google.mlkit:text-recognition                                   # ML Kit, bu
 com.google.mlkit:text-recognition-bundled-common                    # ML Kit, bundled model and native library (M0-07)
 com.google.mlkit:vision-common                                      # ML Kit (M0-07)
 com.google.mlkit:vision-interfaces                                  # ML Kit (M0-07)
+com.microsoft.onnxruntime:onnxruntime-android                       # ONNX Runtime, embeddings on the CPU (M0-09)
 jakarta.inject:jakarta.inject-api                                   # Dagger
 javax.inject:javax.inject                                           # Dagger
 org.jspecify:jspecify                                               # AndroidX nullness annotations
