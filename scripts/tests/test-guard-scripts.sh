@@ -61,15 +61,18 @@ check_bad "a WebView" "feature/search/src/main/kotlin/W.kt" "val view = WebView(
 # --- check-elf-alignment.sh --------------------------------------------------------------------
 if command -v gcc >/dev/null && command -v objdump >/dev/null; then
   printf 'int seekmind_probe(void) { return 1; }\n' > "$work/probe.c"
-  apk() { # apk <name> <max page size>
-    mkdir -p "$work/$1/lib/x86_64"
-    gcc -shared -fPIC -O2 -Wl,-z,max-page-size="$2" -o "$work/$1/lib/x86_64/libprobe.so" "$work/probe.c"
+  apk() { # apk <name> <max page size> [<abi directory>]
+    mkdir -p "$work/$1/lib/${3:-x86_64}"
+    gcc -shared -fPIC -O2 -Wl,-z,max-page-size="$2" -o "$work/$1/lib/${3:-x86_64}/libprobe.so" "$work/probe.c"
     (cd "$work/$1" && zip -q -r "$work/$1.apk" lib)
     echo "$work/$1.apk"
   }
   good="$(apk aligned16k 16384)"; bad="$(apk aligned4k 4096)"
   expect "ELF alignment: 16 KB aligned library passes" 0 env SKIP_ZIPALIGN=1 "$repo/scripts/check-elf-alignment.sh" "$good"
   expect "ELF alignment: 4 KB aligned library is rejected" 1 env SKIP_ZIPALIGN=1 "$repo/scripts/check-elf-alignment.sh" "$bad"
+  # The host compiler builds a 64-bit library; only the directory decides which ABI the script sees.
+  bad32="$(apk aligned4k32 4096 armeabi-v7a)"
+  expect "ELF alignment: 4 KB aligned 32-bit library is only reported" 0 env SKIP_ZIPALIGN=1 "$repo/scripts/check-elf-alignment.sh" "$bad32"
 else
   echo "skip - ELF alignment tests (gcc or objdump missing)"
 fi

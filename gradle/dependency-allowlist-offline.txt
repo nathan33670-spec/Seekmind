@@ -5,20 +5,24 @@
 # AndroidX, Kotlin and JetBrains libraries (whole groups).
 androidx.activity:*
 androidx.annotation:*
+androidx.appcompat:*
 androidx.arch.core:*
 androidx.autofill:*
 androidx.collection:*
-androidx.compose:*
 androidx.compose.animation:*
 androidx.compose.foundation:*
-androidx.compose.material:*
 androidx.compose.material3:*
+androidx.compose.material:*
 androidx.compose.runtime:*
 androidx.compose.ui:*
+androidx.compose:*
 androidx.concurrent:*
 androidx.core:*
+androidx.cursoradapter:*
 androidx.customview:*
+androidx.drawerlayout:*
 androidx.emoji2:*
+androidx.exifinterface:*
 androidx.fragment:*
 androidx.graphics:*
 androidx.interpolator:*
@@ -26,9 +30,11 @@ androidx.lifecycle:*
 androidx.loader:*
 androidx.navigationevent:*
 androidx.profileinstaller:*
+androidx.resourceinspection:*
 androidx.savedstate:*
 androidx.startup:*
 androidx.tracing:*
+androidx.vectordrawable:*
 androidx.versionedparcelable:*
 androidx.viewpager:*
 androidx.window:*
@@ -37,12 +43,30 @@ org.jetbrains.kotlin:*
 org.jetbrains.kotlinx:*
 
 # Third-party libraries, one by one.
-com.google.code.findbugs:jsr305             # Dagger annotations
-com.google.dagger:dagger                    # Hilt (dependency injection)
-com.google.dagger:dagger-lint-aar           # Hilt (dependency injection)
-com.google.dagger:hilt-android              # Hilt (dependency injection)
-com.google.dagger:hilt-core                 # Hilt (dependency injection)
-com.google.guava:listenablefuture           # AndroidX (ListenableFuture stub)
-jakarta.inject:jakarta.inject-api           # Dagger
-javax.inject:javax.inject                   # Dagger
-org.jspecify:jspecify                       # AndroidX nullness annotations
+com.google.android.datatransport:transport-api                      # ML Kit (M0-07); uploads neutralised, docs/specs/ocr.md §4.1
+com.google.android.datatransport:transport-backend-cct              # ML Kit (M0-07); uploads neutralised, docs/specs/ocr.md §4.1
+com.google.android.datatransport:transport-runtime                  # ML Kit (M0-07); uploads neutralised, docs/specs/ocr.md §4.1
+com.google.android.gms:play-services-base                           # ML Kit (M0-07)
+com.google.android.gms:play-services-basement                       # ML Kit (M0-07)
+com.google.android.gms:play-services-mlkit-text-recognition         # ML Kit public API, pulled by the bundled artifact (M0-07)
+com.google.android.gms:play-services-mlkit-text-recognition-common  # ML Kit (M0-07)
+com.google.android.gms:play-services-tasks                          # ML Kit (M0-07)
+com.google.android.odml:image                                       # ML Kit (M0-07)
+com.google.code.findbugs:jsr305                                     # Dagger annotations
+com.google.dagger:dagger                                            # Hilt (dependency injection)
+com.google.dagger:dagger-lint-aar                                   # Hilt (dependency injection)
+com.google.dagger:hilt-android                                      # Hilt (dependency injection)
+com.google.dagger:hilt-core                                         # Hilt (dependency injection)
+com.google.firebase:firebase-annotations                            # ML Kit component registry (M0-07), no Firebase service
+com.google.firebase:firebase-components                             # ML Kit component registry (M0-07), no Firebase service
+com.google.firebase:firebase-encoders                               # ML Kit (M0-07), no Firebase service
+com.google.firebase:firebase-encoders-json                          # ML Kit (M0-07), no Firebase service
+com.google.guava:listenablefuture                                   # AndroidX (ListenableFuture stub)
+com.google.mlkit:common                                             # ML Kit (M0-07)
+com.google.mlkit:text-recognition                                   # ML Kit, bundled Latin model (M0-07)
+com.google.mlkit:text-recognition-bundled-common                    # ML Kit, bundled model and native library (M0-07)
+com.google.mlkit:vision-common                                      # ML Kit (M0-07)
+com.google.mlkit:vision-interfaces                                  # ML Kit (M0-07)
+jakarta.inject:jakarta.inject-api                                   # Dagger
+javax.inject:javax.inject                                           # Dagger
+org.jspecify:jspecify                                               # AndroidX nullness annotations

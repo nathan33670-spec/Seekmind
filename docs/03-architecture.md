@@ -437,7 +437,7 @@ prototype M0-07 ([ocr §4.1](specs/ocr.md)).
 | `scripts/check-forbidden-apis.sh` | Motifs interdits dans les sources hors tests : API réseau et SDK en ligne **hors de `engine/ads`**, `WebView`, `MediaProjection`, `performGlobalAction`, `performAction(`, `dispatchGesture`, `GestureDescription`, `Bitmap.compress`, `MediaStore`, `android.util.Log` hors `core:common` ; dans `engine/ads` : `addKeyword`, `setContentUrl`, `setNeighboringContentUrls`, `addCustomTargeting` | M0-04, M8-03 |
 | `:app:verifyDependencies` | Dépendances d'exécution `release` de chaque variante ⊆ sa liste blanche (`gradle/dependency-allowlist-ads.txt`, `-offline.txt` ; groupes AndroidX, Kotlin et JetBrains admis en bloc, bibliothèques tierces une par une) | M0-04 |
 | `:verifyModuleGraph` | Graphe de modules du §3.2, dont l'isolement de `engine:ads` et son absence de la variante `offline` | M0-04 |
-| `scripts/check-elf-alignment.sh` | Alignement 16 Ko des `.so` de l'APK `release` | M0-04 |
+| `scripts/check-elf-alignment.sh` | Alignement 16 Ko des `.so` 64 bits de l'APK `release` (les bibliothèques 32 bits sont signalées, pas refusées : les pages de 16 Ko n'existent qu'en 64 bits) | M0-04, M0-07 |
 | `NetworkSilenceTest` | Aucun octet émis par l'application tant qu'aucune publicité n'est demandée (variante `ads`) | M8-03 |
 | Lint + `verifyNoHardcodedUiText` | Chaînes non traduites (`MissingTranslation`, `ExtraTranslation`), texte en dur dans les layouts (`HardcodedText`) et dans le code Compose (tâche dédiée, exécutée par `lint` : Android Lint ne couvre pas Compose) | M0-02 |
 
