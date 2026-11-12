@@ -7,9 +7,11 @@ plugins {
 android {
     defaultConfig {
         testInstrumentationRunner = "androidx.benchmark.junit4.AndroidBenchmarkRunner"
-        // CI emulators: the figures are indicative, the phone gives the reference ones.
+        // CI emulators with a debuggable test APK, which cannot be compiled ahead of time
+        // (NOT-AOT-COMPILED follows from DEBUGGABLE): the figures are indicative, the phone gives the
+        // reference ones.
         testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] =
-            "EMULATOR,DEBUGGABLE,LOW-BATTERY,UNLOCKED,ENG-BUILD"
+            "EMULATOR,DEBUGGABLE,NOT-AOT-COMPILED,LOW-BATTERY,UNLOCKED,ENG-BUILD"
     }
 }
 
