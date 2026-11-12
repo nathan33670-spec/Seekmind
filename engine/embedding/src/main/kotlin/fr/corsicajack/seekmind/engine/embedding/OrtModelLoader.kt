@@ -20,7 +20,8 @@ sealed interface ModelLocation {
 /** How a session was obtained; recorded by the measurements of prototype S4. */
 enum class LoadPath { MEMORY_MAPPED_ASSET, COPIED_ASSET, FILE }
 
-class LoadedSession(val session: OrtSession, val path: LoadPath)
+/** [fallbackCause]: why the asset could not be copied, when [path] is [LoadPath.MEMORY_MAPPED_ASSET]. */
+class LoadedSession(val session: OrtSession, val path: LoadPath, val fallbackCause: Throwable? = null)
 
 /**
  * Opens an ONNX Runtime session on the CPU (docs/specs/embeddings.md §4). An asset is copied once to

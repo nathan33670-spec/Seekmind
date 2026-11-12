@@ -12,6 +12,7 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import fr.corsicajack.seekmind.engine.embedding.LoadPath
 import fr.corsicajack.seekmind.engine.embedding.ModelLocation
 import fr.corsicajack.seekmind.engine.embedding.OrtModelLoader
@@ -38,7 +39,8 @@ class EmbeddingPrototypeTest {
     @Test
     fun frMatchesTheReferenceVectors() {
         val loaded = loader.open(ModelLocation.Asset(FR_ASSET), intraOpThreads = 2)
-        assertThat(loaded.path).isEqualTo(LoadPath.COPIED_ASSET)
+        assertWithMessage("fallback cause: ${loaded.fallbackCause?.stackTraceToString()}")
+            .that(loaded.path).isEqualTo(LoadPath.COPIED_ASSET)
         loaded.session.use { checkAgainstGolden(it, "fr", label = "fr_copy") }
     }
 
