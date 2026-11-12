@@ -61,7 +61,8 @@ class SyntheticCorpus(
 
     private companion object {
         const val DAY = 86_400_000L
-        val SLOT = Regex("\\{[a-z]+}")
+        // Both braces escaped: Android's ICU regex engine rejects a bare "}".
+        val SLOT = Regex("\\{[a-z]+\\}")
         val NAMES = listOf("Camille", "Alex", "Sacha", "Léa", "Hugo", "Inès", "Noah", "Emma", "Lucas", "Chloé")
         val CITIES = listOf("Ajaccio", "Bastia", "Lyon", "Nantes", "Lille", "Genève", "Bruxelles", "Montréal")
         val DAYS_FR = listOf("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche")
