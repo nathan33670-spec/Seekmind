@@ -235,7 +235,7 @@ réussies ; résultat consigné dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-08, M0-10 | `engine:embedding` | [embeddings §4, §8](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) |
+| En revue — validation manuelle en attente | M0-08, M0-10 | `engine:embedding` | [embeddings §4, §8](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) |
 
 **À faire**
 
@@ -254,9 +254,11 @@ réussies ; résultat consigné dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] Cosinus ≥ 0,99 avec les vecteurs de référence, pour les deux modèles, sur émulateur.
-- [ ] Le rapport tranche : chemin de chargement retenu, nombre de threads, cibles atteignables ou non,
+- [x] Cosinus ≥ 0,99 avec les vecteurs de référence, pour les deux modèles, sur émulateur.
+      (≥ 0,997 sur les trois niveaux d'API.)
+- [x] Le rapport tranche : chemin de chargement retenu, nombre de threads, cibles atteignables ou non,
       et si le modèle `fr` se comporte comme attendu en français.
+      ([rapport S4](../prototypes/S4-embeddings.md) : copie puis chemin ; 2 threads ; cibles atteignables ; `fr` conservé.)
 
 **Validation manuelle** — mêmes mesures sur le téléphone de test.
 

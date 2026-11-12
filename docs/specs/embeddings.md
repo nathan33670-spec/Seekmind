@@ -157,10 +157,13 @@ interface EmbeddingEngineProvider {
 
 Implémentation `OrtEmbeddingEngine` :
 
-- **Chargement** : le modèle `fr` est un asset non compressé, projeté en mémoire depuis l'APK
-  (`AssetFileDescriptor` → `FileChannel.map`) et passé à `OrtEnvironment.createSession(ByteBuffer, options)`.
-  Un modèle de pack est chargé par son chemin de fichier. Si la projection est impossible, copie unique
-  vers `noBackupFilesDir/model/`. Le prototype M0-09 valide le chemin retenu et mesure la mémoire.
+- **Chargement** ([prototype S4](../prototypes/S4-embeddings.md)) : le modèle `fr`, asset non compressé
+  de l'APK, est **copié une fois** vers `noBackupFilesDir/model/fr/` (40 à 60 ms), puis ouvert **par son
+  chemin** (`OrtEnvironment.createSession(path, options)`). La copie est refaite quand le
+  `MODEL_MANIFEST.json` de l'asset diffère de celui de la copie. Raison : ONNX Runtime recopie les poids
+  d'un tampon projeté, si bien que la projection (`FileChannel.map` → `createSession(ByteBuffer)`) coûte
+  deux fois la taille du modèle en mémoire (61 à 70 Mo contre 27 à 35 Mo) ; elle ne sert que de repli si
+  la copie est impossible. Un modèle de pack est ouvert par son chemin de fichier.
 - **Options de session** : optimisation maximale, un thread inter-opérateurs, threads intra-opérateurs
   donnés par le gouverneur (2, ou 4 en charge), fournisseur d'exécution processeur.
 - **Lots** : textes triés par longueur, sous-lots de 8, remplissage à la longueur du plus long du sous-lot
