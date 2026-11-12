@@ -61,7 +61,6 @@ class StoresTest {
     }
 
     @Test
-<<<<<<< HEAD
     fun insertAllWritesABatchInOneTransaction() = runBlocking<Unit> {
         val ids = handle.captures.insertAll(
             listOf(
@@ -95,9 +94,6 @@ class StoresTest {
 
     @Test
     fun touchUpdatesLastSeenWithoutTouchingTheIndex() = runBlocking<Unit> {
-=======
-    fun touchUpdatesLastSeenWithoutTouchingTheIndex() = runBlocking<Unit> {
->>>>>>> feat/M1-06-maintenance
         val id = handle.captures.insert(capture("écran revu plus tard", at = 1_000), emptyList())
         val segments = sql.long("SELECT count(*) FROM capture_fts_data")
         handle.captures.touch(id, seenAt = 5_000)
