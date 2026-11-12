@@ -9,7 +9,7 @@
 
     <application>
         <service
-            android:name=".prototype.ProbeAccessibilityService"
+            android:name="fr.corsicajack.seekmind.engine.capture.prototype.ProbeAccessibilityService"
             android:exported="true"
             android:label="@string/probe_service_label"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
