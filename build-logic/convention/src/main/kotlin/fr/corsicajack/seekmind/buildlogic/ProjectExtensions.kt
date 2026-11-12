@@ -12,8 +12,7 @@ internal const val ROOT_PACKAGE = "fr.corsicajack.seekmind"
 internal val Project.libs: VersionCatalog
     get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
-internal fun VersionCatalog.intVersion(alias: String): Int =
-    findVersion(alias).get().requiredVersion.toInt()
+internal fun VersionCatalog.intVersion(alias: String): Int = findVersion(alias).get().requiredVersion.toInt()
 
 internal val Project.javaVersion: JavaVersion
     get() = JavaVersion.toVersion(libs.findVersion("jvmTarget").get().requiredVersion)

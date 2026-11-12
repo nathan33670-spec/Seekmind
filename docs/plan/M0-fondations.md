@@ -48,7 +48,7 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01 | `build-logic` | [AGENTS §3](../../AGENTS.md) · [architecture §10.4](../03-architecture.md) |
+| Fait | M0-01 | `build-logic` | [AGENTS §3](../../AGENTS.md) · [architecture §10.4](../03-architecture.md) |
 
 **À faire**
 
@@ -59,8 +59,8 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 **Critères d'acceptation**
 
-- [ ] `./gradlew spotlessCheck lint` réussit sur le squelette.
-- [ ] Une chaîne en dur dans un composable ou une chaîne non traduite fait échouer `lint` (test avec un fichier temporaire, non committé, décrit dans la PR).
+- [x] `./gradlew spotlessCheck lint` réussit sur le squelette.
+- [x] Une chaîne en dur dans un composable ou une chaîne non traduite fait échouer `lint` (test avec un fichier temporaire, non committé, décrit dans la PR).
 
 ---
 

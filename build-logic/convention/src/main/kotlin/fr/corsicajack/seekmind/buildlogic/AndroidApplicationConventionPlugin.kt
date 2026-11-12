@@ -24,6 +24,8 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 sourceCompatibility = javaVersion
                 targetCompatibility = javaVersion
             }
+            lint { configureSeekMindLint() }
         }
+        configureKotlinWarningsAsErrors()
     }
 }

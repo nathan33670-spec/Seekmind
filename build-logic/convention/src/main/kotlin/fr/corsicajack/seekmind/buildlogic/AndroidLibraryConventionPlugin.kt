@@ -24,10 +24,12 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             }
             lint {
                 targetSdk = libs.intVersion("targetSdk")
+                configureSeekMindLint()
             }
             testOptions {
                 targetSdk = libs.intVersion("targetSdk")
             }
         }
+        configureKotlinWarningsAsErrors()
     }
 }

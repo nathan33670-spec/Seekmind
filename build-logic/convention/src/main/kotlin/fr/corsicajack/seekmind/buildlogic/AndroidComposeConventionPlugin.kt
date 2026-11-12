@@ -6,6 +6,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.register
 
 /** Enables Jetpack Compose on an Android application or library module. Apply after the Android plugin. */
 class AndroidComposeConventionPlugin : Plugin<Project> {
@@ -18,6 +19,14 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
         pluginManager.withPlugin("com.android.library") {
             extensions.configure<LibraryExtension> { buildFeatures.compose = true }
         }
+
+        val hardcodedUiText = tasks.register<HardcodedUiTextTask>("verifyNoHardcodedUiText") {
+            group = "verification"
+            description = "Fails when Compose code hard-codes user-visible text."
+            sources.from(fileTree("src") { include("main/**/*.kt", "ads/**/*.kt", "offline/**/*.kt") })
+            report.set(layout.buildDirectory.file("reports/hardcoded-ui-text.txt"))
+        }
+        tasks.matching { it.name == "lint" || it.name == "check" }.configureEach { dependsOn(hardcodedUiText) }
 
         dependencies {
             val bom = platform(libs.findLibrary("androidx-compose-bom").get())

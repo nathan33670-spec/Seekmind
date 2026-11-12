@@ -439,7 +439,7 @@ prototype M0-07 ([ocr §4.1](specs/ocr.md)).
 | Plugin de convention | Graphe de modules du §3.2, dont l'isolement de `engine:ads` et son absence de la variante `offline` | M0-04 |
 | `scripts/check-elf-alignment.sh` | Alignement 16 Ko des `.so` de l'APK `release` | M0-04 |
 | `NetworkSilenceTest` | Aucun octet émis par l'application tant qu'aucune publicité n'est demandée (variante `ads`) | M8-03 |
-| Lint | Chaînes non traduites, texte en dur dans l'interface | M0-02 |
+| Lint + `verifyNoHardcodedUiText` | Chaînes non traduites (`MissingTranslation`, `ExtraTranslation`), texte en dur dans les layouts (`HardcodedText`) et dans le code Compose (tâche dédiée, exécutée par `lint` : Android Lint ne couvre pas Compose) | M0-02 |
 
 ## 11. Erreurs et journalisation
 

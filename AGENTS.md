@@ -42,7 +42,9 @@ L'application existe en deux variantes du même code : `ads` (publiée, avec pub
 
 **Langues.** Documentation en français. Code, identifiants, commentaires et messages de commit en
 anglais. Titre de PR en anglais (Conventional Commits), description de PR en français (modèle fourni).
-Toute chaîne visible par l'utilisateur est une ressource, fournie en français **et** en anglais.
+Toute chaîne visible par l'utilisateur est une ressource, fournie en français **et** en anglais. La tâche
+`verifyNoHardcodedUiText` (lancée par `lint`) refuse les littéraux dans le code Compose ; la marque
+`// ui-text-ok` en fin de ligne est réservée aux textes non traduisibles (nom de marque) et se justifie en PR.
 
 **Kotlin.** Style officiel Kotlin/Android, vérifié par ktlint. Coroutines et `Flow` ; pas de `GlobalScope`,
 pas de `runBlocking` hors tests. Les dispatchers sont injectés (`core:common`). Pas de singleton mutable

@@ -19,5 +19,6 @@ class KotlinLibraryConventionPlugin : Plugin<Project> {
         extensions.configure<KotlinJvmProjectExtension> {
             compilerOptions.jvmTarget.set(JvmTarget.fromTarget(javaVersion.toString()))
         }
+        configureKotlinWarningsAsErrors()
     }
 }

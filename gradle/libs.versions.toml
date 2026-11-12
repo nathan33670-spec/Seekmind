@@ -12,6 +12,8 @@ jvmTarget = "17"
 agp = "9.5.1"
 kotlin = "2.4.21"
 ksp = "2.3.13"
+spotless = "8.11.0"
+ktlint = "1.8.0"
 
 # AndroidX / UI
 composeBom = "2026.09.00"
@@ -130,6 +132,7 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 
 # Convention plugins (build-logic)
 seekmind-android-application = { id = "seekmind.android.application" }
