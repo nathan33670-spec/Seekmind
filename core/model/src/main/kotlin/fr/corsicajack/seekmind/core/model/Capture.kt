@@ -36,6 +36,11 @@ data class TreeExtraction(
     val textCoverage: Float,
     val windowBounds: IntRect,
     val durationMs: Long,
+    /**
+     * Text of the first node whose class names a browser's page (BrowserProfiles), at most 200
+     * characters: the key under which the last URL read is remembered (docs/specs/capture.md §5.2).
+     */
+    val pageTitle: String? = null,
 )
 
 /** A capture accepted by the privacy gate, before deduplication and storage (docs/specs/capture.md §6). */

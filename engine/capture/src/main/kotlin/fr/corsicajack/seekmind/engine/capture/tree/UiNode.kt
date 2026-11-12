@@ -26,6 +26,12 @@ interface UiNode {
 
     fun child(index: Int): UiNode?
 
+    /**
+     * Nodes of this subtree whose viewIdResourceName is [viewId] (`<package>:id/<name>`), in tree
+     * order. The caller releases each of them.
+     */
+    fun findByViewId(viewId: String): List<UiNode>
+
     /** recycle() before API 33, no effect afterwards. */
     fun release()
 }

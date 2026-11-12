@@ -159,7 +159,9 @@ class TreeExtractorTest {
         // obtained (10 groups, then the items of three groups), 280 ms, between the soft (150) and hard
         // (400) budgets.
         val tree = FakeTree(clock, msPerChild = 4)
-        val outcome = TreeExtractor(config, clock).extract(tree.tree { repeat(10) { child { items(20) } } })
+        val root = tree.tree { repeat(10) { child { items(20) } } }
+        val outcome = TreeExtractor(config, clock).extract(root)
+        root.release() // the root stays the caller's
         val result = (outcome as Outcome.Success).value
         assertThat(result.truncated).isTrue()
         assertThat(result.nodeCount).isEqualTo(50)
@@ -170,7 +172,9 @@ class TreeExtractorTest {
     @Test
     fun `past the hard time budget the screen is dropped and every node released`() {
         val tree = FakeTree(clock, msPerChild = 20)
-        val outcome = TreeExtractor(config, clock).extract(tree.tree { items(200) })
+        val root = tree.tree { items(200) }
+        val outcome = TreeExtractor(config, clock).extract(root)
+        root.release()
         assertThat(outcome).isEqualTo(Outcome.Failure(DropReason.TREE_TIMEOUT))
         assertThat(tree.unreleased).isEmpty()
     }
@@ -181,6 +185,32 @@ class TreeExtractorTest {
         assertThat(result.truncated).isTrue()
         assertThat(result.textChars).isAtLeast(50)
         assertThat(result.textChars).isLessThan(50 + "élément numéro 39".length)
+    }
+
+    @Test
+    fun `the first visible node of a page class gives the page title`() {
+        val (result, _) = extract {
+            child {
+                className = PAGE_CLASS
+                visible = false
+                text = "onglet en arrière-plan"
+            }
+            child {
+                className = PAGE_CLASS
+                text = "  Recette des   pâtes "
+            }
+            child {
+                className = PAGE_CLASS
+                text = "second cadre"
+            }
+        }
+        assertThat(result.pageTitle).isEqualTo("Recette des pâtes")
+    }
+
+    @Test
+    fun `without a page node there is no page title`() {
+        val (result, _) = extract { child { text = "Recette des pâtes" } }
+        assertThat(result.pageTitle).isNull()
     }
 
     // --- Statistics and release ------------------------------------------------------------------
@@ -247,9 +277,15 @@ class TreeExtractorTest {
             rootSpec()
             build()
         }
-        val outcome = TreeExtractor(config, clock).extract(root)
+        val outcome = TreeExtractor(config, clock, setOf(PAGE_CLASS)).extract(root)
+        // Throws if the extractor released the root, which stays the caller's.
+        root.release()
         return (outcome as Outcome.Success).value to tree
     }
 
     private fun texts(result: TreeExtraction) = result.lines.map { it.text }
+
+    private companion object {
+        const val PAGE_CLASS = "org.example.PageView"
+    }
 }

@@ -9,10 +9,17 @@ import fr.corsicajack.seekmind.core.model.config.CaptureConfig
 
 /**
  * Reads the text of a window (docs/specs/capture.md §4.2): iterative pre-order depth-first walk with an
- * explicit stack, on the capture thread. Takes ownership of [extract]'s root: every node it is given or
- * obtains is released, abandon included.
+ * explicit stack, on the capture thread. Every node it obtains is released, abandon included; the root
+ * stays the caller's, which still reads the address bar from it (§5.2) and releases it.
+ *
+ * [pageTitleClasses]: classes of the node that carries a browser's page title (BrowserProfiles); the
+ * text of the first visible one becomes [TreeExtraction.pageTitle].
  */
-class TreeExtractor(private val config: CaptureConfig, private val clock: Clock) {
+class TreeExtractor(
+    private val config: CaptureConfig,
+    private val clock: Clock,
+    private val pageTitleClasses: Set<String> = emptySet(),
+) {
     fun extract(root: UiNode): Outcome<TreeExtraction, DropReason> {
         val start = clock.elapsedRealtime()
         val stack = ArrayDeque<Pair<UiNode, Int>>()
@@ -27,6 +34,7 @@ class TreeExtractor(private val config: CaptureConfig, private val clock: Clock)
         var area = 0L
         var truncated = false
         var password = false
+        var pageTitle: String? = null
         try {
             walk@ while (stack.isNotEmpty()) {
                 if (nodes > 0 && nodes % CHECK_EVERY == 0) {
@@ -51,6 +59,10 @@ class TreeExtractor(private val config: CaptureConfig, private val clock: Clock)
                         break@walk
                     }
                     if (node.isEditable) continue
+                    if (pageTitle == null && node.className in pageTitleClasses) {
+                        pageTitle = (node.text ?: node.contentDescription)?.let(::clean)?.take(MAX_TITLE_CHARS)
+                            ?.takeIf { it.isNotEmpty() }
+                    }
 
                     val line = lineOf(node)
                     if (line != null && seen.add(line.text)) {
@@ -65,11 +77,11 @@ class TreeExtractor(private val config: CaptureConfig, private val clock: Clock)
                         for (i in node.childCount - 1 downTo 0) node.child(i)?.let { stack.addLast(it to depth + 1) }
                     }
                 } finally {
-                    node.release()
+                    if (node !== root) node.release()
                 }
             }
         } finally {
-            while (stack.isNotEmpty()) stack.removeLast().first.release()
+            while (stack.isNotEmpty()) stack.removeLast().first.let { if (it !== root) it.release() }
         }
         val windowArea = windowBounds.width.toLong() * windowBounds.height.toLong()
         return Outcome.Success(
@@ -84,6 +96,7 @@ class TreeExtractor(private val config: CaptureConfig, private val clock: Clock)
                 textCoverage = if (windowArea <= 0) 0f else (area.toDouble() / windowArea).coerceAtMost(1.0).toFloat(),
                 windowBounds = windowBounds,
                 durationMs = clock.elapsedRealtime() - start,
+                pageTitle = pageTitle,
             ),
         )
     }
@@ -109,6 +122,7 @@ class TreeExtractor(private val config: CaptureConfig, private val clock: Clock)
     private companion object {
         const val CHECK_EVERY = 50
         const val MAX_LINE_CHARS = 2_000
+        const val MAX_TITLE_CHARS = 200
         const val MIN_ALNUM = 2
         val WHITESPACE = Regex("\\s+")
     }

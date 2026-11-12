@@ -77,7 +77,7 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M2-03 | `engine:capture` | [capture §5](../specs/capture.md) · EF-CAP-02 |
+| Fait | M2-03 | `engine:capture` | [capture §5](../specs/capture.md) · EF-CAP-02 |
 
 **À faire**
 
@@ -88,12 +88,14 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 **Critères d'acceptation**
 
-- [ ] Table de cas de normalisation : sans schéma, avec chemin, termes de recherche (rejet), schéma non web (rejet), longueur excessive.
-- [ ] Barre d'adresse ayant le focus → pas d'URL.
-- [ ] E2E-13 : l'URL de `WebActivity` est lue.
+- [x] Table de cas de normalisation : sans schéma, avec chemin, termes de recherche (rejet), schéma non web (rejet), longueur excessive.
+- [x] Barre d'adresse ayant le focus → pas d'URL.
+- [x] E2E-13 : l'URL de `WebActivity` est lue (`ScreenMetaDeviceTest`, au niveau du module ; son
+      enregistrement avec la capture est vérifié de bout en bout par M2-08).
 
 **Validation manuelle** — vérifier l'identifiant de barre d'adresse sur chaque navigateur de la table
-installé sur le téléphone de test ; corriger la table ; consigner le tableau dans la PR.
+installé sur le téléphone de test ; corriger la table ; consigner le tableau dans la PR. *À faire par le
+porteur du projet : la table livrée est celle de la spec, non vérifiée sur appareil.*
 
 ---
 
