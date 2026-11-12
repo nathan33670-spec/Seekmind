@@ -114,14 +114,14 @@ sequenceDiagram
   participant W as reward-web
   U->>A: « Regarder une publicité (+5) »
   A->>A: crée un nonce, l'enregistre « en attente »
-  A->>N: ouvre https://<domaine>/reward?n=<nonce>&v=<version>&l=<langue>
+  A->>N: ouvre la page de récompense (nonce, version, langue)
   N->>W: charge la page
   U->>N: « Lancer la publicité »
   N->>N: publicité de la régie
-  N->>W: POST /api/reward/grant {n, …}
+  N->>W: demande de jeton pour ce nonce
   W-->>N: jeton signé
   U->>N: « Revenir à SeekMind »
-  N->>A: seekmind://reward?t=<jeton>
+  N->>A: lien seekmind avec le jeton signé
   A->>A: vérifie signature et nonce, crédite
   A-->>U: « +5 recherches »
 ```

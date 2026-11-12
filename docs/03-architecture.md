@@ -235,6 +235,8 @@ Les tests injectent des configurations réduites (délais courts, budgets petits
 
 Versions stables relevées sur Google Maven et Maven Central le 12 novembre 2026. Le ticket M0-01 les fige
 dans `gradle/libs.versions.toml` ; toute montée de version ultérieure fait l'objet d'une PR dédiée.
+Si deux versions de ce tableau se révèlent incompatibles entre elles (par exemple KSP et Kotlin), M0-01
+retient la combinaison stable la plus récente qui compile et corrige le tableau.
 
 | Domaine | Composant | Version |
 |---|---|---|

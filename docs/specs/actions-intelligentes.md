@@ -64,7 +64,7 @@ Une date sans année prend la prochaine occurrence à venir. Les dates passées 
 
 | Transporteur | Forme | Validation | Lien de suivi |
 |---|---|---|---|
-| Poste internationale (norme S10) | 2 lettres, 9 chiffres, 2 lettres | Chiffre de contrôle (poids 8, 6, 4, 2, 3, 5, 9, 7, modulo 11) | `https://www.laposte.fr/outils/suivre-vos-envois?code={n}` si le pays est `FR` |
+| Poste internationale (norme S10) | 2 lettres, 9 chiffres, 2 lettres | Chiffre de contrôle : somme des 8 premiers chiffres pondérés par 8, 6, 4, 2, 3, 5, 9, 7 ; clé = 11 − (somme mod 11), avec 10 → 0 et 11 → 5 | `https://www.laposte.fr/outils/suivre-vos-envois?code={n}` si le pays est `FR` |
 | Colissimo | 1 chiffre, 1 lettre, 11 chiffres | Forme | `https://www.laposte.fr/outils/suivre-vos-envois?code={n}` |
 | UPS | `1Z` + 16 caractères alphanumériques | Forme | `https://www.ups.com/track?tracknum={n}` |
 | Amazon | `TBA` + 12 chiffres | Forme | Aucun : action « Copier » |

@@ -36,7 +36,8 @@ Scripts Python, versions figées dans `tools/model/requirements.txt`.
 Contrôles de qualité de `build_model.py` (échec du script sinon) :
 
 - cosinus moyen entre vecteurs du modèle d'origine et du modèle quantifié ≥ 0,98 sur 200 phrases ;
-- sur le jeu d'évaluation de la recherche, Rappel@5 du modèle quantifié ≥ Rappel@5 d'origine − 0,02.
+- sur le jeu d'évaluation de la recherche, Rappel@5 du modèle quantifié ≥ Rappel@5 d'origine − 0,02
+  (contrôle ajouté par le ticket M5-07, quand le jeu d'évaluation existe).
 
 Le script écrit `MODEL_MANIFEST.json` (identifiant de modèle, révision source, empreintes des sorties,
 versions des outils). Les empreintes attendues sont versionnées dans `engine/embedding/model.lock.json`.
@@ -140,7 +141,7 @@ Implémentation `OrtEmbeddingEngine` :
 
 Les composantes d'un vecteur normalisé de dimension 384 valent typiquement ±0,05 : multiplier par 127
 gaspillerait la plage. L'échelle de départ est **`S = 400`** (plage utile ±0,32) ; le ticket M4-05 la
-calibre pour que moins de 0,1 % des composantes soient écrêtées sur le corpus d'évaluation.
+calibre pour que moins de 0,1 % des composantes soient écrêtées sur les vecteurs des 1 000 phrases de référence.
 
 Similarité de rescore entre une requête en flottants `q` et un document int8 `d` :
 `(Σ q[i] × d[i]) / S`, approximation du cosinus.

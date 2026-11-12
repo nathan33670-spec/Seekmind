@@ -26,8 +26,8 @@ flowchart TD
   lock -- non --> first{Première utilisation ?}
   gate --> first
   first -- oui --> onb[Présentation] --> disc[Divulgation]
-  disc -- J'accepte --> enable[Activer le service] --> ok[Confirmation] --> lockopt[Proposition de verrouillage] --> search
-  disc -- Non merci --> search
+  disc -- "J'accepte" --> enable[Activer le service] --> ok[Confirmation] --> lockopt[Proposition de verrouillage] --> search
+  disc -- "Non merci" --> search
   first -- non --> search[Recherche]
   search <--> journal[Journal]
   search <--> settings[Réglages]
