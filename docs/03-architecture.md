@@ -60,8 +60,8 @@ flowchart LR
 | Module | Rôle | Types publics principaux |
 |---|---|---|
 | `:app` | Application, manifeste, graphe Hilt, navigation, activité de liens ; sources propres à chaque variante | `SeekMindApp`, `MainActivity`, `LinkActivity` |
-| `:core:common` | Utilitaires sans dépendance Android lourde | `Clock`, `DispatcherProvider`, `SmLog`, `Outcome` |
-| `:core:model` | Modèles de domaine et interfaces entre modules | `Capture`, `ScreenSnapshot`, `SourceRef`, `SearchQuery`, `SearchHit`, `Entitlement`, `AppFamily`, ports |
+| `:core:common` | Utilitaires sans dépendance Android lourde | `Clock`, `DispatcherProvider`, `SmLog`, `Outcome`, `IntRect` |
+| `:core:model` | Modèles de domaine, interfaces entre modules, configurations | `Capture`, `ScreenMeta`, `RawCapture`, `SourceRef`, `SearchRequest`, `SearchHit`, `Entitlement`, `AppFamily`, ports (`port`), `*Config` (`config`) |
 | `:core:database` | Base chiffrée, schéma, DAO, clé, purge, réglages | `SeekMindDatabase`, `CaptureStore`, `SearchStore`, `SettingsRepository` |
 | `:core:designsystem` | Thème et composants Compose | `SeekMindTheme`, composants |
 | `:core:testing` | Doubles de test, jeux de données | `FakeClock`, `TestDispatchers`, fabriques |
@@ -449,7 +449,11 @@ aucune statistique d'usage n'est planifiée ni émise ([ocr §4.1](specs/ocr.md)
 - Les erreurs attendues (arbre indisponible, capture d'écran refusée, jeton invalide, annonce
   indisponible) sont des valeurs (`Outcome`), pas des exceptions. Le pipeline de capture ne propage
   jamais d'exception au service : une capture ratée est comptée et abandonnée.
-- `SmLog` : en `release`, niveaux WARN et ERROR seulement, sans contenu utilisateur (INV-07).
+- `SmLog` : en `release`, niveaux WARN et ERROR seulement, sans contenu utilisateur (INV-07). Une
+  entrée n'est qu'un nom d'événement constant et des mesures numériques ; une exception est réduite au
+  nom de sa classe, car son message peut citer du texte capturé. `SmLog` écrit par `java.util.logging`,
+  qu'Android redirige vers logcat : `core:common` reste en JVM pur et `android.util.Log` n'apparaît
+  nulle part.
 - Le diagnostic local (`metric_daily`) compte par jour : captures stockées, rejets par motif, OCR
   effectués ou sautés, fragments vectorisés, durées médianes. Il est consultable dans Réglages → Diagnostic
   et exportable en texte par un partage explicite de l'utilisateur.

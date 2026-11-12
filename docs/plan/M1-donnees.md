@@ -12,7 +12,7 @@ schéma, plein texte, dépôts, purge, effacement.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0 | `core:common`, `core:model` | [architecture §3.3, §7, §11](../03-architecture.md) · interfaces des specs |
+| Fait | M0 | `core:common`, `core:model` | [architecture §3.3, §7, §11](../03-architecture.md) · interfaces des specs |
 
 **À faire**
 
@@ -28,9 +28,9 @@ schéma, plein texte, dépôts, purge, effacement.
 
 **Critères d'acceptation**
 
-- [ ] Les deux modules compilent sans dépendance vers Android au-delà du strict nécessaire (`core:common` est en JVM pur).
-- [ ] Chaque `*Config` a un test qui fige ses valeurs par défaut (un changement de valeur doit être délibéré).
-- [ ] `scripts/check-forbidden-apis.sh` signale tout usage de `android.util.Log` hors de `core:common`.
+- [x] Les deux modules compilent sans dépendance vers Android au-delà du strict nécessaire (`core:common` est en JVM pur).
+- [x] Chaque `*Config` a un test qui fige ses valeurs par défaut (un changement de valeur doit être délibéré).
+- [x] `scripts/check-forbidden-apis.sh` signale tout usage de `android.util.Log` hors de `core:common`.
 
 ---
 
