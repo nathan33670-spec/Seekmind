@@ -14,7 +14,7 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | — | tous | [architecture §3, §8, §9, §10.1, §10.2, §12](../03-architecture.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) |
+| Fait | — | tous | [architecture §3, §8, §9, §10.1, §10.2, §12](../03-architecture.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) |
 
 **À faire**
 
@@ -36,11 +36,11 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 **Critères d'acceptation**
 
-- [ ] `./gradlew assembleAdsDebug assembleOfflineDebug assembleAdsRelease assembleOfflineRelease` réussit
+- [x] `./gradlew assembleAdsDebug assembleOfflineDebug assembleAdsRelease assembleOfflineRelease` réussit
       sur une machine préparée par `scripts/setup-android-sdk.sh`.
-- [ ] `./gradlew projects` liste les modules attendus.
-- [ ] Le manifeste fusionné `offlineRelease` ne contient pas `INTERNET` ; les deux portent `allowBackup="false"`.
-- [ ] Aucun numéro de version hors de `libs.versions.toml` ; aucun code propre à une variante hors de `:app`.
+- [x] `./gradlew projects` liste les modules attendus.
+- [x] Le manifeste fusionné `offlineRelease` ne contient pas `INTERNET` ; les deux portent `allowBackup="false"`.
+- [x] Aucun numéro de version hors de `libs.versions.toml` ; aucun code propre à une variante hors de `:app`.
 
 ---
 
