@@ -336,6 +336,15 @@ l'annonce récompensée.
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" />
         </intent>
+        <!-- Apportés par le manifeste de engine:capture : lanceurs et claviers, dont les événements
+             sont ignorés sans lecture (specs/capture.md §5.3). -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <intent>
+            <action android:name="android.view.InputMethod" />
+        </intent>
     </queries>
 
     <application

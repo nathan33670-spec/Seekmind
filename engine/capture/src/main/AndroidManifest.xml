@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Merged into the application's manifest. The accessibility service itself is declared by :app. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Launchers and keyboards, whose events are ignored unread (docs/specs/capture.md §5.3). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <intent>
+            <action android:name="android.view.InputMethod" />
+        </intent>
+    </queries>
+</manifest>

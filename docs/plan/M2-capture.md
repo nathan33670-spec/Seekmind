@@ -12,7 +12,7 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-05 | `engine:capture`, `app` | [capture §2, §5.3, §8](../specs/capture.md) · [conformité §3](../05-conformite-play-store.md#3-engagements-de-conception) |
+| Fait | M1-05 | `engine:capture`, `app` | [capture §2, §5.3, §8](../specs/capture.md) · [conformité §3](../05-conformite-play-store.md#3-engagements-de-conception) |
 
 **À faire**
 
@@ -26,10 +26,10 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 **Critères d'acceptation**
 
-- [ ] Aucun accès à l'arbre, à la base ou au disque sur le thread principal (test avec `StrictMode` en debug).
-- [ ] Les événements des paquets ignorés ne réveillent pas le thread de capture.
-- [ ] `CaptureStatus` reflète : service désactivé, consentement manquant, pause, actif.
-- [ ] `:app:verifyAdsReleaseManifest` et `:app:verifyOfflineReleaseManifest` verts (capacités du service, composants exportés).
+- [x] Aucun accès à l'arbre, à la base ou au disque sur le thread principal (test avec `StrictMode` en debug).
+- [x] Les événements des paquets ignorés ne réveillent pas le thread de capture.
+- [x] `CaptureStatus` reflète : service désactivé, consentement manquant, pause, actif.
+- [x] `:app:verifyAdsReleaseManifest` et `:app:verifyOfflineReleaseManifest` verts (capacités du service, composants exportés).
 
 ---
 

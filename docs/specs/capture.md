@@ -36,9 +36,17 @@ class SeekMindAccessibilityService : AccessibilityService() {
 - Configuration XML : [05 §3](../05-conformite-play-store.md#3-engagements-de-conception). Elle n'est pas modifiée à l'exécution.
 - L'objet `AccessibilityEvent` n'est jamais conservé ni transmis à un autre thread.
 - `EventRouter` écarte sur le thread principal, par simple test d'appartenance à un ensemble en mémoire,
-  les événements des paquets toujours ignorés (§5.3). Les autres réarment l'anti-rebond.
-- Un événement `TYPE_WINDOW_STATE_CHANGED` met à jour la fenêtre courante `(package, className, windowId)`
-  et remet à zéro le ralentissement adaptatif (§3.2).
+  les événements des paquets toujours ignorés (§5.3), et, par lecture de deux champs `@Volatile`, ceux qui
+  arrivent sans consentement enregistré ou pendant une pause (§7). Tant que l'ensemble des paquets
+  ignorés et les réglages n'ont pas été lus une première fois, il écarte tout. Les autres événements
+  passent au thread `sm-capture`, où `CaptureLoop` réarme l'anti-rebond.
+- Un événement `TYPE_WINDOW_STATE_CHANGED` met à jour, sur `sm-capture`, la fenêtre courante
+  `(package, className, windowId)` et l'activité (§5.1), et remet à zéro le ralentissement adaptatif (§3.2).
+- `AndroidCaptureEnvironment` publie l'état de connexion, calcule l'ensemble des paquets ignorés et suit
+  les réglages, le tout sur `sm-capture` : le thread principal ne lit ni le disque ni la base.
+- Un écran stable est confié à `StableScreenHandler.onStable(): PipelineEvent`, implémenté par
+  `CapturePipeline` (§6). Une issue `Deduplicated` alimente le ralentissement adaptatif. Tant qu'aucune
+  implémentation n'est liée, un écran stable ne lit rien.
 
 ## 3. Stabilité de l'écran
 
@@ -293,6 +301,11 @@ sealed interface CaptureStatus {
 `CaptureStatusRepository` combine : la présence du service dans
 `AccessibilityManager.getEnabledAccessibilityServiceList(...)`, l'état de connexion publié par le service,
 le consentement et la pause. L'interface l'observe (EF-CAP-05).
+
+Priorité, du premier état qui s'applique au dernier : `ConsentMissing` (sans consentement, l'interface
+rouvre la divulgation avant tout passage par les réglages système), `ServiceDisabled`, `Paused`, `Active`.
+`Paused.until` vaut `null` pour une pause sans limite (`pausedUntil = Long.MAX_VALUE`). `lastCaptureAt`
+est publié par le pipeline (`onCaptureStored`).
 
 ## 9. Configuration
 

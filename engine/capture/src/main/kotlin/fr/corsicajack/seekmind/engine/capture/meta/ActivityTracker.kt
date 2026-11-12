@@ -28,7 +28,7 @@ class PackageManagerActivityLookup(private val packageManager: PackageManager) :
  * The activity on screen (docs/specs/capture.md §5.1). Several TYPE_WINDOW_STATE_CHANGED events follow
  * the opening of a screen and the last one may name a view container, a dialog or a menu: a class is
  * kept only when [lookup] says it is an activity of the event's package. Answers are cached, the
- * [cacheSize] most recent ones. Main thread only.
+ * [cacheSize] most recent ones. Capture thread only: [lookup] is an inter-process call.
  */
 class ActivityTracker(private val lookup: ActivityLookup, private val cacheSize: Int = CACHE_SIZE) {
     private val cache = object : LinkedHashMap<Pair<String, String>, Boolean>(16, 0.75f, true) {

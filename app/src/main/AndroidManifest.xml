@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Common manifest of both variants (docs/03-architecture.md §10.1).
-     Services and LinkActivity are declared by their own tickets (M2-01, M2-07, M8-05). -->
+     PauseTileService and LinkActivity are declared by their own tickets (M2-07, M8-05). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -36,6 +36,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- The accessibility service (docs/specs/capture.md §2), bound by the system only. -->
+        <service
+            android:name="fr.corsicajack.seekmind.engine.capture.SeekMindAccessibilityService"
+            android:exported="true"
+            android:label="@string/a11y_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
 
         <!-- WorkManager is initialised on demand by SeekMindApp, with the worker factory of the Hilt graph. -->
         <provider
