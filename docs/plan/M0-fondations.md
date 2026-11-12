@@ -199,7 +199,7 @@ réussies ; résultat consigné dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-03 | `engine:capture`, `fixtureapp`, `.github/workflows` | [capture §2, §4](../specs/capture.md) · [ocr §2, §3](../specs/ocr.md) · [tests §3, §4](../06-qualite-tests-ci.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) |
+| En revue — validation manuelle en attente | M0-03 | `engine:capture`, `fixtureapp`, `.github/workflows` | [capture §2, §4](../specs/capture.md) · [ocr §2, §3](../specs/ocr.md) · [tests §3, §4](../06-qualite-tests-ci.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) |
 
 **À faire**
 
@@ -220,8 +220,8 @@ réussies ; résultat consigné dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] `device-tests` vert sur les trois niveaux d'API, en moins de 25 minutes.
-- [ ] Le rapport donne les mesures et confirme ou corrige la stratégie de sonde, **en particulier pour
+- [x] `device-tests` vert sur les trois niveaux d'API, en moins de 25 minutes.
+- [x] Le rapport donne les mesures et confirme ou corrige la stratégie de sonde, **en particulier pour
       l'API 30**, qui ne sera validée sur aucun téléphone réel avant le test fermé (risque R-14).
 
 **Validation manuelle** — sur le téléphone de test : lecture de l'arbre de trois applications courantes

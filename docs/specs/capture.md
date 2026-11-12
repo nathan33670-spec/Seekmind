@@ -162,7 +162,9 @@ data class ScreenMeta(
 
 ### 5.1 Activité et titre
 
-- `activityName` : le `className` du dernier `TYPE_WINDOW_STATE_CHANGED`, retenu seulement si
+- `activityName` : le `className` du dernier `TYPE_WINDOW_STATE_CHANGED` qui désigne une activité.
+  Plusieurs événements suivent l'ouverture d'un écran et le dernier peut nommer un conteneur de vues
+  ([prototype S3](../prototypes/S3-accessibilite.md)) : un `className` n'est retenu que si
   `PackageManager.getActivityInfo(ComponentName(package, className))` réussit (résultat mis en cache,
   200 entrées). Les dialogues et vues ne sont pas des activités.
 - `windowTitle` : `root.window?.title`, sinon le premier élément de `headings`, sinon `null`. Borné à 200 caractères.

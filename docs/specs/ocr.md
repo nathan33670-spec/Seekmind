@@ -55,7 +55,8 @@ try {
 
 - Si le plus grand côté dépasse 1 600 px, l'image est réduite à 1 600 px avant l'OCR.
 - Le système impose un intervalle minimal entre deux captures
-  (`ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT`). Un limiteur interne garantit au moins 1 000 ms entre
+  (`ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT`) : 1 000 ms mesurés sous Android 11, 500 ms à partir
+  d'Android 14 ([prototype S3](../prototypes/S3-accessibilite.md)). Un limiteur interne garantit au moins 1 000 ms entre
   deux demandes ; au-delà, `RateLimited`.
 - **Interdits** (INV-03) : `Bitmap.compress`, écriture de fichier, `MediaStore`, cache, passage de
   l'image à un autre module. Le bitmap ne sort jamais de `block`.
