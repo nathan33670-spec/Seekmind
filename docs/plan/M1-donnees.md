@@ -38,7 +38,7 @@ schéma, plein texte, dépôts, purge, effacement.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `core:database` | [sécurité §4](../07-securite-vie-privee.md#4-chiffrement) · [stockage §2](../specs/stockage.md) |
+| Fait | M1-01 | `core:database` | [sécurité §4](../07-securite-vie-privee.md#4-chiffrement) · [stockage §2](../specs/stockage.md) |
 
 **À faire**
 
@@ -49,9 +49,9 @@ schéma, plein texte, dépôts, purge, effacement.
 
 **Critères d'acceptation**
 
-- [ ] Deux appels rendent la même clé ; après `destroy()`, une nouvelle clé est créée.
-- [ ] Un fichier de clé altéré produit l'erreur typée, pas une exception non gérée.
-- [ ] La clé en clair n'est jamais écrite ni journalisée (revue + garde-fou).
+- [x] Deux appels rendent la même clé ; après `destroy()`, une nouvelle clé est créée.
+- [x] Un fichier de clé altéré produit l'erreur typée, pas une exception non gérée.
+- [x] La clé en clair n'est jamais écrite ni journalisée (revue + garde-fou `db-key-exposure`).
 
 ---
 

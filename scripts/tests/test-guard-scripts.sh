@@ -57,6 +57,8 @@ check_bad "Bitmap.compress" "engine/ocr/src/main/kotlin/C.kt" "bitmap.compress(B
 check_bad "a file written by the OCR module" "engine/ocr/src/main/kotlin/F.kt" "val out = FileOutputStream(file)"
 check_bad "android.util.Log outside core/common" "engine/index/src/main/kotlin/L.kt" "Log.d(\"tag\", text)"
 check_bad "a WebView" "feature/search/src/main/kotlin/W.kt" "val view = WebView(context)"
+check_bad "the database key turned into text" "core/database/src/main/kotlin/fr/corsicajack/seekmind/core/database/key/K.kt" "val hex = key.joinToString(\"\")"
+check_bad "the database key logged" "core/database/src/main/kotlin/fr/corsicajack/seekmind/core/database/key/L.kt" "SmLog.i(TAG, \"key\")"
 
 # --- check-elf-alignment.sh --------------------------------------------------------------------
 if command -v gcc >/dev/null && command -v objdump >/dev/null; then
