@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Statut** | Accepté |
+| **Statut** | Accepté — amendé par [ADR-0009](0009-publicite-admob-et-variante-sans-reseau.md) : s'applique tel quel à la variante `offline` ; dans la variante `ads`, le réseau est cantonné au module publicitaire |
 | **Date** | 2026-11-12 |
 
 ## Contexte
@@ -30,7 +30,8 @@ Mise en œuvre :
 
 - **Aucun SDK en ligne** : pas de publicité intégrée, pas d'analytics, pas de rapport de plantage, pas
   de configuration distante, pas de téléchargement de modèle. Tout est embarqué.
-- La publicité et l'activation passent par le navigateur et des jetons signés (ADR-0002, ADR-0007).
+- La publicité ne peut pas être intégrée à l'application : c'est ce qui a conduit à l'ADR-0002, puis à
+  la variante `ads` de l'ADR-0009. L'activation passe par des jetons signés (ADR-0007).
 - Le diagnostic est local ; l'assistance repose sur un rapport que l'utilisateur partage lui-même.
 - La taille de l'application augmente (modèles embarqués).
 - Un canal résiduel existe : une application peut faire ouvrir une URL par le navigateur. Les seules

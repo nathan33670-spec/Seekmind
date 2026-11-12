@@ -1,52 +1,68 @@
-# Spec — Embeddings (`engine:embedding`, `tools/model`)
+# Spec — Embeddings et packs de langue (`engine:embedding`, `tools/model`)
 
 | | |
 |---|---|
-| **Exigences** | EF-IDX-02, EF-SRCH-03, ENF-MEM-02, ENF-STO-02 |
-| **Tickets** | M0-09 (prototype), M0-10 (outillage), M4-03, M4-04, M4-06 |
-| **Voir aussi** | [ADR-0006](../adr/0006-modele-d-embeddings.md) |
+| **Exigences** | EF-IDX-02, EF-SRCH-03, EF-LANG-01 à 04, ENF-MEM-02, ENF-STO-02 |
+| **Tickets** | M0-09 (prototype), M0-10 (outillage), M4-03, M4-04, M4-06, M4-07 |
+| **Voir aussi** | [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) · [ADR-0006](../adr/0006-modele-d-embeddings.md) |
 
-## 1. Modèle
+## 1. Modèles
+
+Un **catalogue** de modèles, dont un seul est actif à la fois.
+
+| Identifiant | Modèle | Révision figée | Langues | Vocabulaire | Taille quantifiée | Livraison |
+|---|---|---|---|---|---|---|
+| `fr` | `antoinelouis/french-me5-small` (MIT) | `1605fe3b64cb22dde93f30e8fbfb1889742d2753` | Français | 37 200 jetons | ~36 Mo | Embarqué (asset du module) |
+| `multi` | `intfloat/multilingual-e5-small` (MIT) | `614241f622f53c4eeff9890bdc4f31cfecc418b3` | Une centaine de langues | 250 002 jetons | ~118 Mo | Pack de langue à la demande |
+
+Le modèle `fr` est le modèle `multi` dont le vocabulaire a été réduit au français. Tout le reste est commun :
 
 | | |
 |---|---|
-| Modèle | `intfloat/multilingual-e5-small` (licence MIT) |
-| Révision figée | `614241f622f53c4eeff9890bdc4f31cfecc418b3` |
-| Architecture | Encodeur de type XLM-R, 12 couches, dimension 384, vocabulaire de 250 002 jetons |
+| Architecture | Encodeur de 12 couches, dimension 384 |
 | Longueur maximale | 512 jetons ; SeekMind tronque les passages à 256 et les requêtes à 64 |
 | Préfixes obligatoires | `"query: "` pour une requête, `"passage: "` pour un texte indexé |
 | Agrégation | Moyenne des états cachés pondérée par le masque d'attention, puis normalisation L2 |
+| Tokenisation | Unigram (SentencePiece), pré-découpage « Metaspace », gabarit `<s> … </s>` |
 | Exécution | ONNX Runtime, quantification dynamique int8, processeur uniquement |
 
-Un texte encodé sans son préfixe, ou avec le mauvais, dégrade nettement la recherche : les préfixes
-sont ajoutés par le moteur, jamais par l'appelant.
+Un texte encodé sans son préfixe, ou avec le mauvais, dégrade nettement la recherche : les préfixes sont
+ajoutés par le moteur, jamais par l'appelant.
 
 ## 2. Fabrication des artefacts (`tools/model`)
 
-Scripts Python, versions figées dans `tools/model/requirements.txt`.
+Scripts Python, versions figées dans `tools/model/requirements.txt`. Un jeu d'artefacts par modèle, dans
+`tools/model/out/<identifiant>/`.
 
-| Script | Entrée | Sortie (`tools/model/out/`) |
-|---|---|---|
-| `build_model.py` | `onnx/model.onnx` de la révision figée (470 Mo, SHA-256 `ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665`) | `e5s-int8.onnx` (~118 Mo) par `onnxruntime.quantization.quantize_dynamic(..., weight_type=QuantType.QInt8, per_channel=False, reduce_range=False)` |
-| `export_vocab.py` | `tokenizer.json` (SHA-256 `0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39`) | `vocab.bin` (§3.2) |
-| `gen_tokenizer_golden.py` | 1 000 phrases FR/EN versionnées | `testdata/tokenizer_golden.jsonl` |
-| `gen_embedding_golden.py` | 50 textes versionnés, modèle quantifié | `testdata/embedding_golden.json` |
-| `verify.py` | Artefacts | Contrôles de qualité ci-dessous |
+| Script | Rôle |
+|---|---|
+| `build_model.py --model fr` | Télécharge `model.safetensors` de la révision figée (144 Mo, SHA-256 `de4508e0e6fa9b71605ce5e00af423d741a8f28a40239d31a63ffbbd80bf900d`), l'exporte au format ONNX, puis le quantifie |
+| `build_model.py --model multi` | Télécharge `onnx/model.onnx` de la révision figée (470 Mo, SHA-256 `ca456c06b3a9505ddfd9131408916dd79290368331e7d76bb621f1cba6bc8665`), puis le quantifie |
+| `export_vocab.py --model <id>` | Convertit le `tokenizer.json` du modèle en `vocab.bin` (§3.2) |
+| `gen_tokenizer_golden.py --model <id>` | Produit `testdata/tokenizer_golden_<id>.jsonl` à partir des 1 000 phrases versionnées |
+| `gen_embedding_golden.py --model <id>` | Produit `testdata/embedding_golden_<id>.json` à partir des 50 textes versionnés |
+| `verify.py` | Contrôles de qualité ci-dessous |
 
-Contrôles de qualité de `build_model.py` (échec du script sinon) :
+Quantification : `onnxruntime.quantization.quantize_dynamic(..., weight_type=QuantType.QInt8,
+per_channel=False, reduce_range=False)`.
+
+Contrôles de qualité, pour chaque modèle (échec du script sinon) :
 
 - cosinus moyen entre vecteurs du modèle d'origine et du modèle quantifié ≥ 0,98 sur 200 phrases ;
 - sur le jeu d'évaluation de la recherche, Rappel@5 du modèle quantifié ≥ Rappel@5 d'origine − 0,02
   (contrôle ajouté par le ticket M5-07, quand le jeu d'évaluation existe).
 
-Le script écrit `MODEL_MANIFEST.json` (identifiant de modèle, révision source, empreintes des sorties,
-versions des outils). Les empreintes attendues sont versionnées dans `engine/embedding/model.lock.json`.
+Chaque jeu contient `model.onnx`, `vocab.bin` et `MODEL_MANIFEST.json` (identifiant, révision source,
+empreintes des sorties, versions des outils). Les empreintes attendues sont versionnées dans
+`engine/embedding/model.lock.json`.
 
 **Les artefacts binaires ne sont jamais committés.** Intégration au build :
 
-- `:engine:embedding:verifyModel` vérifie que `e5s-int8.onnx` et `vocab.bin` sont présents dans
-  `engine/embedding/src/main/assets/model/` et conformes à `model.lock.json` ; sinon message indiquant
-  la commande à lancer (`python tools/model/build_model.py --install`).
+- `:engine:embedding:verifyModel` vérifie que le jeu `fr` est présent dans
+  `engine/embedding/src/main/assets/model/fr/` et conforme à `model.lock.json` ; sinon message indiquant
+  la commande à lancer (`python tools/model/build_model.py --model fr --install`).
+- Le jeu `multi` n'est requis que pour construire le lot d'application (`bundle`) : il alimente le
+  module de pack d'assets `:modelpack_multi`.
 - La propriété `-PskipModel` désactive la vérification pour les tâches qui n'ont pas besoin du modèle
   (tests JVM, lint). Les tests JVM utilisent `FakeEmbeddingEngine`.
 - En CI, les artefacts sont mis en cache avec `model.lock.json` comme clé.
@@ -54,8 +70,7 @@ versions des outils). Les empreintes attendues sont versionnées dans `engine/em
 ## 3. Tokenizer
 
 Implémentation en Kotlin pur de l'algorithme Unigram de SentencePiece, équivalente au tokenizer de
-référence du modèle (normalisation précompilée, pré-découpage « Metaspace », modèle Unigram,
-gabarit `<s> … </s>`).
+référence. Elle est **indépendante du modèle** : elle charge le `vocab.bin` du modèle actif.
 
 ```kotlin
 interface Tokenizer {
@@ -84,18 +99,20 @@ class Encoding(val inputIds: IntArray, val attentionMask: IntArray)
 ### 3.2 Vocabulaire binaire
 
 `vocab.bin`, petit-boutiste : magique `SMV1`, nombre de jetons (int32), puis pour chaque jeton, dans
-l'ordre des identifiants : longueur en octets (uint16), octets UTF-8, score (float32). Environ 5 Mo.
+l'ordre des identifiants : longueur en octets (uint16), octets UTF-8, score (float32). Environ 0,7 Mo
+pour `fr`, 5 Mo pour `multi`.
 
 Chargement en structures compactes : un tableau d'octets unique, un tableau de positions, un tableau de
 scores, et une table de hachage à adressage ouvert (hachage 64 bits des octets du jeton → identifiant,
-vérification des octets à chaque succès). **Budget mémoire : 16 Mo.** Pas de `HashMap<String, Int>`.
+vérification des octets à chaque succès). **Budget mémoire : 16 Mo** pour le plus grand vocabulaire.
+Pas de `HashMap<String, Int>`.
 
 ### 3.3 Parité
 
-Le tokenizer est correct s'il produit exactement les mêmes identifiants que la référence Python sur au
-moins **99,5 %** des 1 000 phrases de `testdata/tokenizer_golden.jsonl`. Les écarts restants sont listés
-dans le rapport de test. Si le seuil n'est pas atteint (risque R-12), repli : embarquer une
-bibliothèque native de tokenisation, par un ADR.
+Pour **chaque** modèle, le tokenizer doit produire exactement les mêmes identifiants que la référence
+Python sur au moins **99,5 %** des 1 000 phrases de `testdata/tokenizer_golden_<id>.jsonl`. Les écarts
+restants sont listés dans le rapport de test. Si le seuil n'est pas atteint (risque R-12), repli :
+embarquer une bibliothèque native de tokenisation, par un ADR.
 
 ## 4. Moteur
 
@@ -108,17 +125,17 @@ interface EmbeddingEngine : AutoCloseable {
 }
 
 interface EmbeddingEngineProvider {
-    /** Rend un moteur partagé ; le modèle est chargé au premier appel. */
+    /** Rend le moteur du modèle actif ; le modèle est chargé au premier appel. */
     suspend fun <T> use(block: suspend (EmbeddingEngine) -> T): T
 }
 ```
 
 Implémentation `OrtEmbeddingEngine` :
 
-- **Chargement** : le modèle est un asset non compressé ; il est projeté en mémoire depuis l'APK
+- **Chargement** : le modèle `fr` est un asset non compressé, projeté en mémoire depuis l'APK
   (`AssetFileDescriptor` → `FileChannel.map`) et passé à `OrtEnvironment.createSession(ByteBuffer, options)`.
-  Si la projection est impossible, copie unique vers `noBackupFilesDir/model/` puis chargement par chemin.
-  Le prototype M0-09 valide le chemin retenu et mesure la mémoire.
+  Un modèle de pack est chargé par son chemin de fichier. Si la projection est impossible, copie unique
+  vers `noBackupFilesDir/model/`. Le prototype M0-09 valide le chemin retenu et mesure la mémoire.
 - **Options de session** : optimisation maximale, un thread inter-opérateurs, threads intra-opérateurs
   donnés par le gouverneur (2, ou 4 en charge), fournisseur d'exécution processeur.
 - **Lots** : textes triés par longueur, sous-lots de 8, remplissage à la longueur du plus long du sous-lot
@@ -126,13 +143,83 @@ Implémentation `OrtEmbeddingEngine` :
   `attention_mask`, et `token_type_ids` à zéro si elle l'exige).
 - **Sortie** : moyenne masquée de `last_hidden_state`, puis normalisation L2.
 - **Cycle de vie** : le fournisseur compte les utilisateurs ; la session est fermée 60 s après le
-  dernier usage et sur `onTrimMemory(TRIM_MEMORY_RUNNING_LOW)`. L'interface de recherche la retient
-  tant qu'elle est au premier plan.
+  dernier usage et sur `onTrimMemory(TRIM_MEMORY_RUNNING_LOW)`. L'interface de recherche la retient tant
+  qu'elle est au premier plan.
 - Les appels sont sérialisés (un seul calcul à la fois dans le processus).
 
-## 5. Codage des vecteurs
+## 5. Packs de langue
 
-`VectorCodec`, Kotlin pur.
+### 5.1 Catalogue et modèle actif
+
+```kotlin
+data class ModelSpec(
+    val id: String,              // "fr", "multi"
+    val modelId: Int,            // identifiant enregistré avec chaque vecteur (§7)
+    val languages: Set<String>,  // codes de langue ; vide = toutes
+    val sizeBytes: Long,
+    val delivery: Delivery,      // BUNDLED ou PACK
+    val packName: String?,       // nom du pack d'assets
+)
+
+interface ModelCatalog {
+    val models: List<ModelSpec>
+    val active: StateFlow<ModelSpec>
+    fun state(id: String): Flow<PackState>     // NotInstalled, Downloading(progress), Installed, Failed
+    suspend fun activate(id: String)           // change le modèle actif ; déclenche le recalcul des vecteurs
+}
+
+interface ModelPackInstaller {
+    suspend fun install(spec: ModelSpec): Flow<PackState>
+    suspend fun remove(spec: ModelSpec)
+    fun location(spec: ModelSpec): ModelFiles?   // chemins de model.onnx et vocab.bin si installé
+}
+```
+
+Le modèle actif est un réglage (`activeModelId`). Par défaut : `fr`.
+
+### 5.2 Installation
+
+| Installateur | Quand | Mécanisme |
+|---|---|---|
+| `PlayModelPackInstaller` | Application installée depuis Google Play | Pack d'assets à la demande : `com.google.android.play:asset-delivery` 2.3.0 (`AssetPackManager.fetch`, suivi d'état, `getPackLocation`). C'est le Play Store qui télécharge ; la bibliothèque ne déclare aucune permission réseau. |
+| `FileModelPackInstaller` | Builds de développement, tests automatisés, distribution hors Play | L'utilisateur choisit un fichier `.smpack` (archive contenant `model.onnx`, `vocab.bin`, `MODEL_MANIFEST.json`) dans le sélecteur de fichiers ; les empreintes sont vérifiées contre `model.lock.json` avant la copie dans le stockage privé. |
+
+Le module `:modelpack_multi` (plugin `com.android.asset-pack`, livraison à la demande) contient le jeu
+d'artefacts `multi`.
+
+Règles :
+
+- Le téléchargement n'est **jamais** lancé sans une action de l'utilisateur.
+- Au-delà du seuil de données mobiles fixé par Google Play, la confirmation système est affichée.
+- Les fichiers d'un pack sont vérifiés (empreintes) avant toute activation.
+- Un pack installé peut être supprimé ; s'il était actif, le modèle `fr` redevient actif.
+
+### 5.3 Changer de modèle
+
+`ModelCatalog.activate(id)` :
+
+1. vérifie que les fichiers sont présents et intègres ;
+2. enregistre le nouveau `activeModelId` ;
+3. ferme la session en cours ;
+4. déclenche `VectorStore.resetForModel(modelId)` : vecteurs vidés, fragments remis en attente
+   ([indexation §7.3](indexation.md)) ; les lots d'embeddings reconstruisent l'index en arrière-plan.
+
+Pendant la reconstruction, la recherche par mots-clés fonctionne normalement et l'interface indique
+l'avancement. Le changement de modèle demande une confirmation qui annonce ce délai.
+
+### 5.4 Quand proposer le pack multilingue
+
+- À la fin de l'accueil, si aucune des langues du téléphone n'est le français.
+- Dans Réglages → Langues de recherche, à tout moment.
+- Sur l'écran de recherche, une seule fois, si l'application constate que plus de la moitié des
+  captures récentes ne sont pas en français (script non latin, ou langue du téléphone différente).
+
+Le texte dit ce que le pack change : « La recherche par mots-clés fonctionne dans toutes les langues.
+Pour chercher aussi *par le sens* dans d'autres langues que le français, ajoutez le pack multilingue (118 Mo). »
+
+## 6. Codage des vecteurs
+
+`VectorCodec`, Kotlin pur, commun à tous les modèles.
 
 | Forme | Calcul | Taille | Usage |
 |---|---|---|---|
@@ -146,27 +233,31 @@ calibre pour que moins de 0,1 % des composantes soient écrêtées sur les vecte
 Similarité de rescore entre une requête en flottants `q` et un document int8 `d` :
 `(Σ q[i] × d[i]) / S`, approximation du cosinus.
 
-## 6. Identifiant de modèle
+## 7. Identifiant de modèle
 
-`modelId` est une constante entière incrémentée dès que change l'un de : fichier du modèle, vocabulaire,
-règles de tokenisation, préfixes, longueurs maximales, échelle `S`. Elle est enregistrée avec chaque
-vecteur ; un changement déclenche le recalcul ([indexation §7.3](indexation.md)).
+Chaque entrée du catalogue porte un `modelId` entier, enregistré avec chaque vecteur. Il est incrémenté
+dès que change l'un de : fichier du modèle, vocabulaire, règles de tokenisation, préfixes, longueurs
+maximales, échelle `S`. Valeurs initiales : `fr` = 1, `multi` = 2. Un vecteur dont le `modelId` n'est
+pas celui du modèle actif n'est jamais utilisé par la recherche.
 
-## 7. Cibles de performance
+## 8. Cibles de performance
 
-À mesurer au prototype M0-09 puis à tenir en M4-04.
+À mesurer au prototype M0-09 puis à tenir en M4-04. Les deux modèles ont le même coût de calcul (même
+encodeur) ; ils diffèrent par la mémoire et le temps de chargement.
 
 | Mesure | Appareil moyen | Appareil bas |
 |---|---|---|
-| Chargement de la session | ≤ 1 s | ≤ 2,5 s |
+| Chargement de la session, modèle `fr` | ≤ 0,5 s | ≤ 1,5 s |
+| Chargement de la session, modèle `multi` | ≤ 1 s | ≤ 2,5 s |
 | Requête (≤ 16 jetons) | ≤ 40 ms | ≤ 120 ms |
 | Passage de 256 jetons, 2 threads | ≤ 150 ms | ≤ 500 ms |
-| Mémoire du processus, session chargée | ≤ 300 Mo | ≤ 300 Mo |
+| Mémoire du processus, session `fr` chargée | ≤ 150 Mo | ≤ 150 Mo |
+| Mémoire du processus, session `multi` chargée | ≤ 300 Mo | ≤ 300 Mo |
 
 Si l'appareil bas dépasse ces cibles d'un facteur deux, le ticket M10-02 isole le moteur dans un
-processus dédié et le ticket M10-07 évalue un modèle plus petit.
+processus dédié.
 
-## 8. Configuration
+## 9. Configuration
 
 ```kotlin
 data class EmbeddingConfig(
@@ -177,13 +268,18 @@ data class EmbeddingConfig(
     val idleCloseMs: Long = 60_000,
     val threadsDefault: Int = 2,
     val threadsCharging: Int = 4,
+    val defaultModel: String = "fr",
 )
 ```
 
-## 9. Tests attendus
+## 10. Tests attendus
 
-- **JVM** : tokenizer contre le jeu de référence (seuil 99,5 %) ; cas limites (chaîne vide, émojis,
-  caractères inconnus, troncature) ; `VectorCodec` (aller-retour, écrêtage, bits) ; chargement de `vocab.bin`.
-- **Instrumenté** : `OrtEmbeddingEngine` contre `testdata/embedding_golden.json` (cosinus ≥ 0,99 pour
-  chaque texte) ; normes égales à 1 ; préfixes appliqués ; fermeture après inactivité ; mesures du §7.
+- **JVM** : tokenizer contre les deux jeux de référence (seuil 99,5 %) ; cas limites (chaîne vide,
+  émojis, caractères inconnus, troncature) ; `VectorCodec` (aller-retour, écrêtage, bits) ; chargement
+  de `vocab.bin` ; `ModelCatalog` avec un installateur factice (états, activation, suppression du pack actif).
+- **Instrumenté** : `OrtEmbeddingEngine` contre `testdata/embedding_golden_fr.json` (cosinus ≥ 0,99 pour
+  chaque texte) ; normes égales à 1 ; préfixes appliqués ; fermeture après inactivité ; mesures du §8 ;
+  `FileModelPackInstaller` (archive valide, empreinte incorrecte, archive incomplète) ; changement de
+  modèle → vecteurs recalculés, recherche lexicale intacte.
 - **Outils** : `pytest` sur `tools/model` (format du vocabulaire, empreintes, contrôles de qualité).
+- **Validation manuelle** : téléchargement du pack par Google Play sur la piste de test interne.

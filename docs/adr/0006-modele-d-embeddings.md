@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Statut** | Accepté |
+| **Statut** | Remplacé par [ADR-0010](0010-modele-francais-et-packs-de-langue.md) pour le modèle embarqué ; le modèle décrit ici devient le pack de langue « multilingue » |
 | **Date** | 2026-11-12 |
 
 ## Contexte

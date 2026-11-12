@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Statut** | Accepté — à confirmer par le porteur du projet (décision D-02) |
+| **Statut** | Accepté — distribution gratuite confirmée par le porteur du projet le 12 novembre 2026 |
 | **Date** | 2026-11-12 |
 
 ## Contexte
@@ -42,6 +42,6 @@ promotionnelles). Aucune vente hors de Google Play n'est engagée sans vérifica
 | Alternative | Pourquoi non |
 |---|---|
 | Code court vérifié par un secret embarqué (HMAC tronqué) | Secret extractible de l'APK : générateur de codes possible. |
-| Code court validé par un serveur via le navigateur, qui renvoie un jeton lié à l'appareil | Bonne solution (codes saisissables, limite d'activations, révocation) mais demande un service avec état. **Ticket optionnel M8-07** ; le vérificateur de l'application est déjà compatible. |
+| Code court validé par un serveur via le navigateur, qui renvoie un jeton lié à l'appareil | Bonne solution (codes saisissables, limite d'activations, révocation) mais demande un service avec état. Hors périmètre de la v1 ; le vérificateur de l'application est déjà compatible. |
 | Achat intégré Google Play dès la v1 | Hors du périmètre demandé pour la v1 ; prévu en v2. |
 | Ed25519 | Disponibilité inégale dans la plateforme selon les versions d'Android ; ES256 est universel. |

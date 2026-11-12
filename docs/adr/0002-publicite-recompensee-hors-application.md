@@ -2,8 +2,12 @@
 
 | | |
 |---|---|
-| **Statut** | Accepté — à confirmer par le porteur du projet (décision D-01) |
+| **Statut** | **Écarté pour la v1** par le porteur du projet le 12 novembre 2026 — conservé comme solution de repli (voir [ADR-0009](0009-publicite-admob-et-variante-sans-reseau.md)) |
 | **Date** | 2026-11-12 |
+
+> **Note du 12 novembre 2026.** Le porteur du projet a retenu le SDK AdMob dans l'application
+> (ADR-0009). Ce document n'est pas modifié sur le fond : il décrit la solution vers laquelle basculer
+> si Google Play refuse la variante avec publicité intégrée.
 
 ## Contexte
 
@@ -20,7 +24,7 @@ processus que le service qui lit l'écran.
 La publicité est affichée **hors de l'application**, dans le navigateur de l'utilisateur, sur une page
 web de l'éditeur. La page renvoie à l'application, par un lien `seekmind://`, un **jeton signé** lié à
 un nonce que l'application a émis. L'application vérifie le jeton hors ligne et crédite cinq recherches.
-Protocole : [specs/monetisation §4](../specs/monetisation.md).
+Protocole : [annexe — récompense par le navigateur](../specs/annexe-recompense-navigateur.md).
 
 Le fournisseur de publicité est isolé derrière un adaptateur côté page web. Référence : Google Ad
 Manager, publicité récompensée pour le web.
