@@ -55,7 +55,7 @@ class LexicalQueryBenchmark {
 
         @BeforeClass
         @JvmStatic
-        fun generate() = runBlocking {
+        fun generate() = runBlocking<Unit> {
             database.delete()
             handle = database.open()
             SyntheticDatabase(handle, corpus).populate(COUNT)

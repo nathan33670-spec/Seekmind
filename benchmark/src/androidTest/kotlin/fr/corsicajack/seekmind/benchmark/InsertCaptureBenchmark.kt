@@ -28,10 +28,9 @@ class InsertCaptureBenchmark {
     private val corpus = SyntheticCorpus(seed = 7)
 
     @Before
-    fun fill() = runBlocking {
+    fun fill() = runBlocking<Unit> {
         database.delete()
         SyntheticDatabase(database.open(), corpus).populate(BASELINE)
-        Unit
     }
 
     @After

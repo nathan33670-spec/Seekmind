@@ -34,7 +34,7 @@ class SideStoresTest {
     fun clean() = test.delete()
 
     @Test
-    fun appRulesAreSetReplacedRemovedAndObserved() = runBlocking {
+    fun appRulesAreSetReplacedRemovedAndObserved() = runBlocking<Unit> {
         val rules = handle.appRules
         assertThat(rules.get("com.example.bank")).isNull()
         rules.set(AppRule("com.example.bank", AppRuleMode.EXCLUDED, 1_000))
@@ -52,7 +52,7 @@ class SideStoresTest {
     }
 
     @Test
-    fun secureProbesAreKeyedByPackageAndActivity() = runBlocking {
+    fun secureProbesAreKeyedByPackageAndActivity() = runBlocking<Unit> {
         val probes = handle.secureProbes
         probes.put(SecureProbe("com.example.browser", "", isSecure = false, probedAt = 1_000))
         probes.put(SecureProbe("com.example.browser", "a.Private", isSecure = true, probedAt = 2_000))
@@ -66,7 +66,7 @@ class SideStoresTest {
     }
 
     @Test
-    fun theLedgerSumsMovementsAndAnswersTheRuleQueries() = runBlocking {
+    fun theLedgerSumsMovementsAndAnswersTheRuleQueries() = runBlocking<Unit> {
         val money = handle.monetization
         assertThat(money.balance()).isEqualTo(0)
         assertThat(money.hasAny(CreditReason.WELCOME)).isFalse()
@@ -95,7 +95,7 @@ class SideStoresTest {
     }
 
     @Test
-    fun theLicenseIsASingleRow() = runBlocking {
+    fun theLicenseIsASingleRow() = runBlocking<Unit> {
         val money = handle.monetization
         assertThat(money.license()).isNull()
         money.setLicense(License("lid-1", "lifetime", "token-1", 1_000))
@@ -109,7 +109,7 @@ class SideStoresTest {
     }
 
     @Test
-    fun historyIsMostRecentFirstLimitedAndDeletable() = runBlocking {
+    fun historyIsMostRecentFirstLimitedAndDeletable() = runBlocking<Unit> {
         val history = handle.searchHistory
         history.add(SearchHistoryEntry(1_000, "facture", "facture|", 3, charged = true))
         history.add(SearchHistoryEntry(2_000, "train", "train|", 0, charged = false))
@@ -122,7 +122,7 @@ class SideStoresTest {
     }
 
     @Test
-    fun metricsIncrementPerDayAndKey() = runBlocking {
+    fun metricsIncrementPerDayAndKey() = runBlocking<Unit> {
         val metrics = handle.metrics
         metrics.increment("2026-11-11", "captures_stored")
         metrics.increment("2026-11-12", "captures_stored")

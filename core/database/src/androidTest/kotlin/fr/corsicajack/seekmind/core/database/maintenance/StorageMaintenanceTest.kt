@@ -35,7 +35,7 @@ class StorageMaintenanceTest {
     fun clean() = test.delete()
 
     @Test
-    fun capturesOutOfRetentionDisappear() = runBlocking {
+    fun capturesOutOfRetentionDisappear() = runBlocking<Unit> {
         val now = 100 * DAY
         val old = insert("ancienne capture", at = now - 91 * DAY)
         val kept = insert("capture récente", at = now - 89 * DAY)
@@ -48,7 +48,7 @@ class StorageMaintenanceTest {
     }
 
     @Test
-    fun unlimitedRetentionDeletesNothing() = runBlocking {
+    fun unlimitedRetentionDeletesNothing() = runBlocking<Unit> {
         val now = 10_000 * DAY
         insert("capture très ancienne", at = 1)
         val report = maintenance().run(now, ZoneOffset.UTC, retentionDays = null, budgetBytes = BIG, charging = false)
@@ -58,7 +58,7 @@ class StorageMaintenanceTest {
     }
 
     @Test
-    fun overBudgetTheOldestGoUntilBackUnderTheBudget() = runBlocking {
+    fun overBudgetTheOldestGoUntilBackUnderTheBudget() = runBlocking<Unit> {
         val texts = List(1_200) { i ->
             "capture numéro $i " +
                 List(80) { w -> "mot${(i * 7 + w) % 900}" }.joinToString(" ")
@@ -81,7 +81,7 @@ class StorageMaintenanceTest {
     }
 
     @Test
-    fun sideTablesArePurged() = runBlocking {
+    fun sideTablesArePurged() = runBlocking<Unit> {
         val now = 200 * DAY
         handle.metrics.increment("1970-06-18", "captures") // day 168: older than 30 days
         handle.metrics.increment("1970-07-19", "captures") // day 199: kept
@@ -97,7 +97,7 @@ class StorageMaintenanceTest {
     }
 
     @Test
-    fun compactionOnlyWhileChargingAndFtsOptimisationWeekly() = runBlocking {
+    fun compactionOnlyWhileChargingAndFtsOptimisationWeekly() = runBlocking<Unit> {
         val ids = List(300) { insert("texte à supprimer $it " + "x".repeat(500), at = 1_000) }
         ids.forEach { handle.captures.delete(it) }
         val maintenance = maintenance()

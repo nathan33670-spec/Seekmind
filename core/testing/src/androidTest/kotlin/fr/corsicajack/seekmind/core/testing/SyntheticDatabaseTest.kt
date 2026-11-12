@@ -20,7 +20,7 @@ class SyntheticDatabaseTest {
     fun clean() = database.delete()
 
     @Test
-    fun oneHundredThousandCapturesInLessThanTwoMinutes() = runBlocking {
+    fun oneHundredThousandCapturesInLessThanTwoMinutes() = runBlocking<Unit> {
         database.delete()
         val handle = database.open()
         val ms = SyntheticDatabase(handle).populate(100_000)
@@ -31,7 +31,7 @@ class SyntheticDatabaseTest {
     }
 
     @Test
-    fun capturesWithVectors() = runBlocking {
+    fun capturesWithVectors() = runBlocking<Unit> {
         database.delete()
         val handle = database.open()
         val ms = SyntheticDatabase(handle).populate(10_000, vectors = true)

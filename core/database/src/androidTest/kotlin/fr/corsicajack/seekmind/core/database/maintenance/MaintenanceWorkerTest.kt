@@ -50,7 +50,7 @@ class MaintenanceWorkerTest {
     }
 
     @Test
-    fun theWorkerAppliesTheRetentionOfTheSettings() = runBlocking {
+    fun theWorkerAppliesTheRetentionOfTheSettings() = runBlocking<Unit> {
         test.delete()
         val handle = test.handle()
         val old = handle.captures.insert(
@@ -64,7 +64,7 @@ class MaintenanceWorkerTest {
     }
 
     @Test
-    fun anUnavailableDatabaseIsNotAnError() = runBlocking {
+    fun anUnavailableDatabaseIsNotAnError() = runBlocking<Unit> {
         val result = worker { DatabaseState.Unavailable(UnavailableReason.KEY_MISSING) }.doWork()
         assertThat(result).isEqualTo(ListenableWorker.Result.success())
     }
