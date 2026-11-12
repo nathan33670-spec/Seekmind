@@ -1,0 +1,9 @@
+# Components allowed to be exported (INV-12). Format: `component.Name [required.Permission]`.
+# When a permission is given, the component must be protected by exactly that permission.
+fr.corsicajack.seekmind.MainActivity                                    # launcher
+fr.corsicajack.seekmind.link.LinkActivity                               # seekmind://activate (M8-05)
+fr.corsicajack.seekmind.engine.capture.SeekMindAccessibilityService android.permission.BIND_ACCESSIBILITY_SERVICE  # M2-01
+fr.corsicajack.seekmind.engine.capture.PauseTileService android.permission.BIND_QUICK_SETTINGS_TILE               # M2-07
+# Library components reachable by the system only (signature|privileged permission).
+androidx.profileinstaller.ProfileInstallReceiver android.permission.DUMP
+androidx.work.impl.diagnostics.DiagnosticsReceiver android.permission.DUMP

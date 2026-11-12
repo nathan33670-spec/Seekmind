@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.seekmind.android.application)
     alias(libs.plugins.seekmind.android.compose)
     alias(libs.plugins.seekmind.hilt)
+    alias(libs.plugins.seekmind.app.guards)
 }
 
 // AdMob application id (docs/04-prerequis.md §3). Google's public sample id is used unless the

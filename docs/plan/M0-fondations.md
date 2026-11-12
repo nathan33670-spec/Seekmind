@@ -80,7 +80,7 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 **Critères d'acceptation**
 
-- [ ] Le workflow est vert sur la PR du ticket et dure moins de 12 minutes.
+- [x] Le workflow est vert sur la PR du ticket et dure moins de 12 minutes (4 min au premier passage).
 - [ ] Une erreur de formatage introduite volontairement le fait échouer (preuve dans la PR, puis retirée).
 
 **Validation manuelle** — le porteur du projet protège `main` (PR obligatoire, vérification `ci`
@@ -92,7 +92,7 @@ requise) et autorise la fusion automatique.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01 | `build-logic`, `scripts`, `gradle/` | [architecture §3.2, §10.3, §10.4](../03-architecture.md) · [AGENTS §2](../../AGENTS.md) |
+| Fait | M0-01 | `build-logic`, `scripts`, `gradle/` | [architecture §3.2, §10.3, §10.4](../03-architecture.md) · [AGENTS §2](../../AGENTS.md) |
 
 **À faire**
 
@@ -115,11 +115,11 @@ requise) et autorise la fusion automatique.
 
 **Critères d'acceptation**
 
-- [ ] Chaque garde-fou a un test « passe » et un test « échoue » : manifeste `offline` avec `INTERNET`,
+- [x] Chaque garde-fou a un test « passe » et un test « échoue » : manifeste `offline` avec `INTERNET`,
       manifeste `ads` avec une permission hors liste, source hors de `engine/ads` important une API
       réseau, source appelant `performGlobalAction`, dépendance hors liste, dépendance `engine → feature`,
       `engine:ads` dépendant de `core:database`, bibliothèque mal alignée.
-- [ ] Les garde-fous sont verts sur le squelette et exécutés par `ci`.
+- [x] Les garde-fous sont verts sur le squelette et exécutés par `ci`.
 
 ---
 

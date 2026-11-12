@@ -1,0 +1,20 @@
+# Forbidden APIs in shipped source code (ticket M0-04, AGENTS.md §2).
+# One rule per line, fields separated by TABs: id, scope, extended regex (grep -E), message.
+# Scope: `all`, `except:<dir>[,<dir>…]` or `only:<dir>[,<dir>…]`, directories relative to the repository root.
+# Scanned: *.kt and *.java under app/, core/, engine/, feature/, excluding src/test, src/androidTest and build/.
+# Comment lines (//, /*, *) are ignored. :fixtureapp is test tooling and is not scanned.
+network-java-net	except:engine/ads	\bjava\.net\.(URL|URLConnection|HttpURLConnection|Socket|ServerSocket|DatagramSocket|InetAddress|InetSocketAddress)\b	INV-01: network API outside :engine:ads
+network-javax-net	except:engine/ads	\bjavax\.net\.	INV-01: network API outside :engine:ads
+network-okhttp	all	\b(okhttp3|com\.squareup\.okhttp|io\.ktor|retrofit2)\.	INV-01: HTTP clients are forbidden
+network-webview	all	\bandroid\.webkit\.|\bWebView\b	INV-01: no WebView in SeekMind code
+network-connectivity	except:engine/ads	\bConnectivityManager\b|\bandroid\.net\.http\.	INV-01: network API outside :engine:ads
+ads-sdk-outside-module	except:engine/ads	\bcom\.google\.android\.(gms\.ads|ump)\b	INV-01/INV-08: online SDKs only in :engine:ads
+ads-targeting	only:engine/ads	\b(addKeyword|setContentUrl|setNeighboringContentUrls|addCustomTargeting)\(	INV-08: ad requests carry no targeting
+a11y-global-action	all	\bperformGlobalAction\b	INV-02: the accessibility service never acts
+a11y-perform-action	all	\.performAction\(	INV-02: the accessibility service never acts
+a11y-gesture	all	\bdispatchGesture\b|\bGestureDescription\b	INV-02: the accessibility service never acts
+media-projection	all	\bMediaProjection	INV-03: screenshots only through the accessibility service, in memory
+image-compress	all	\.compress\(\s*Bitmap\.CompressFormat|\bBitmap\.CompressFormat\b	INV-03: no image is ever encoded or written
+image-mediastore	all	\bMediaStore\b	INV-03: no image is ever written
+image-files	only:engine/ocr,engine/capture	\bFileOutputStream\b|\bImageWriter\b	INV-03: screen captures stay in memory
+android-log	except:core/common	\bandroid\.util\.Log\b|(^|[^A-Za-z0-9_.])Log\.(v|d|i|w|e|wtf)\(	INV-07: log through SmLog (core:common)

@@ -141,3 +141,5 @@ seekmind-android-compose = { id = "seekmind.android.compose" }
 seekmind-kotlin-library = { id = "seekmind.kotlin.library" }
 seekmind-hilt = { id = "seekmind.hilt" }
 seekmind-android-test = { id = "seekmind.android.test" }
+seekmind-app-guards = { id = "seekmind.app.guards" }
+seekmind-root = { id = "seekmind.root" }

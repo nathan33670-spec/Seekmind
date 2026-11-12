@@ -433,10 +433,10 @@ prototype M0-07 ([ocr §4.1](specs/ocr.md)).
 
 | Garde-fou | Vérifie | Créé par |
 |---|---|---|
-| `:app:verifyAdsReleaseManifest`, `:app:verifyOfflineReleaseManifest` | Permissions (§10.3) par variante, composants exportés (INV-12), `allowBackup`, capacités du service d'accessibilité (uniquement `canRetrieveWindowContent` et `canTakeScreenshot`) | M0-04 |
+| `:app:verifyAdsReleaseManifest`, `:app:verifyOfflineReleaseManifest` | Permissions (§10.3) par variante (`gradle/permission-allowlist-*.txt`), composants exportés (INV-12, `gradle/exported-allowlist.txt` : un composant de bibliothèque n'y est admis que protégé par une permission système, comme `ProfileInstallReceiver` derrière `DUMP`), `allowBackup`, capacités du service d'accessibilité (uniquement `canRetrieveWindowContent` et `canTakeScreenshot`) | M0-04 |
 | `scripts/check-forbidden-apis.sh` | Motifs interdits dans les sources hors tests : API réseau et SDK en ligne **hors de `engine/ads`**, `WebView`, `MediaProjection`, `performGlobalAction`, `performAction(`, `dispatchGesture`, `GestureDescription`, `Bitmap.compress`, `MediaStore`, `android.util.Log` hors `core:common` ; dans `engine/ads` : `addKeyword`, `setContentUrl`, `setNeighboringContentUrls`, `addCustomTargeting` | M0-04, M8-03 |
-| `:app:verifyDependencies` | Dépendances d'exécution `release` de chaque variante ⊆ sa liste blanche (`gradle/dependency-allowlist-ads.txt`, `-offline.txt`) | M0-04 |
-| Plugin de convention | Graphe de modules du §3.2, dont l'isolement de `engine:ads` et son absence de la variante `offline` | M0-04 |
+| `:app:verifyDependencies` | Dépendances d'exécution `release` de chaque variante ⊆ sa liste blanche (`gradle/dependency-allowlist-ads.txt`, `-offline.txt` ; groupes AndroidX, Kotlin et JetBrains admis en bloc, bibliothèques tierces une par une) | M0-04 |
+| `:verifyModuleGraph` | Graphe de modules du §3.2, dont l'isolement de `engine:ads` et son absence de la variante `offline` | M0-04 |
 | `scripts/check-elf-alignment.sh` | Alignement 16 Ko des `.so` de l'APK `release` | M0-04 |
 | `NetworkSilenceTest` | Aucun octet émis par l'application tant qu'aucune publicité n'est demandée (variante `ads`) | M8-03 |
 | Lint + `verifyNoHardcodedUiText` | Chaînes non traduites (`MissingTranslation`, `ExtraTranslation`), texte en dur dans les layouts (`HardcodedText`) et dans le code Compose (tâche dédiée, exécutée par `lint` : Android Lint ne couvre pas Compose) | M0-02 |

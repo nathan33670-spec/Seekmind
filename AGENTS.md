@@ -81,7 +81,10 @@ scripts/setup-android-sdk.sh                # installe le SDK Android (une fois 
 ./gradlew testAdsDebugUnitTest              # tests JVM
 ./gradlew :app:verifyAdsReleaseManifest :app:verifyOfflineReleaseManifest   # permissions et composants
 ./gradlew :app:verifyDependencies           # listes blanches des dépendances
+./gradlew verifyModuleGraph                 # graphe de modules autorisé
 scripts/check-forbidden-apis.sh             # API interdites (réseau, automatisation, images, logs, ciblage)
+scripts/check-elf-alignment.sh              # alignement 16 Ko des bibliothèques natives (APK release)
+scripts/tests/test-guard-scripts.sh         # tests des scripts de garde-fous
 ./gradlew connectedAdsDebugAndroidTest      # tests instrumentés (émulateur : en CI uniquement)
 ```
 

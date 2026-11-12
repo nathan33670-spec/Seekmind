@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.spotless)
+    alias(libs.plugins.seekmind.root)
 }
 
 // Formatting of every Kotlin source and Gradle script of the repository (ticket M0-02).

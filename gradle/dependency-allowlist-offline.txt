@@ -1,0 +1,48 @@
+# External runtime dependencies allowed in the `offline` release variant (INV-11).
+# Format: `group:name` or `group:*`. Versions are governed by gradle/libs.versions.toml.
+# Adding an entry requires a justification in the pull request.
+
+# AndroidX, Kotlin and JetBrains libraries (whole groups).
+androidx.activity:*
+androidx.annotation:*
+androidx.arch.core:*
+androidx.autofill:*
+androidx.collection:*
+androidx.compose:*
+androidx.compose.animation:*
+androidx.compose.foundation:*
+androidx.compose.material:*
+androidx.compose.material3:*
+androidx.compose.runtime:*
+androidx.compose.ui:*
+androidx.concurrent:*
+androidx.core:*
+androidx.customview:*
+androidx.emoji2:*
+androidx.fragment:*
+androidx.graphics:*
+androidx.interpolator:*
+androidx.lifecycle:*
+androidx.loader:*
+androidx.navigationevent:*
+androidx.profileinstaller:*
+androidx.savedstate:*
+androidx.startup:*
+androidx.tracing:*
+androidx.versionedparcelable:*
+androidx.viewpager:*
+androidx.window:*
+org.jetbrains:*
+org.jetbrains.kotlin:*
+org.jetbrains.kotlinx:*
+
+# Third-party libraries, one by one.
+com.google.code.findbugs:jsr305             # Dagger annotations
+com.google.dagger:dagger                    # Hilt (dependency injection)
+com.google.dagger:dagger-lint-aar           # Hilt (dependency injection)
+com.google.dagger:hilt-android              # Hilt (dependency injection)
+com.google.dagger:hilt-core                 # Hilt (dependency injection)
+com.google.guava:listenablefuture           # AndroidX (ListenableFuture stub)
+jakarta.inject:jakarta.inject-api           # Dagger
+javax.inject:javax.inject                   # Dagger
+org.jspecify:jspecify                       # AndroidX nullness annotations

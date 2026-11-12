@@ -41,6 +41,14 @@ gradlePlugin {
             id = "seekmind.hilt"
             implementationClass = "fr.corsicajack.seekmind.buildlogic.HiltConventionPlugin"
         }
+        register("appGuards") {
+            id = "seekmind.app.guards"
+            implementationClass = "fr.corsicajack.seekmind.buildlogic.AppGuardsConventionPlugin"
+        }
+        register("root") {
+            id = "seekmind.root"
+            implementationClass = "fr.corsicajack.seekmind.buildlogic.RootConventionPlugin"
+        }
         register("androidTest") {
             id = "seekmind.android.test"
             implementationClass = "fr.corsicajack.seekmind.buildlogic.AndroidTestConventionPlugin"
