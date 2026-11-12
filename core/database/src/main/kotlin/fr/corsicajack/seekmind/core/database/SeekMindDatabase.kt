@@ -14,6 +14,7 @@ import fr.corsicajack.seekmind.core.database.schema.MetricDailyEntity
 import fr.corsicajack.seekmind.core.database.schema.SearchHistoryEntity
 import fr.corsicajack.seekmind.core.database.schema.SecureProbeEntity
 import fr.corsicajack.seekmind.core.database.store.CaptureDao
+import fr.corsicajack.seekmind.core.database.store.SideDao
 import fr.corsicajack.seekmind.core.database.store.VectorDao
 
 /**
@@ -41,6 +42,8 @@ internal abstract class SeekMindDatabase : RoomDatabase() {
     abstract fun captureDao(): CaptureDao
 
     abstract fun vectorDao(): VectorDao
+
+    abstract fun sideDao(): SideDao
 
     companion object {
         const val VERSION = 1

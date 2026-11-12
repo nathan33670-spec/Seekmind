@@ -20,6 +20,7 @@ androidx.concurrent:*
 androidx.core:*
 androidx.cursoradapter:*
 androidx.customview:*
+androidx.datastore:*
 androidx.drawerlayout:*
 androidx.emoji2:*
 androidx.exifinterface:*
@@ -70,6 +71,8 @@ com.google.mlkit:text-recognition-bundled-common                    # ML Kit, bu
 com.google.mlkit:vision-common                                      # ML Kit (M0-07)
 com.google.mlkit:vision-interfaces                                  # ML Kit (M0-07)
 com.microsoft.onnxruntime:onnxruntime-android                       # ONNX Runtime, embeddings on the CPU (M0-09)
+com.squareup.okio:okio                                              # DataStore file I/O (M1-05); no network use
+com.squareup.okio:okio-jvm                                          # DataStore file I/O (M1-05); no network use
 jakarta.inject:jakarta.inject-api                                   # Dagger
 javax.inject:javax.inject                                           # Dagger
 net.zetetic:sqlcipher-android                                       # SQLCipher, encrypted database with FTS5 (ADR-0004, M1-03)

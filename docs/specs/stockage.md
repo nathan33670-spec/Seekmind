@@ -211,6 +211,14 @@ interface WipeService { suspend fun wipeEverything() }                        //
 Auxquels s'ajoutent `AppRuleStore`, `SecureProbeStore`, `MonetizationStore`, `SearchHistoryStore`,
 `MetricsStore` (un par table) et `SettingsRepository` (DataStore).
 
+Ces dépôts annexes lisent et écrivent des lignes ; les règles (plafonds de crédits, gratuité d'une
+requête répétée, familles) appartiennent aux moteurs qui les emploient. `MonetizationStore` porte le
+registre (`append`, `balance`, `countSince`, `lastAt`, `hasAny`) et la licence, ligne unique remplacée par
+`setLicense`. `SettingsRepository` expose un `Flow<Settings>` et des flux par réglage ; ses valeurs par
+défaut sont prises dans les objets `*Config` : rétention 90 jours, budget 500 Mo, toutes les familles,
+modèle `fr`. S'y ajoutent le verrouillage actif avec 5 min de délai de grâce, et l'historique actif. Il
+n'écrit que ses dix clés, et aucune ne peut contenir de donnée capturée (INV-06).
+
 Toute suppression de captures incrémente `meta.index_generation` dans la même transaction : c'est le
 signal de rechargement de l'index vectoriel en mémoire ([recherche §6](recherche.md)). `resetForModel`
 l'incrémente aussi, puisqu'il vide les vecteurs. Une suppression qui ne supprime rien ne l'incrémente pas.
