@@ -179,6 +179,7 @@ END;
 ```kotlin
 interface CaptureStore {
     suspend fun insert(capture: NewCapture, chunks: List<NewChunk>): Long     // une transaction
+    suspend fun insertAll(items: List<Pair<NewCapture, List<NewChunk>>>): List<Long>  // une transaction ; imports, bases synthétiques
     suspend fun touch(captureId: Long, seenAt: Long)                          // last_seen_at, seen_count + 1
     suspend fun recentHashes(packageName: String, limit: Int): List<HashRef>  // id, simhash, first/last_seen_at
     suspend fun get(captureId: Long): Capture?

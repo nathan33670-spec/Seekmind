@@ -64,7 +64,8 @@ flowchart LR
 | `:core:model` | Modèles de domaine, interfaces entre modules, configurations | `Capture`, `ScreenMeta`, `RawCapture`, `SourceRef`, `SearchRequest`, `SearchHit`, `Entitlement`, `AppFamily`, ports (`port`), `*Config` (`config`) |
 | `:core:database` | Base chiffrée, schéma, DAO, clé, purge, réglages | `SeekMindDatabase`, `CaptureStore`, `SearchStore`, `SettingsRepository` |
 | `:core:designsystem` | Thème et composants Compose | `SeekMindTheme`, composants |
-| `:core:testing` | Doubles de test, jeux de données | `FakeClock`, `TestDispatchers`, fabriques |
+| `:core:testing` | Doubles de test, jeux de données | `FakeClock`, `TestDispatchers`, `Models`, `FakeEmbeddingEngine`, `TemporaryDatabase`, `SyntheticDatabase` |
+| `:benchmark` | Microbenchmarks des modules `core` (outillage de test, jamais livré) | `InsertCaptureBenchmark`, `LexicalQueryBenchmark` |
 | `:engine:privacy` | Décision de capture, familles et listes d'applications, masquage | `PrivacyGate`, `AppFamilies`, `SensitiveApps`, `Redactor` |
 | `:engine:capture` | Service d'accessibilité, anti-rebond, lecture de l'arbre, orchestration | `SeekMindAccessibilityService`, `Debouncer`, `TreeExtractor`, `CapturePipeline` |
 | `:engine:ocr` | Capture d'écran en RAM, sonde de fenêtre sécurisée, reconnaissance | `ScreenshotSource`, `SecureWindowProbe`, `OcrEngine`, `OcrPolicy`, `ThermalGovernor` |

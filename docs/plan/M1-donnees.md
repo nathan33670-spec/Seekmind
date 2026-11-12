@@ -147,7 +147,7 @@ schéma, plein texte, dépôts, purge, effacement.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-04 | `core:testing`, `benchmark` | [tests §2, §6](../06-qualite-tests-ci.md) · ENF-PERF-03, ENF-PERF-05 |
+| Fait | M1-04 | `core:testing`, `benchmark` | [tests §2, §6](../06-qualite-tests-ci.md) · ENF-PERF-03, ENF-PERF-05 |
 
 **À faire**
 
@@ -158,5 +158,7 @@ schéma, plein texte, dépôts, purge, effacement.
 
 **Critères d'acceptation**
 
-- [ ] Le générateur produit 100 000 captures en moins de 2 minutes sur émulateur.
-- [ ] Les deux bancs publient leurs résultats en artefact de CI ; les valeurs sont consignées dans `docs/mesures/`.
+- [x] Le générateur produit 100 000 captures en moins de 2 minutes sur émulateur (27 à 48 s).
+- [x] Les deux bancs publient leurs résultats en artefact de CI ; les valeurs sont consignées dans `docs/mesures/`
+      ([2026-11-12-ci-emulateurs-M1-07.md](../mesures/2026-11-12-ci-emulateurs-M1-07.md) ; préfixe de 3 lettres
+      à 112 ms au p95 en API 30, à revoir en M5).
