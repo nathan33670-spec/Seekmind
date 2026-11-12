@@ -1,4 +1,4 @@
-package fr.corsicajack.seekmind.core.model
+package fr.corsicajack.seekmind.core.common
 
 /** A rectangle in screen pixels, independent of the Android framework. */
 data class IntRect(val left: Int, val top: Int, val right: Int, val bottom: Int) {

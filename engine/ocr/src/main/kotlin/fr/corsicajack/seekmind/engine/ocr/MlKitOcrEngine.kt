@@ -6,7 +6,10 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import fr.corsicajack.seekmind.core.model.IntRect
+import fr.corsicajack.seekmind.core.common.IntRect
+import fr.corsicajack.seekmind.core.model.OcrLine
+import fr.corsicajack.seekmind.core.model.OcrOutcome
+import fr.corsicajack.seekmind.core.model.port.OcrEngine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -36,7 +39,8 @@ class MlKitOcrEngine(
         return OcrOutcome(lines, SystemClock.elapsedRealtime() - start)
     }
 
-    override fun close() = recognizer.close()
+    /** Releases the native resources; the engine is unusable afterwards. */
+    fun close() = recognizer.close()
 
     private object DirectExecutor : java.util.concurrent.Executor {
         override fun execute(command: Runnable) = command.run()
