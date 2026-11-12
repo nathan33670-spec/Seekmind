@@ -50,4 +50,27 @@ object FtsSchema {
             LIMIT ?
         """.trimIndent()
     }
+
+    /**
+     * Same result as [lexicalQuery], written so that FTS5 sorts by its `rank` column itself
+     * (`rank MATCH` selects the weighted bm25) and the join cannot be reordered (`CROSS JOIN`):
+     * rows come out best first and `snippet` runs only on the rows kept by `LIMIT`.
+     */
+    fun rankedLexicalQuery(packageCount: Int): String {
+        val packages = if (packageCount == 0) "NULL" else List(packageCount) { "?" }.joinToString(",")
+        return """
+            SELECT c.id,
+                   rank,
+                   snippet(capture_fts, 0, char(2), char(3), '…', 24) AS snip
+            FROM capture_fts
+            CROSS JOIN capture c ON c.id = capture_fts.rowid
+            WHERE capture_fts MATCH ?
+              AND rank MATCH 'bm25(1.0, 2.0, 0.5)'
+              AND (? IS NULL OR c.last_seen_at >= ?)
+              AND (? IS NULL OR c.first_seen_at <= ?)
+              AND (? = 0 OR c.package_name IN ($packages))
+            ORDER BY rank
+            LIMIT ?
+        """.trimIndent()
+    }
 }

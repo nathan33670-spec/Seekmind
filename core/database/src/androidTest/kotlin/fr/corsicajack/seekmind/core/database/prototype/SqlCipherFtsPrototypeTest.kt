@@ -79,6 +79,7 @@ class SqlCipherFtsPrototypeTest {
         assertThat(rows.map { it.id }).containsExactly(short, long).inOrder()
         assertThat(rows.all { it.rank < 0.0 }).isTrue()
         assertThat(rows.first().snippet).contains("\u0002truffe\u0003")
+        assertThat(lexical(database, "truffe", ranked = true)).isEqualTo(rows)
     }
 
     @Test
@@ -104,6 +105,9 @@ class SqlCipherFtsPrototypeTest {
         assertThat(lexical(database, "facture", from = 2_000).map { it.id }).containsExactly(recent)
         assertThat(lexical(database, "facture", to = 2_000).map { it.id }).containsExactly(old)
         assertThat(lexical(database, "facture", packages = listOf("com.example.mail")).map { it.id })
+            .containsExactly(old)
+        assertThat(lexical(database, "facture", from = 2_000, ranked = true).map { it.id }).containsExactly(recent)
+        assertThat(lexical(database, "facture", packages = listOf("com.example.mail"), ranked = true).map { it.id })
             .containsExactly(old)
     }
 
@@ -168,15 +172,24 @@ class SqlCipherFtsPrototypeTest {
             "two_terms" to { "${vocabulary.word(random)} ${vocabulary.word(random)}" },
             "prefix" to { vocabulary.word(random).take(3) + "*" },
         )
-        for ((kind, next) in queries) {
-            val queryMs = DoubleArray(BENCH_QUERIES) {
-                val match = next()
-                val start = SystemClock.elapsedRealtimeNanos()
-                lexical(database, match, limit = 50)
-                (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000.0
+        for (ranked in listOf(false, true)) {
+            val form = if (ranked) "ranked" else "reference"
+            for ((kind, next) in queries) {
+                val queryMs = DoubleArray(BENCH_QUERIES) {
+                    val match = next()
+                    val start = SystemClock.elapsedRealtimeNanos()
+                    lexical(database, match, limit = 50, ranked = ranked)
+                    (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000.0
+                }
+                measure("match_${form}_${kind}_ms_median", queryMs.percentile(0.50))
+                measure("match_${form}_${kind}_ms_p95", queryMs.percentile(0.95))
             }
-            measure("match_${kind}_ms_median", queryMs.percentile(0.50))
-            measure("match_${kind}_ms_p95", queryMs.percentile(0.95))
+        }
+        // Both forms return the same rows, in the same order.
+        repeat(20) {
+            val match = vocabulary.word(random)
+            assertThat(lexical(database, match, limit = 50, ranked = true).map { it.rank })
+                .isEqualTo(lexical(database, match, limit = 50).map { it.rank })
         }
 
         database.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)").close()
@@ -213,9 +226,10 @@ class SqlCipherFtsPrototypeTest {
         to: Long? = null,
         packages: List<String> = emptyList(),
         limit: Int = 20,
+        ranked: Boolean = false,
     ): List<LexicalRow> {
         val args = listOf<Any?>(match, from, from, to, to, if (packages.isEmpty()) 0 else 1) + packages + limit
-        val sql = FtsSchema.lexicalQuery(packages.size)
+        val sql = if (ranked) FtsSchema.rankedLexicalQuery(packages.size) else FtsSchema.lexicalQuery(packages.size)
         return database.openHelper.readableDatabase.query(sql, args.toTypedArray()).use { cursor ->
             buildList {
                 while (cursor.moveToNext()) add(LexicalRow(cursor.getLong(0), cursor.getDouble(1), cursor.getString(2)))
