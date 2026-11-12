@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Variant `offline` (ADR-0001, ADR-0009): no network permission at all, whatever the dependencies declare. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission
+        android:name="android.permission.INTERNET"
+        tools:node="remove" />
+
+    <!-- Declared by ML Kit's transport library and WorkManager; neither needs it here (prototype S2):
+         ML Kit's uploads are removed and SeekMind's workers have no network constraint. -->
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"
+        tools:node="remove" />
+</manifest>

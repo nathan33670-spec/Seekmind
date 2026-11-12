@@ -1,0 +1,91 @@
+# Continuous integration of every pull request and of main (ticket M0-03, docs/04-prerequis.md §6).
+# Needs no secret. Instrumented tests run in the separate `device-tests` workflow (ticket M0-08).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build, static analysis and JVM tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Install Android SDK packages
+        run: bash scripts/setup-android-sdk.sh
+
+      # The bundled `fr` model, from the cache or rebuilt and checked against model.lock.json
+      # (docs/specs/embeddings.md §2): the release builds below embed it and :engine:embedding:verifyModel
+      # checks it.
+      - name: Embedding model
+        uses: ./.github/actions/model-artifacts
+        with:
+          models: fr
+
+      - name: Formatting, lint, JVM tests and build of both variants
+        run: >
+          ./gradlew --continue
+          spotlessCheck
+          lint
+          test
+          :build-logic:convention:test
+          assembleAdsDebug assembleOfflineDebug
+          assembleAdsRelease assembleOfflineRelease
+          :fixtureapp:assembleDebug
+          verifyAdsReleaseManifest verifyOfflineReleaseManifest
+          verifyDependencies
+          verifyModuleGraph
+
+      # Guards of ticket M0-04 (docs/03-architecture.md §10.4).
+      - name: Forbidden APIs
+        run: scripts/check-forbidden-apis.sh
+
+      - name: 16 KB alignment of native libraries
+        run: scripts/check-elf-alignment.sh
+
+      - name: Tests of the guard scripts
+        run: scripts/tests/test-guard-scripts.sh
+
+      - name: Set up Python
+        if: hashFiles('tools/**/requirements*.txt') != ''
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Python tools tests
+        if: hashFiles('tools/**/requirements*.txt') != ''
+        run: |
+          for req in tools/*/requirements*.txt; do pip install -r "$req"; done
+          python -m pytest tools
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports
+          path: |
+            **/build/reports/**
+            **/build/test-results/**
+          if-no-files-found: ignore
+          retention-days: 14

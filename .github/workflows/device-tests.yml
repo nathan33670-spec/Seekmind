@@ -1,0 +1,83 @@
+# Instrumented and end-to-end tests on emulators (ticket M0-08, docs/06-qualite-tests-ci.md §4).
+# Matrix of API levels 30, 34 and 36. Needs no secret.
+name: device-tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: device-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  emulator:
+    name: Emulator API ${{ matrix.api-level }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [30, 34, 36]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Android SDK packages
+        run: bash scripts/setup-android-sdk.sh
+
+      # fr is bundled in the APKs; multi is pushed to the emulator for prototype S4 (ticket M0-09).
+      - name: Embedding models
+        uses: ./.github/actions/model-artifacts
+        with:
+          models: fr multi
+
+      # Built before the emulator starts, so that emulator time is spent on tests only.
+      - name: Build the fixture app and the test APKs
+        run: ./gradlew :fixtureapp:assembleDebug :engine:capture:assembleDebugAndroidTest :core:database:assembleDebugAndroidTest :engine:embedding:assembleDebugAndroidTest :app:assembleAdsDebugAndroidTest :app:assembleOfflineDebugAndroidTest :app:assembleAdsDebug :app:assembleOfflineDebug
+
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r fixtureapp/build/outputs/apk/debug/fixtureapp-debug.apk
+            adb shell mkdir -p /data/local/tmp/seekmind/multi && adb push tools/model/out/multi/model.onnx /data/local/tmp/seekmind/multi/model.onnx
+            adb logcat -G 16M; adb logcat -c
+            # One Gradle invocation per module: two suites must never share the emulator at the same time.
+            status=0; for task in :engine:capture:connectedDebugAndroidTest :core:database:connectedDebugAndroidTest :engine:embedding:connectedDebugAndroidTest :app:connectedAdsDebugAndroidTest :app:connectedOfflineDebugAndroidTest; do ./gradlew $task || status=1; done; mkdir -p build/device; adb logcat -d -s SeekMindProto:I > build/device/measurements-api${{ matrix.api-level }}.txt; exit $status
+
+      - name: Upload reports and measurements
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: device-tests-api${{ matrix.api-level }}
+          path: |
+            build/device/**
+            **/build/reports/androidTests/**
+            **/build/outputs/androidTest-results/**
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,147 @@
+# Versions of the whole project. No version number may appear anywhere else (ticket M0-01).
+# Source: docs/03-architecture.md §8 (stable releases as of 2026-11-12).
+
+[versions]
+# SDK levels
+compileSdk = "37"
+targetSdk = "36"
+minSdk = "30"
+buildTools = "37.0.0"
+jvmTarget = "17"
+
+# Build
+agp = "9.5.1"
+kotlin = "2.4.21"
+ksp = "2.3.13"
+spotless = "8.11.0"
+ktlint = "1.8.0"
+
+# AndroidX / UI
+composeBom = "2026.09.00"
+activityCompose = "1.13.0"
+navigationCompose = "2.10.2"
+lifecycle = "2.11.0"
+coreKtx = "1.19.1"
+browser = "1.10.0"
+biometric = "1.1.0"
+
+# Data and background work
+room = "2.8.5"
+sqlcipher = "4.20.0"
+androidxSqlite = "2.7.1"
+datastore = "1.3.0"
+work = "2.12.0"
+
+# Injection, async, serialization
+hilt = "2.60.1"
+androidxHilt = "1.4.0"
+coroutines = "1.11.0"
+serialization = "1.13.0"
+
+# On-device ML
+mlkitTextRecognition = "16.0.1"
+onnxruntime = "1.31.1"
+playAssetDelivery = "2.3.0"
+
+# Ads (variant `ads` only, module :engine:ads only)
+playServicesAds = "25.5.0"
+userMessagingPlatform = "4.0.0"
+
+# Tests
+junit = "4.13.2"
+truth = "1.4.5"
+turbine = "1.2.1"
+mockk = "1.14.12"
+robolectric = "4.17"
+androidxTestRunner = "1.7.0"
+androidxTestExtJunit = "1.3.0"
+uiautomator = "2.4.1"
+benchmark = "1.5.0"
+
+[libraries]
+# Gradle plugins used by build-logic
+android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+compose-gradlePlugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
+ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
+hilt-gradlePlugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hilt" }
+
+# AndroidX / UI
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui" }
+androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
+androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
+androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+
+# Data and background work
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+androidx-sqlite = { module = "androidx.sqlite:sqlite", version.ref = "androidxSqlite" }
+sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "work" }
+
+# Injection, async, serialization
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
+hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
+androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "androidxHilt" }
+androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "androidxHilt" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+
+# On-device ML
+mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "mlkitTextRecognition" }
+onnxruntime-android = { module = "com.microsoft.onnxruntime:onnxruntime-android", version.ref = "onnxruntime" }
+play-asset-delivery = { module = "com.google.android.play:asset-delivery-ktx", version.ref = "playAssetDelivery" }
+
+# Ads (variant `ads` only, module :engine:ads only)
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+user-messaging-platform = { module = "com.google.android.ump:user-messaging-platform", version.ref = "userMessagingPlatform" }
+
+# Tests
+junit = { module = "junit:junit", version.ref = "junit" }
+truth = { module = "com.google.truth:truth", version.ref = "truth" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestExtJunit" }
+androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
+androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+android-test = { id = "com.android.test", version.ref = "agp" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+
+# Convention plugins (build-logic)
+seekmind-android-application = { id = "seekmind.android.application" }
+seekmind-android-library = { id = "seekmind.android.library" }
+seekmind-android-compose = { id = "seekmind.android.compose" }
+seekmind-kotlin-library = { id = "seekmind.kotlin.library" }
+seekmind-hilt = { id = "seekmind.hilt" }
+seekmind-android-test = { id = "seekmind.android.test" }
+seekmind-app-guards = { id = "seekmind.app.guards" }
+seekmind-root = { id = "seekmind.root" }
+seekmind-model-assets = { id = "seekmind.model.assets" }

@@ -42,6 +42,9 @@ Scripts Python, versions figées dans `tools/model/requirements.txt`. Un jeu d'a
 | `gen_tokenizer_golden.py --model <id>` | Produit `testdata/tokenizer_golden_<id>.jsonl` à partir des 1 000 phrases versionnées |
 | `gen_embedding_golden.py --model <id>` | Produit `testdata/embedding_golden_<id>.json` à partir des 50 textes versionnés |
 | `verify.py` | Contrôles de qualité ci-dessous |
+| `pack_model.py --model <id>` | Produit l'archive `.smpack` (§5.2) : ZIP sans compression, entrées `MODEL_MANIFEST.json`, `vocab.bin`, `model.onnx`, date fixe (archive reproductible) |
+| `gen_sentences.py` | Produit les phrases sources versionnées de `tools/model/data/` (générateur déterministe, valeurs fictives) |
+| `compare_embedding_golden.py` | Workflow `model` : compare les vecteurs régénérés aux vecteurs committés (identifiants identiques, cosinus ≥ 0,99) |
 
 Quantification : `onnxruntime.quantization.quantize_dynamic(..., weight_type=QuantType.QInt8,
 per_channel=False, reduce_range=False)`.
@@ -52,9 +55,31 @@ Contrôles de qualité, pour chaque modèle (échec du script sinon) :
 - sur le jeu d'évaluation de la recherche, Rappel@5 du modèle quantifié ≥ Rappel@5 d'origine − 0,02
   (contrôle ajouté par le ticket M5-07, quand le jeu d'évaluation existe).
 
+Le modèle `fr` est exporté par `torch.onnx.export` (exportateur TorchScript, opset 17) : entrées
+`input_ids` et `attention_mask`, sortie `last_hidden_state`, axes de lot et de séquence dynamiques. Le
+modèle `multi` déclare en plus `token_type_ids`. La construction est reproductible : deux constructions
+donnent les mêmes empreintes.
+
 Chaque jeu contient `model.onnx`, `vocab.bin` et `MODEL_MANIFEST.json` (identifiant, révision source,
-empreintes des sorties, versions des outils). Les empreintes attendues sont versionnées dans
-`engine/embedding/model.lock.json`.
+empreintes des sorties, versions des outils). Les empreintes attendues de `model.onnx` et `vocab.bin`, et
+celles des jeux de référence de `testdata/`, sont versionnées dans `engine/embedding/model.lock.json`.
+
+**Arithmétique int8.** Sur un processeur x86 sans VNNI, les noyaux int8 (u8s8) d'ONNX Runtime saturent :
+les vecteurs s'écartent de ceux d'un téléphone (arithmétique exacte des instructions ARM) d'un cosinus
+d'environ 0,995, mesuré sur un exécuteur GitHub. Les vecteurs de référence de `testdata/` sont donc
+produits sur une machine ARM ou x86 avec VNNI (le générateur refuse les autres), et toute comparaison
+faite sur un exécuteur x86 quelconque (workflow `model`, évaluation de la recherche sur JVM) tolère cet
+écart. `reduce_range=True` éviterait la saturation au prix d'une précision moindre sur les téléphones :
+écarté.
+
+Valeurs relevées à la construction (M0-10) :
+
+| | `fr` | `multi` |
+|---|---|---|
+| `model.onnx` quantifié | 36,4 Mo | 118,1 Mo |
+| `vocab.bin` | 0,46 Mo | 4,1 Mo |
+| Archive `.smpack` | 36,8 Mo | 122,2 Mo |
+| Cosinus moyen origine / quantifié (minimum), 200 phrases | 0,9887 (0,9766) | 0,9888 (0,9788) |
 
 **Les artefacts binaires ne sont jamais committés.** Intégration au build :
 
@@ -99,8 +124,8 @@ class Encoding(val inputIds: IntArray, val attentionMask: IntArray)
 ### 3.2 Vocabulaire binaire
 
 `vocab.bin`, petit-boutiste : magique `SMV1`, nombre de jetons (int32), puis pour chaque jeton, dans
-l'ordre des identifiants : longueur en octets (uint16), octets UTF-8, score (float32). Environ 0,7 Mo
-pour `fr`, 5 Mo pour `multi`.
+l'ordre des identifiants : longueur en octets (uint16), octets UTF-8, score (float32). 0,46 Mo
+pour `fr`, 4,1 Mo pour `multi`.
 
 Chargement en structures compactes : un tableau d'octets unique, un tableau de positions, un tableau de
 scores, et une table de hachage à adressage ouvert (hachage 64 bits des octets du jeton → identifiant,
@@ -132,10 +157,13 @@ interface EmbeddingEngineProvider {
 
 Implémentation `OrtEmbeddingEngine` :
 
-- **Chargement** : le modèle `fr` est un asset non compressé, projeté en mémoire depuis l'APK
-  (`AssetFileDescriptor` → `FileChannel.map`) et passé à `OrtEnvironment.createSession(ByteBuffer, options)`.
-  Un modèle de pack est chargé par son chemin de fichier. Si la projection est impossible, copie unique
-  vers `noBackupFilesDir/model/`. Le prototype M0-09 valide le chemin retenu et mesure la mémoire.
+- **Chargement** ([prototype S4](../prototypes/S4-embeddings.md)) : le modèle `fr`, asset non compressé
+  de l'APK, est **copié une fois** vers `noBackupFilesDir/model/fr/` (40 à 60 ms), puis ouvert **par son
+  chemin** (`OrtEnvironment.createSession(path, options)`). La copie est refaite quand le
+  `MODEL_MANIFEST.json` de l'asset diffère de celui de la copie. Raison : ONNX Runtime recopie les poids
+  d'un tampon projeté, si bien que la projection (`FileChannel.map` → `createSession(ByteBuffer)`) coûte
+  deux fois la taille du modèle en mémoire (61 à 70 Mo contre 27 à 35 Mo) ; elle ne sert que de repli si
+  la copie est impossible. Un modèle de pack est ouvert par son chemin de fichier.
 - **Options de session** : optimisation maximale, un thread inter-opérateurs, threads intra-opérateurs
   donnés par le gouverneur (2, ou 4 en charge), fournisseur d'exécution processeur.
 - **Lots** : textes triés par longueur, sous-lots de 8, remplissage à la longueur du plus long du sous-lot

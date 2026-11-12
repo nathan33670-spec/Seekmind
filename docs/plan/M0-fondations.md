@@ -14,7 +14,7 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | — | tous | [architecture §3, §8, §9, §10.1, §10.2, §12](../03-architecture.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) |
+| Fait | — | tous | [architecture §3, §8, §9, §10.1, §10.2, §12](../03-architecture.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) |
 
 **À faire**
 
@@ -36,11 +36,11 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 **Critères d'acceptation**
 
-- [ ] `./gradlew assembleAdsDebug assembleOfflineDebug assembleAdsRelease assembleOfflineRelease` réussit
+- [x] `./gradlew assembleAdsDebug assembleOfflineDebug assembleAdsRelease assembleOfflineRelease` réussit
       sur une machine préparée par `scripts/setup-android-sdk.sh`.
-- [ ] `./gradlew projects` liste les modules attendus.
-- [ ] Le manifeste fusionné `offlineRelease` ne contient pas `INTERNET` ; les deux portent `allowBackup="false"`.
-- [ ] Aucun numéro de version hors de `libs.versions.toml` ; aucun code propre à une variante hors de `:app`.
+- [x] `./gradlew projects` liste les modules attendus.
+- [x] Le manifeste fusionné `offlineRelease` ne contient pas `INTERNET` ; les deux portent `allowBackup="false"`.
+- [x] Aucun numéro de version hors de `libs.versions.toml` ; aucun code propre à une variante hors de `:app`.
 
 ---
 
@@ -48,7 +48,7 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01 | `build-logic` | [AGENTS §3](../../AGENTS.md) · [architecture §10.4](../03-architecture.md) |
+| Fait | M0-01 | `build-logic` | [AGENTS §3](../../AGENTS.md) · [architecture §10.4](../03-architecture.md) |
 
 **À faire**
 
@@ -59,8 +59,8 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 **Critères d'acceptation**
 
-- [ ] `./gradlew spotlessCheck lint` réussit sur le squelette.
-- [ ] Une chaîne en dur dans un composable ou une chaîne non traduite fait échouer `lint` (test avec un fichier temporaire, non committé, décrit dans la PR).
+- [x] `./gradlew spotlessCheck lint` réussit sur le squelette.
+- [x] Une chaîne en dur dans un composable ou une chaîne non traduite fait échouer `lint` (test avec un fichier temporaire, non committé, décrit dans la PR).
 
 ---
 
@@ -68,7 +68,7 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-02 | `.github/workflows` | [prérequis §6](../04-prerequis.md#6-intégration-continue) · [tests §7](../06-qualite-tests-ci.md#7-intégration-continue) |
+| En revue — protection de `main` par le porteur | M0-02 | `.github/workflows` | [prérequis §6](../04-prerequis.md#6-intégration-continue) · [tests §7](../06-qualite-tests-ci.md#7-intégration-continue) |
 
 **À faire**
 
@@ -80,8 +80,8 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 **Critères d'acceptation**
 
-- [ ] Le workflow est vert sur la PR du ticket et dure moins de 12 minutes.
-- [ ] Une erreur de formatage introduite volontairement le fait échouer (preuve dans la PR, puis retirée).
+- [x] Le workflow est vert sur la PR du ticket et dure moins de 12 minutes (4 min au premier passage).
+- [x] Une erreur de formatage introduite volontairement le fait échouer (preuve dans la PR, puis retirée) : commit `262e86b`, exécution `43212021102` en échec sur `:spotlessKotlinCheck`, annulé ensuite.
 
 **Validation manuelle** — le porteur du projet protège `main` (PR obligatoire, vérification `ci`
 requise) et autorise la fusion automatique.
@@ -92,7 +92,7 @@ requise) et autorise la fusion automatique.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01 | `build-logic`, `scripts`, `gradle/` | [architecture §3.2, §10.3, §10.4](../03-architecture.md) · [AGENTS §2](../../AGENTS.md) |
+| Fait | M0-01 | `build-logic`, `scripts`, `gradle/` | [architecture §3.2, §10.3, §10.4](../03-architecture.md) · [AGENTS §2](../../AGENTS.md) |
 
 **À faire**
 
@@ -115,11 +115,11 @@ requise) et autorise la fusion automatique.
 
 **Critères d'acceptation**
 
-- [ ] Chaque garde-fou a un test « passe » et un test « échoue » : manifeste `offline` avec `INTERNET`,
+- [x] Chaque garde-fou a un test « passe » et un test « échoue » : manifeste `offline` avec `INTERNET`,
       manifeste `ads` avec une permission hors liste, source hors de `engine/ads` important une API
       réseau, source appelant `performGlobalAction`, dépendance hors liste, dépendance `engine → feature`,
       `engine:ads` dépendant de `core:database`, bibliothèque mal alignée.
-- [ ] Les garde-fous sont verts sur le squelette et exécutés par `ci`.
+- [x] Les garde-fous sont verts sur le squelette et exécutés par `ci`.
 
 ---
 
@@ -127,7 +127,7 @@ requise) et autorise la fusion automatique.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01 | `scripts` | [prérequis §4, §5](../04-prerequis.md#5-environnement-des-agents-ia) |
+| Fait | M0-01 | `scripts` | [prérequis §4, §5](../04-prerequis.md#5-environnement-des-agents-ia) |
 
 **À faire**
 
@@ -139,8 +139,8 @@ requise) et autorise la fusion automatique.
 
 **Critères d'acceptation**
 
-- [ ] Dans un environnement vierge : `scripts/setup-android-sdk.sh && ./gradlew assembleAdsDebug -PskipModel` réussit.
-- [ ] `scripts/doctor.sh` rend un code de sortie non nul et un message utile pour chaque prérequis manquant.
+- [x] Dans un environnement vierge : `scripts/setup-android-sdk.sh && ./gradlew assembleAdsDebug -PskipModel` réussit.
+- [x] `scripts/doctor.sh` rend un code de sortie non nul et un message utile pour chaque prérequis manquant.
 
 ---
 
@@ -148,7 +148,7 @@ requise) et autorise la fusion automatique.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01, M0-08 | `core:database` | [stockage §1 à §3, §5](../specs/stockage.md) · [ADR-0004](../adr/0004-stockage-room-sqlcipher-fts5.md) |
+| Fait | M0-01, M0-08 | `core:database` | [stockage §1 à §3, §5](../specs/stockage.md) · [ADR-0004](../adr/0004-stockage-room-sqlcipher-fts5.md) |
 
 **À faire**
 
@@ -161,8 +161,9 @@ requise) et autorise la fusion automatique.
 
 **Critères d'acceptation**
 
-- [ ] Tests verts sur les émulateurs API 30, 34 et 36.
-- [ ] Le rapport conclut explicitement : pile confirmée, ou alternative proposée par un ADR.
+- [x] Tests verts sur les émulateurs API 30, 34 et 36.
+- [x] Le rapport conclut explicitement : pile confirmée, ou alternative proposée par un ADR.
+      ([rapport S1](../prototypes/S1-sqlcipher-fts5.md) : pile confirmée ; requête lexicale corrigée.)
 
 ---
 
@@ -170,7 +171,7 @@ requise) et autorise la fusion automatique.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-04, M0-08 | `engine:ocr`, `app` | [ocr §4](../specs/ocr.md) · [architecture §10.2, §10.3](../03-architecture.md) · risque R-11 |
+| En revue — validation manuelle en attente | M0-04, M0-08 | `engine:ocr`, `app` | [ocr §4](../specs/ocr.md) · [architecture §10.2, §10.3](../03-architecture.md) · risque R-11 |
 
 **À faire**
 
@@ -186,9 +187,10 @@ requise) et autorise la fusion automatique.
 
 **Critères d'acceptation**
 
-- [ ] `:app:verifyOfflineReleaseManifest` et `:app:verifyAdsReleaseManifest` verts avec ML Kit dans le build.
-- [ ] Aucune erreur fatale dans le journal système pendant les 100 reconnaissances, sur les trois émulateurs.
-- [ ] Variante `ads` : aucun octet émis par l'application pendant et après les reconnaissances.
+- [x] `:app:verifyOfflineReleaseManifest` et `:app:verifyAdsReleaseManifest` verts avec ML Kit dans le build.
+- [x] Aucune erreur fatale dans le journal système pendant les 100 reconnaissances, sur les trois émulateurs.
+- [x] Variante `ads` : aucun octet émis par l'application pendant et après les reconnaissances.
+      ([rapport S2](../prototypes/S2-mlkit-sans-telemetrie.md) : option B retenue.)
 
 **Validation manuelle** — sur le téléphone de test, installation neuve, mode avion : 20 reconnaissances
 réussies ; résultat consigné dans la PR.
@@ -199,7 +201,7 @@ réussies ; résultat consigné dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-03 | `engine:capture`, `fixtureapp`, `.github/workflows` | [capture §2, §4](../specs/capture.md) · [ocr §2, §3](../specs/ocr.md) · [tests §3, §4](../06-qualite-tests-ci.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) |
+| En revue — validation manuelle en attente | M0-03 | `engine:capture`, `fixtureapp`, `.github/workflows` | [capture §2, §4](../specs/capture.md) · [ocr §2, §3](../specs/ocr.md) · [tests §3, §4](../06-qualite-tests-ci.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) |
 
 **À faire**
 
@@ -220,8 +222,8 @@ réussies ; résultat consigné dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] `device-tests` vert sur les trois niveaux d'API, en moins de 25 minutes.
-- [ ] Le rapport donne les mesures et confirme ou corrige la stratégie de sonde, **en particulier pour
+- [x] `device-tests` vert sur les trois niveaux d'API, en moins de 25 minutes.
+- [x] Le rapport donne les mesures et confirme ou corrige la stratégie de sonde, **en particulier pour
       l'API 30**, qui ne sera validée sur aucun téléphone réel avant le test fermé (risque R-14).
 
 **Validation manuelle** — sur le téléphone de test : lecture de l'arbre de trois applications courantes
@@ -233,7 +235,7 @@ réussies ; résultat consigné dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-08, M0-10 | `engine:embedding` | [embeddings §4, §8](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) |
+| En revue — validation manuelle en attente | M0-08, M0-10 | `engine:embedding` | [embeddings §4, §8](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) |
 
 **À faire**
 
@@ -252,9 +254,11 @@ réussies ; résultat consigné dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] Cosinus ≥ 0,99 avec les vecteurs de référence, pour les deux modèles, sur émulateur.
-- [ ] Le rapport tranche : chemin de chargement retenu, nombre de threads, cibles atteignables ou non,
+- [x] Cosinus ≥ 0,99 avec les vecteurs de référence, pour les deux modèles, sur émulateur.
+      (≥ 0,997 sur les trois niveaux d'API.)
+- [x] Le rapport tranche : chemin de chargement retenu, nombre de threads, cibles atteignables ou non,
       et si le modèle `fr` se comporte comme attendu en français.
+      ([rapport S4](../prototypes/S4-embeddings.md) : copie puis chemin ; 2 threads ; cibles atteignables ; `fr` conservé.)
 
 **Validation manuelle** — mêmes mesures sur le téléphone de test.
 
@@ -264,7 +268,7 @@ réussies ; résultat consigné dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01 | `tools/model`, `testdata`, `engine:embedding` | [embeddings §2, §3.2, §5.2](../specs/embeddings.md) · [tests §5](../06-qualite-tests-ci.md#5-jeux-de-référence) |
+| Fait | M0-01 | `tools/model`, `testdata`, `engine:embedding` | [embeddings §2, §3.2, §5.2](../specs/embeddings.md) · [tests §5](../06-qualite-tests-ci.md#5-jeux-de-référence) |
 
 **À faire**
 
@@ -282,8 +286,10 @@ réussies ; résultat consigné dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] `python tools/model/build_model.py --model fr --install` et `--model multi` produisent des
+- [x] `python tools/model/build_model.py --model fr --install` et `--model multi` produisent des
       artefacts conformes à `model.lock.json` ; tailles relevées (cibles : environ 36 Mo et 118 Mo).
-- [ ] Le contrôle de cosinus de la spec §2 passe pour les deux modèles (celui sur le jeu d'évaluation
+      (36,4 Mo et 118,1 Mo ; [spec §2](../specs/embeddings.md).)
+- [x] Le contrôle de cosinus de la spec §2 passe pour les deux modèles (celui sur le jeu d'évaluation
       arrive avec M5-07) ; les fichiers de référence sont committés avec leurs empreintes.
-- [ ] Aucun fichier de modèle, de vocabulaire binaire ni d'archive `.smpack` n'est suivi par git.
+      (0,9887 et 0,9888.)
+- [x] Aucun fichier de modèle, de vocabulaire binaire ni d'archive `.smpack` n'est suivi par git.

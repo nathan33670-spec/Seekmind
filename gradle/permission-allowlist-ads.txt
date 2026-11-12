@@ -1,0 +1,13 @@
+# Permissions allowed in the merged release manifest of the `ads` variant (architecture §10.3, ADR-0009).
+# ACCESS_ADSERVICES_ATTRIBUTION and ACCESS_ADSERVICES_TOPICS are deliberately absent: they are removed.
+${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION   # androidx.core
+android.permission.USE_BIOMETRIC                            # androidx.biometric (M6-07)
+android.permission.USE_FINGERPRINT                          # androidx.biometric (M6-07)
+android.permission.WAKE_LOCK                                # WorkManager
+android.permission.RECEIVE_BOOT_COMPLETED                   # WorkManager
+android.permission.FOREGROUND_SERVICE                       # WorkManager
+android.permission.FOREGROUND_SERVICE_DATA_SYNC             # Play Asset Delivery (M4-07)
+android.permission.ACCESS_NETWORK_STATE                     # WorkManager, ads SDK
+android.permission.INTERNET                                 # ads SDK only (:engine:ads, M8-03)
+com.google.android.gms.permission.AD_ID                     # ads SDK (M8-03)
+android.permission.ACCESS_ADSERVICES_AD_ID                  # ads SDK (M8-03)

@@ -55,7 +55,8 @@ try {
 
 - Si le plus grand côté dépasse 1 600 px, l'image est réduite à 1 600 px avant l'OCR.
 - Le système impose un intervalle minimal entre deux captures
-  (`ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT`). Un limiteur interne garantit au moins 1 000 ms entre
+  (`ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT`) : 1 000 ms mesurés sous Android 11, 500 ms à partir
+  d'Android 14 ([prototype S3](../prototypes/S3-accessibilite.md)). Un limiteur interne garantit au moins 1 000 ms entre
   deux demandes ; au-delà, `RateLimited`.
 - **Interdits** (INV-03) : `Bitmap.compress`, écriture de fichier, `MediaStore`, cache, passage de
   l'image à un autre module. Le bitmap ne sort jamais de `block`.
@@ -113,8 +114,12 @@ data class OcrOutcome(val lines: List<OcrLine>, val durationMs: Long)
 data class OcrLine(val text: String, val bounds: IntRect, val confidence: Float?)
 ```
 
-- Bibliothèque : `com.google.mlkit:text-recognition` (modèle **embarqué**, script latin). La variante
-  `play-services-mlkit-text-recognition`, qui télécharge son modèle, est interdite.
+- Bibliothèque : `com.google.mlkit:text-recognition` (modèle **embarqué**, script latin). Elle tire
+  `com.google.android.gms:play-services-mlkit-text-recognition`, qui porte l'API publique
+  (`TextRecognizerOptions`) ; l'artefact embarqué fournit le module local (modèle et bibliothèque
+  native), qui est celui chargé. Est interdit : déclarer `play-services-mlkit-text-recognition` **sans**
+  l'artefact embarqué, ou déclarer la méta-donnée `com.google.mlkit.vision.DEPENDENCIES` (téléchargement
+  du modèle par les services Play).
 - Un seul `TextRecognizer` pour le processus, fermé à la déconnexion du service.
 - La `Task` de ML Kit est adaptée en fonction suspendue par `suspendCancellableCoroutine` (pas de
   dépendance supplémentaire).
@@ -129,16 +134,22 @@ statistiques d'usage à Google. SeekMind n'en veut dans aucune variante :
 - variante `ads` : la permission existe pour la publicité ; laisser ML Kit s'en servir romprait le
   silence réseau (EF-MON-10) et l'absence de télémétrie (INV-08).
 
-Le prototype **M0-07** établit le réglage retenu, avec la preuve (100 reconnaissances sur installation
-neuve, aucun plantage, aucune erreur fatale dans le journal système, aucun octet émis) :
+Réglage retenu, établi par le [prototype S2](../prototypes/S2-mlkit-sans-telemetrie.md) : **option B**,
+dans les deux variantes. Le manifeste commun retire, par `tools:node="remove"`, les trois composants de
+transport : `TransportBackendDiscovery`, `JobInfoSchedulerService` et
+`AlarmManagerSchedulerBroadcastReceiver`. Sans `TransportBackendDiscovery`, aucun service d'envoi n'est
+enregistré : les statistiques de ML Kit sont écartées avant toute planification.
 
-- **Option A** — variante `offline` seulement : retirer la permission ; l'envoi échoue silencieusement.
-- **Option B** — les deux variantes : retirer du manifeste les composants de transport
-  (`JobInfoSchedulerService`, `AlarmManagerSchedulerBroadcastReceiver`, `TransportBackendDiscovery`)
-  par `tools:node="remove"`, pour qu'aucun envoi ne soit même planifié. C'est l'option attendue.
+L'option A (retrait de la seule permission `INTERNET`, variante `offline`) a été mesurée et écartée : en
+variante `ads`, ML Kit émettait environ 2 Ko après 100 reconnaissances ; en variante `offline`, l'envoi
+échouait en laissant une quarantaine d'erreurs `TransportRuntime` dans le journal.
 
-Si aucune option n'est stable (risque R-11), le moteur de repli est un modèle de reconnaissance exécuté
-par ONNX Runtime, déjà embarqué ; `OcrEngine` isole ce choix.
+La variante `offline` retire en outre `ACCESS_NETWORK_STATE`, qu'aucun composant restant n'utilise.
+
+Chaque montée de version de ML Kit rejoue le test `MlKitTelemetryPrototypeTest` (aucun octet émis,
+aucune erreur de transport). Si une version future rendait l'option B instable (risque R-11), le moteur
+de repli est un modèle de reconnaissance exécuté par ONNX Runtime, déjà embarqué ; `OcrEngine` isole ce
+choix.
 
 ## 5. Quand lancer l'OCR
 

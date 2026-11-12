@@ -42,7 +42,9 @@ L'application existe en deux variantes du même code : `ads` (publiée, avec pub
 
 **Langues.** Documentation en français. Code, identifiants, commentaires et messages de commit en
 anglais. Titre de PR en anglais (Conventional Commits), description de PR en français (modèle fourni).
-Toute chaîne visible par l'utilisateur est une ressource, fournie en français **et** en anglais.
+Toute chaîne visible par l'utilisateur est une ressource, fournie en français **et** en anglais. La tâche
+`verifyNoHardcodedUiText` (lancée par `lint`) refuse les littéraux dans le code Compose ; la marque
+`// ui-text-ok` en fin de ligne est réservée aux textes non traduisibles (nom de marque) et se justifie en PR.
 
 **Kotlin.** Style officiel Kotlin/Android, vérifié par ktlint. Coroutines et `Flow` ; pas de `GlobalScope`,
 pas de `runBlocking` hors tests. Les dispatchers sont injectés (`core:common`). Pas de singleton mutable
@@ -72,6 +74,8 @@ Disponibles à partir du jalon M0 (les tickets M0 les créent) :
 
 ```bash
 scripts/setup-android-sdk.sh                # installe le SDK Android (une fois par machine)
+python tools/model/build_model.py --model fr --install   # modèle embarqué (une fois ; sinon -PskipModel)
+scripts/doctor.sh                           # vérifie les prérequis et indique comment corriger un manque
 ./gradlew assembleAdsDebug                  # compile la variante publiée
 ./gradlew assembleOfflineDebug              # compile la variante sans réseau
 ./gradlew spotlessApply                     # formate
@@ -79,7 +83,10 @@ scripts/setup-android-sdk.sh                # installe le SDK Android (une fois 
 ./gradlew testAdsDebugUnitTest              # tests JVM
 ./gradlew :app:verifyAdsReleaseManifest :app:verifyOfflineReleaseManifest   # permissions et composants
 ./gradlew :app:verifyDependencies           # listes blanches des dépendances
+./gradlew verifyModuleGraph                 # graphe de modules autorisé
 scripts/check-forbidden-apis.sh             # API interdites (réseau, automatisation, images, logs, ciblage)
+scripts/check-elf-alignment.sh              # alignement 16 Ko des bibliothèques natives (APK release)
+scripts/tests/test-guard-scripts.sh         # tests des scripts de garde-fous
 ./gradlew connectedAdsDebugAndroidTest      # tests instrumentés (émulateur : en CI uniquement)
 ```
 

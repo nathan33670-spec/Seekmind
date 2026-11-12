@@ -1,0 +1,58 @@
+# Embedding model sets of tools/model (ticket M0-10, docs/specs/embeddings.md §2).
+# Restores tools/model/out/<id>/ from the cache, keyed on model.lock.json and the tooling; on a miss,
+# builds the sets (each build fails unless it matches model.lock.json) and saves them.
+# With install-fr, copies the `fr` set into the assets of :engine:embedding.
+name: Model artefacts
+description: Restore or build the embedding model sets, checked against model.lock.json.
+
+inputs:
+  models:
+    description: Space-separated model ids (fr, multi).
+    default: fr
+  install-fr:
+    description: Copy the fr set into engine/embedding/src/main/assets/model/fr.
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Restore model sets
+      id: restore
+      uses: actions/cache/restore@v6
+      with:
+        path: |
+          tools/model/out/*/model.onnx
+          tools/model/out/*/vocab.bin
+          tools/model/out/*/MODEL_MANIFEST.json
+        key: model-v1-${{ inputs.models }}-${{ hashFiles('engine/embedding/model.lock.json', 'tools/model/requirements.txt', 'tools/model/*.py') }}
+
+    - name: Set up Python
+      if: steps.restore.outputs.cache-hit != 'true'
+      uses: actions/setup-python@v7
+      with:
+        python-version: "3.13"
+
+    - name: Build model sets
+      if: steps.restore.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        python -m pip install -r tools/model/requirements.txt
+        for model in ${{ inputs.models }}; do python tools/model/build_model.py --model "$model"; done
+
+    - name: Save model sets
+      if: steps.restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: |
+          tools/model/out/*/model.onnx
+          tools/model/out/*/vocab.bin
+          tools/model/out/*/MODEL_MANIFEST.json
+        key: ${{ steps.restore.outputs.cache-primary-key }}
+
+    - name: Install the fr set
+      if: inputs.install-fr == 'true'
+      shell: bash
+      run: |
+        mkdir -p engine/embedding/src/main/assets/model/fr
+        cp tools/model/out/fr/model.onnx tools/model/out/fr/vocab.bin tools/model/out/fr/MODEL_MANIFEST.json \
+          engine/embedding/src/main/assets/model/fr/

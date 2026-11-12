@@ -1,0 +1,83 @@
+# Embedding model tooling (ticket M0-10, docs/specs/embeddings.md §2): rebuilds both model sets from
+# their pinned sources, checks them against model.lock.json, regenerates the reference files of
+# testdata/ and fails if any of them changes. Manual, weekly, and on changes to the tooling.
+name: model
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"
+  pull_request:
+    paths:
+      - tools/model/**
+      - engine/embedding/model.lock.json
+      - testdata/tokenizer_golden_*
+      - testdata/embedding_golden_*
+      - .github/workflows/model.yml
+      - .github/actions/model-artifacts/**
+
+concurrency:
+  group: model-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and verify both models
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Processor
+        run: |
+          grep -m1 "model name" /proc/cpuinfo
+          grep -m1 -o -w -E "avx512_vnni|avx_vnni" /proc/cpuinfo || echo "no VNNI: int8 kernels saturate, vectors compared at the engine tolerance"
+
+      - name: Install the pinned tooling
+        run: python -m pip install -r tools/model/requirements.txt
+
+      # From scratch, without the cache: this is the reproducibility check of model.lock.json.
+      - name: Build fr and multi from their pinned sources
+        run: |
+          python tools/model/build_model.py --model fr
+          python tools/model/build_model.py --model multi
+
+      - name: Regenerate the reference files and source sentences
+        run: |
+          python tools/model/gen_sentences.py
+          for model in fr multi; do
+            python tools/model/gen_tokenizer_golden.py --model "$model"
+            python tools/model/gen_embedding_golden.py --model "$model" --allow-inexact-int8
+          done
+
+      # Token ids must be identical. Vectors are compared by cosine at the engine tolerance (0.99): an
+      # x86 runner without VNNI saturates in its int8 kernels. The committed files are then restored.
+      - name: Compare with the committed references
+        run: |
+          git diff --exit-code -- tools/model/data testdata/tokenizer_golden_fr.jsonl testdata/tokenizer_golden_multi.jsonl
+          python tools/model/compare_embedding_golden.py
+          git checkout -- testdata engine/embedding/model.lock.json
+
+      - name: Tool tests
+        run: python -m pytest tools/model
+
+      - name: Pack the sets
+        run: |
+          python tools/model/pack_model.py --model fr
+          python tools/model/pack_model.py --model multi
+          ls -l tools/model/out/*.smpack
+
+      - name: Save the sets in the cache used by ci and device-tests
+        uses: ./.github/actions/model-artifacts
+        with:
+          models: fr
+          install-fr: "false"

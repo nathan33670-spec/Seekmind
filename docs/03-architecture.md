@@ -263,7 +263,7 @@ retient la combinaison stable la plus récente qui compile et corrige le tableau
 | SDK | `compileSdk` | 37 (plateforme `android-37.0`) |
 | | `targetSdk` | 36 (exigence Google Play depuis le 31 août 2026) |
 | | `minSdk` | 30 |
-| | Build-tools | 37.0.0 |
+| | Build-tools | 37.0.0 (fixé dans le catalogue : sans cela, AGP 9.5.1 télécharge sa version par défaut, 36.0.0) |
 | Interface | Compose BOM | 2026.09.00 (Material 3) |
 | | Activity Compose | 1.13.0 |
 | | Navigation Compose | 2.10.2 |
@@ -289,7 +289,7 @@ retient la combinaison stable la plus récente qui compile et corrige le tableau
 | Tests | JUnit 4.13.2 · Truth 1.4.5 · Turbine 1.2.1 · MockK 1.14.12 · Robolectric 4.17 | |
 | | AndroidX Test runner 1.7.0 · ext-junit 1.3.0 · UI Automator 2.4.1 · Benchmark 1.5.0 | |
 | Qualité | Spotless + ktlint, Android Lint | dernières stables à M0-02 |
-| Outils | Python 3.11+ (`tools/`) | |
+| Outils | Python 3.13+ (`tools/`, versions figées dans `tools/model/requirements.txt`) | |
 
 Bibliothèques **exclues** par décision : tout client HTTP et tout SDK en ligne hors de `engine:ads`,
 Firebase, Play Billing (v2), `sqlite-vec` ([ADR-0005](adr/0005-recherche-vectorielle-en-memoire.md)),
@@ -411,8 +411,11 @@ publicitaires inutiles retirées :
 </application>
 ```
 
-Dans les deux variantes, les composants de télémétrie de ML Kit sont neutralisés selon la conclusion du
-prototype M0-07 ([ocr §4.1](specs/ocr.md)).
+Dans les deux variantes, le manifeste commun retire les trois composants de transport de ML Kit
+(`TransportBackendDiscovery`, `JobInfoSchedulerService`, `AlarmManagerSchedulerBroadcastReceiver`) :
+aucune statistique d'usage n'est planifiée ni émise ([ocr §4.1](specs/ocr.md),
+[prototype S2](prototypes/S2-mlkit-sans-telemetrie.md)). La variante `offline` retire aussi
+`ACCESS_NETWORK_STATE`.
 
 ### 10.3 Permissions admises dans le manifeste fusionné `release`
 
@@ -422,7 +425,7 @@ prototype M0-07 ([ocr §4.1](specs/ocr.md)).
 | `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` | WorkManager | Admises | Admises |
 | `FOREGROUND_SERVICE_DATA_SYNC` | Play Asset Delivery (packs de langue) | Admise | Admise |
 | `<applicationId>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | `androidx.core` | Admise | Admise |
-| `ACCESS_NETWORK_STATE` | WorkManager, datatransport, SDK publicitaire | Tolérée ; objectif : la retirer (M0-07) | Admise |
+| `ACCESS_NETWORK_STATE` | WorkManager, datatransport, SDK publicitaire | **Interdite** (retirée, prototype S2) | Admise |
 | `INTERNET` | SDK publicitaire | **Interdite — build en échec** | Admise |
 | `com.google.android.gms.permission.AD_ID`, `ACCESS_ADSERVICES_AD_ID` | SDK publicitaire | Interdites | Admises |
 | `ACCESS_ADSERVICES_ATTRIBUTION`, `ACCESS_ADSERVICES_TOPICS` | SDK publicitaire | Interdites | **Interdites** (retirées) |
@@ -433,13 +436,13 @@ prototype M0-07 ([ocr §4.1](specs/ocr.md)).
 
 | Garde-fou | Vérifie | Créé par |
 |---|---|---|
-| `:app:verifyAdsReleaseManifest`, `:app:verifyOfflineReleaseManifest` | Permissions (§10.3) par variante, composants exportés (INV-12), `allowBackup`, capacités du service d'accessibilité (uniquement `canRetrieveWindowContent` et `canTakeScreenshot`) | M0-04 |
+| `:app:verifyAdsReleaseManifest`, `:app:verifyOfflineReleaseManifest` | Permissions (§10.3) par variante (`gradle/permission-allowlist-*.txt`), composants exportés (INV-12, `gradle/exported-allowlist.txt` : un composant de bibliothèque n'y est admis que protégé par une permission système, comme `ProfileInstallReceiver` derrière `DUMP`), `allowBackup`, capacités du service d'accessibilité (uniquement `canRetrieveWindowContent` et `canTakeScreenshot`) | M0-04 |
 | `scripts/check-forbidden-apis.sh` | Motifs interdits dans les sources hors tests : API réseau et SDK en ligne **hors de `engine/ads`**, `WebView`, `MediaProjection`, `performGlobalAction`, `performAction(`, `dispatchGesture`, `GestureDescription`, `Bitmap.compress`, `MediaStore`, `android.util.Log` hors `core:common` ; dans `engine/ads` : `addKeyword`, `setContentUrl`, `setNeighboringContentUrls`, `addCustomTargeting` | M0-04, M8-03 |
-| `:app:verifyDependencies` | Dépendances d'exécution `release` de chaque variante ⊆ sa liste blanche (`gradle/dependency-allowlist-ads.txt`, `-offline.txt`) | M0-04 |
-| Plugin de convention | Graphe de modules du §3.2, dont l'isolement de `engine:ads` et son absence de la variante `offline` | M0-04 |
-| `scripts/check-elf-alignment.sh` | Alignement 16 Ko des `.so` de l'APK `release` | M0-04 |
+| `:app:verifyDependencies` | Dépendances d'exécution `release` de chaque variante ⊆ sa liste blanche (`gradle/dependency-allowlist-ads.txt`, `-offline.txt` ; groupes AndroidX, Kotlin et JetBrains admis en bloc, bibliothèques tierces une par une) | M0-04 |
+| `:verifyModuleGraph` | Graphe de modules du §3.2, dont l'isolement de `engine:ads` et son absence de la variante `offline` | M0-04 |
+| `scripts/check-elf-alignment.sh` | Alignement 16 Ko des `.so` 64 bits de l'APK `release` (les bibliothèques 32 bits sont signalées, pas refusées : les pages de 16 Ko n'existent qu'en 64 bits) | M0-04, M0-07 |
 | `NetworkSilenceTest` | Aucun octet émis par l'application tant qu'aucune publicité n'est demandée (variante `ads`) | M8-03 |
-| Lint | Chaînes non traduites, texte en dur dans l'interface | M0-02 |
+| Lint + `verifyNoHardcodedUiText` | Chaînes non traduites (`MissingTranslation`, `ExtraTranslation`), texte en dur dans les layouts (`HardcodedText`) et dans le code Compose (tâche dédiée, exécutée par `lint` : Android Lint ne couvre pas Compose) | M0-02 |
 
 ## 11. Erreurs et journalisation
 

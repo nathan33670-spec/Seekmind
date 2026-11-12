@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fixed contents read by end-to-end tests (docs/06-qualite-tests-ci.md §3). Test data: not translated. -->
+<resources>
+    <string name="fixture_plain_marker" translatable="false">SEEKMIND_FIXTURE_PLAIN zanzibar</string>
+    <string name="fixture_plain_fr" translatable="false">Le restaurant italien de la rue Paradis sert des pâtes à la truffe le mardi soir.</string>
+    <string name="fixture_plain_en" translatable="false">The bookshop on Baker Street recommends a novel about lighthouses.</string>
+    <string name="fixture_secure_marker" translatable="false">SEEKMIND_FIXTURE_SECURE confidential</string>
+    <string name="fixture_image_line1" translatable="false">SEEKMIND IMAGE</string>
+    <string name="fixture_image_line2" translatable="false">CODE 4821</string>
+</resources>
