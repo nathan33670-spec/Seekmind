@@ -81,7 +81,7 @@ schéma, plein texte, dépôts, purge, effacement.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-03 | `core:database` | [stockage §4, §5](../specs/stockage.md) |
+| Fait | M1-03 | `core:database` | [stockage §4, §5](../specs/stockage.md) |
 
 **À faire**
 
@@ -91,12 +91,12 @@ schéma, plein texte, dépôts, purge, effacement.
 
 **Critères d'acceptation**
 
-- [ ] `insert` écrit la capture et ses fragments en une transaction ; un échec n'en laisse aucun.
-- [ ] `touch` ne modifie pas l'index plein texte.
-- [ ] `lexical` : classement attendu sur un petit corpus, filtres de dates et de paquets, insensibilité aux accents.
-- [ ] Suppression : fragments et vecteurs supprimés en cascade ; génération incrémentée.
-- [ ] `pendingChunks` rend les plus récents d'abord ; `saveEmbeddings` passe les fragments à l'état « vectorisé ».
-- [ ] `binaryCodesAfter` pagine dans l'ordre d'insertion des vecteurs.
+- [x] `insert` écrit la capture et ses fragments en une transaction ; un échec n'en laisse aucun.
+- [x] `touch` ne modifie pas l'index plein texte.
+- [x] `lexical` : classement attendu sur un petit corpus, filtres de dates et de paquets, insensibilité aux accents.
+- [x] Suppression : fragments et vecteurs supprimés en cascade ; génération incrémentée.
+- [x] `pendingChunks` rend les plus récents d'abord ; `saveEmbeddings` passe les fragments à l'état « vectorisé ».
+- [x] `binaryCodesAfter` pagine dans l'ordre d'insertion des vecteurs.
 
 ---
 

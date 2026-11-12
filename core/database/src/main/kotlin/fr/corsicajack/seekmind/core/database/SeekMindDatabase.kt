@@ -13,11 +13,13 @@ import fr.corsicajack.seekmind.core.database.schema.MetaEntity
 import fr.corsicajack.seekmind.core.database.schema.MetricDailyEntity
 import fr.corsicajack.seekmind.core.database.schema.SearchHistoryEntity
 import fr.corsicajack.seekmind.core.database.schema.SecureProbeEntity
+import fr.corsicajack.seekmind.core.database.store.CaptureDao
+import fr.corsicajack.seekmind.core.database.store.VectorDao
 
 /**
  * The SeekMind database, schema version 1 (docs/specs/stockage.md §3). Exported schemas live in
  * core/database/schemas/; every new version adds a [Migration] to [MIGRATIONS] and a MigrationTestHelper
- * test (spec §7). Opened only through [DatabaseOpener].
+ * test (spec §7). Opened only through [DatabaseOpener]; other modules see a [DatabaseHandle].
  */
 @Database(
     entities = [
@@ -35,7 +37,11 @@ import fr.corsicajack.seekmind.core.database.schema.SecureProbeEntity
     version = SeekMindDatabase.VERSION,
     exportSchema = true,
 )
-abstract class SeekMindDatabase : RoomDatabase() {
+internal abstract class SeekMindDatabase : RoomDatabase() {
+    abstract fun captureDao(): CaptureDao
+
+    abstract fun vectorDao(): VectorDao
+
     companion object {
         const val VERSION = 1
         const val NAME = "seekmind.db"

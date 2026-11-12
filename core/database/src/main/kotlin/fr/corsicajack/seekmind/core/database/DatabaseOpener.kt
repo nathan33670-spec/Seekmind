@@ -14,7 +14,7 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 /** Result of opening the database (docs/specs/stockage.md §2). */
 sealed interface DatabaseState {
-    data class Ready(val database: SeekMindDatabase) : DatabaseState
+    data class Ready(val database: DatabaseHandle) : DatabaseState
 
     /** The interface offers a reset (ENF-REL-02); no repair is ever attempted. */
     data class Unavailable(val reason: UnavailableReason) : DatabaseState
@@ -64,7 +64,7 @@ class DatabaseOpener(
             database.openHelper.writableDatabase
             // The passphrase stays in memory while the database is open: in WAL mode, the connection
             // pool opens further read connections with it.
-            DatabaseState.Ready(database)
+            DatabaseState.Ready(DatabaseHandle(database))
         } catch (error: RuntimeException) {
             SmLog.w(TAG, "database_unreadable", error)
             database.close()
