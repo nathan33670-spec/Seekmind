@@ -56,7 +56,7 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `engine:capture` | [capture §4](../specs/capture.md) · ENF-PERF-02 |
+| Fait | M1-01 | `engine:capture` | [capture §4](../specs/capture.md) · ENF-PERF-02 |
 
 **À faire**
 
@@ -66,10 +66,10 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 **Critères d'acceptation**
 
-- [ ] Un test par règle du §4.2 : nœud invisible, mot de passe (arrêt immédiat), champ de saisie,
+- [x] Un test par règle du §4.2 : nœud invisible, mot de passe (arrêt immédiat), champ de saisie,
       texte, description (cliquable ou non, image), titre, ligne en double.
-- [ ] Un test par budget : nœuds, profondeur, durée souple (résultat partiel), durée dure (abandon), taille du texte.
-- [ ] Tous les nœuds visités sont libérés, y compris en cas d'abandon.
+- [x] Un test par budget : nœuds, profondeur, durée souple (résultat partiel), durée dure (abandon), taille du texte.
+- [x] Tous les nœuds visités sont libérés, y compris en cas d'abandon.
 
 ---
 
