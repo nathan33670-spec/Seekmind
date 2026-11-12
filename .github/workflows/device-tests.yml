@@ -47,7 +47,7 @@ jobs:
 
       # Built before the emulator starts, so that emulator time is spent on tests only.
       - name: Build the fixture app and the test APKs
-        run: ./gradlew -PskipModel :fixtureapp:assembleDebug :engine:capture:assembleDebugAndroidTest
+        run: ./gradlew -PskipModel :fixtureapp:assembleDebug :engine:capture:assembleDebugAndroidTest :core:database:assembleDebugAndroidTest
 
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@v2
@@ -60,7 +60,7 @@ jobs:
           script: |
             adb install -r fixtureapp/build/outputs/apk/debug/fixtureapp-debug.apk
             adb logcat -c
-            ./gradlew -PskipModel :engine:capture:connectedDebugAndroidTest; status=$?; mkdir -p build/device; adb logcat -d -s SeekMindProto:I > build/device/measurements-api${{ matrix.api-level }}.txt; exit $status
+            ./gradlew -PskipModel --continue :engine:capture:connectedDebugAndroidTest :core:database:connectedDebugAndroidTest; status=$?; mkdir -p build/device; adb logcat -d -s SeekMindProto:I > build/device/measurements-api${{ matrix.api-level }}.txt; exit $status
 
       - name: Upload reports and measurements
         if: always()
