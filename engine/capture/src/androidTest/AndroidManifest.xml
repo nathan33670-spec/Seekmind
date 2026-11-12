@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Prototype S3 (ticket M0-08): an accessibility service that lives only in the test APK.
+     It reads nothing on its own; the tests drive it. The product service arrives with M2-01. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <queries>
+        <package android:name="fr.corsicajack.seekmind.fixture" />
+    </queries>
+
+    <application>
+        <service
+            android:name=".prototype.ProbeAccessibilityService"
+            android:exported="true"
+            android:label="@string/probe_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/probe_accessibility_config" />
+        </service>
+    </application>
+</manifest>

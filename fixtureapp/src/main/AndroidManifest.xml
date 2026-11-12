@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Fixture activities are added by ticket M0-08 and the end-to-end tickets. -->
+<!-- Test fixture application (never published). Activities are exported so that instrumented tests
+     running in another package can open them. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
         android:allowBackup="false"
         android:label="@string/fixture_app_name"
-        android:supportsRtl="true" />
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+        <activity android:name=".PlainTextActivity" android:exported="true" />
+        <activity android:name=".SecureActivity" android:exported="true" />
+        <activity android:name=".ImageTextActivity" android:exported="true" />
+    </application>
 </manifest>
