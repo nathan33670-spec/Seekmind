@@ -47,7 +47,7 @@
 | T10 | Lien `seekmind://` forgé par une application ou une page web | Jeton signé ES256 ; récompense liée à un nonce en attente ; activation soumise à confirmation ; entrées bornées et validées | specs/monetisation §3 |
 | T11 | Fraude aux crédits (modification locale, appel direct du service de signature) | État dans la base chiffrée ; limitation de débit et anti-robot côté Worker ; risque résiduel accepté : l'enjeu est commercial, pas de sécurité | R-02 |
 | T12 | Pastille flottante détournée ou gênante | Fenêtre non focalisable, petite, limitée en fréquence, jamais affichée sur un écran rejeté par la porte de confidentialité | specs/actions-intelligentes |
-| T13 | Dépendance compromise | Versions figées, vérification des empreintes par Gradle (`verification-metadata.xml`), mises à jour par PR dédiées | M0-04 |
+| T13 | Dépendance compromise | Versions figées, liste blanche (M0-04), vérification des empreintes par Gradle (`verification-metadata.xml`, M10-05), mises à jour par PR dédiées | INV-11 |
 | T14 | Perte de la clé (réinitialisation du Keystore) | Détection à l'ouverture, message clair, réinitialisation proposée ; aucune tentative de récupération | ENF-REL-02 |
 
 ## 4. Chiffrement
