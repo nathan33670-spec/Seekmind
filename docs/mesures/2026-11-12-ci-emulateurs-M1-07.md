@@ -36,7 +36,7 @@
 3. **Préfixes courts : point à surveiller.** Le préfixe de 3 lettres dépasse la cible en API 30
    (112 ms au p95) et s'en approche en API 34. Un préfixe de 3 lettres parcourt tous les termes qui le
    prolongent. La recherche ajoute `*` au dernier jeton de 3 caractères ou plus
-   ([recherche §3](../specs/recherche.md)) : c'est le cas réel le plus coûteux. Le ticket de la recherche
+   ([recherche §5](../specs/recherche.md)) : c'est le cas réel le plus coûteux. Le ticket de la recherche
    lexicale (M5) mesure à nouveau ce cas sur téléphone. Si la cible n'y est pas tenue, l'option FTS5
    `prefix='3'` (index de préfixes, au prix d'un index plus gros) ou un préfixe minimal de 4 caractères
    sont les deux remèdes ; la spec stockage §3.2 écarte aujourd'hui l'index de préfixes.
