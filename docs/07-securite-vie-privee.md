@@ -60,7 +60,7 @@
 | Moteur | SQLCipher 4 (AES-256, intégrité par page HMAC-SHA512), réglages par défaut |
 | Clé de base | 32 octets tirés de `SecureRandom` au premier lancement, fournie en clé brute (`x'…'`, sans dérivation) |
 | Protection de la clé | Enveloppée en AES-256-GCM par une clé non exportable du Keystore Android (alias `seekmind.db.kek.v1`), StrongBox si disponible, repli sur le TEE |
-| Stockage de la clé enveloppée | `noBackupFilesDir/db.key` : version, IV, texte chiffré |
+| Stockage de la clé enveloppée | `noBackupFilesDir/db.key`, 61 octets : version (1 octet, `1`), IV (12 octets), texte chiffré (32 octets de clé et 16 octets d'étiquette d'authentification). Tout autre contenu est refusé (`DbKeyError.FileCorrupt`). |
 | Authentification utilisateur sur la clé | **Non.** Le service écrit dès que l'écran s'allume et le lot d'embeddings tourne téléphone verrouillé en charge : lier la clé au déverrouillage casserait ces deux usages. Le verrouillage de l'application est une barrière d'interface, pas un chiffrement supplémentaire. |
 | Effacement | « Tout effacer » ferme la base, supprime les fichiers, la clé enveloppée et l'alias du Keystore |
 | `PRAGMA secure_delete` | `FAST` ; purge suivie d'un compactage |

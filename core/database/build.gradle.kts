@@ -4,6 +4,11 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":core:model"))
+
+    testImplementation(libs.junit)
+    testImplementation(libs.truth)
+
     // Prototype S1 (ticket M0-06): Room on SQLCipher with FTS5, in the instrumented tests only.
     // The production stack arrives with the M1 tickets.
     androidTestImplementation(libs.androidx.room.runtime)

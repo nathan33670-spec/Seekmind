@@ -18,3 +18,4 @@ image-compress	all	\.compress\(\s*Bitmap\.CompressFormat|\bBitmap\.CompressForma
 image-mediastore	all	\bMediaStore\b	INV-03: no image is ever written
 image-files	only:engine/ocr,engine/capture	\bFileOutputStream\b|\bImageWriter\b	INV-03: screen captures stay in memory
 android-log	except:core/common	\bandroid\.util\.Log\b|(^|[^A-Za-z0-9_.])Log\.(v|d|i|w|e|wtf)\(	INV-07: log through SmLog (core:common)
+db-key-exposure	only:core/database/src/main/kotlin/fr/corsicajack/seekmind/core/database/key	\bSmLog\b|\bprintln\(|printStackTrace\(|\bBase64\b|toHexString|joinToString|\bString\(|toString\(\)	INV-06/INV-07: the database key is never logged, printed or turned into text
