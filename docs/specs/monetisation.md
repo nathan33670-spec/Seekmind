@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Exigences** | EF-MON-01 à 10, INV-01, INV-08 |
+| **Exigences** | EF-MON-01 à 12, INV-01, INV-08 |
 | **Tickets** | M8-01 à M8-08 |
 | **Voir aussi** | [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) · [ADR-0007](../adr/0007-codes-d-activation-signes.md) · [annexe — récompense par le navigateur](annexe-recompense-navigateur.md) |
 

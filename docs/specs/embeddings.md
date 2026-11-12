@@ -211,8 +211,6 @@ l'avancement. Le changement de modèle demande une confirmation qui annonce ce d
 
 - À la fin de l'accueil, si aucune des langues du téléphone n'est le français.
 - Dans Réglages → Langues de recherche, à tout moment.
-- Sur l'écran de recherche, une seule fois, si l'application constate que plus de la moitié des
-  captures récentes ne sont pas en français (script non latin, ou langue du téléphone différente).
 
 Le texte dit ce que le pack change : « La recherche par mots-clés fonctionne dans toutes les langues.
 Pour chercher aussi *par le sens* dans d'autres langues que le français, ajoutez le pack multilingue (118 Mo). »
