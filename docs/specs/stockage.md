@@ -202,6 +202,7 @@ interface VectorStore {
     suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row>
     suspend fun pendingCount(): Int
     suspend fun resetForModel(modelId: Int)                                   // vide embedding, remet chunk.state à 0, écrit meta.model_id
+    suspend fun indexGeneration(): Long                                       // meta.index_generation, 0 au départ
 }
 
 interface WipeService { suspend fun wipeEverything() }                        // base, clé, alias Keystore
@@ -211,7 +212,24 @@ Auxquels s'ajoutent `AppRuleStore`, `SecureProbeStore`, `MonetizationStore`, `Se
 `MetricsStore` (un par table) et `SettingsRepository` (DataStore).
 
 Toute suppression de captures incrémente `meta.index_generation` dans la même transaction : c'est le
-signal de rechargement de l'index vectoriel en mémoire ([recherche §6](recherche.md)).
+signal de rechargement de l'index vectoriel en mémoire ([recherche §6](recherche.md)). `resetForModel`
+l'incrémente aussi, puisqu'il vide les vecteurs. Une suppression qui ne supprime rien ne l'incrémente pas.
+
+Précisions (M1-04) :
+
+- `deleteByRange(from, to)` supprime toute capture **vue** pendant l'intervalle :
+  `first_seen_at ≤ to` et `last_seen_at ≥ from`. C'est le choix le plus protecteur : un écran affiché
+  pendant la période à effacer disparaît, même s'il avait été vu avant.
+- `page` : curseur strict sur `last_seen_at` ; l'aperçu (`CaptureSummary.preview`) est fait des
+  160 premiers caractères du texte.
+- `pendingChunks` : fragments en attente par identifiant décroissant (derniers insérés d'abord), avec le
+  texte du fragment découpé en Kotlin dans `capture.text`. Les positions sont des indices de `String`
+  (UTF-16), que `substr` de SQLite ne connaît pas.
+- `markFailed` : `attempts + 1`, état « en échec » à `IndexConfig.maxAttempts`.
+- `stats().sizeBytes` : taille logique, `page_count × page_size`.
+- Types échangés : `NewCapture`, `NewChunk`, `HashRef`, `StorageStats`, `LexicalRow`, `PendingChunk`,
+  `NewEmbedding`, `BinaryRow`, `Int8Row` (paquet `core.database.store`). Les autres modules reçoivent
+  un `DatabaseHandle`, qui donne les dépôts et `close()`, jamais la base Room.
 
 ## 5. Requête lexicale de référence
 

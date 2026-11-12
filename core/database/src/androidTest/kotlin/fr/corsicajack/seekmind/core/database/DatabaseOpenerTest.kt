@@ -62,13 +62,5 @@ class DatabaseOpenerTest {
         assertThat(test.open()).isEqualTo(DatabaseState.Unavailable(UnavailableReason.KEY_INVALID))
     }
 
-    private fun closeAll() {
-        // Closing through delete() would also remove the files: close the instances only.
-        val field = TestDatabase::class.java.getDeclaredField("opened").apply { isAccessible = true }
-        @Suppress("UNCHECKED_CAST")
-        (field.get(test) as MutableList<SeekMindDatabase>).run {
-            forEach { it.close() }
-            clear()
-        }
-    }
+    private fun closeAll() = test.closeAll()
 }

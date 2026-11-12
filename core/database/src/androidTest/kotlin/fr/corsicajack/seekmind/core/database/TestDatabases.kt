@@ -8,22 +8,31 @@ import fr.corsicajack.seekmind.core.database.key.DbKeyStore
 import java.io.File
 
 /** A database of its own for each test: file, key file and Keystore alias derived from [name]. */
-class TestDatabase(val name: String) {
+internal class TestDatabase(val name: String) {
     val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
     val keyStore =
         DbKeyStore(File(context.noBackupFilesDir, "$name.key"), AndroidKeystoreWrapper("seekmind.db.kek.test.$name"))
     val opener = DatabaseOpener(context, keyStore, "$name.db")
-    private val opened = mutableListOf<SeekMindDatabase>()
+    private val opened = mutableListOf<DatabaseHandle>()
 
     fun open(): DatabaseState = opener.open().also { if (it is DatabaseState.Ready) opened += it.database }
 
-    fun ready(): SeekMindDatabase = (open() as? DatabaseState.Ready)?.database ?: error("database not ready")
+    /** The stores of a ready database. */
+    fun handle(): DatabaseHandle = (open() as? DatabaseState.Ready)?.database ?: error("database not ready")
+
+    /** The Room database behind them, for the tests that inspect SQL directly. */
+    fun ready(): SeekMindDatabase = handle().room
+
+    /** Closes the open instances, keeping their files. */
+    fun closeAll() {
+        opened.forEach { it.close() }
+        opened.clear()
+    }
 
     fun file(): File = context.getDatabasePath("$name.db")
 
     fun delete() {
-        opened.forEach { it.close() }
-        opened.clear()
+        closeAll()
         context.deleteDatabase("$name.db")
         keyStore.destroy()
     }
