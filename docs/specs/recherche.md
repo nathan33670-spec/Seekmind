@@ -1,0 +1,276 @@
+# Spec — Recherche (`engine:search`)
+
+| | |
+|---|---|
+| **Exigences** | EF-SRCH-01 à 09, ENF-PERF-03, ENF-PERF-04 |
+| **Dépend de** | `core:database`, `engine:embedding` |
+| **Tickets** | M5-01 à M5-08 |
+| **Voir aussi** | [ADR-0005](../adr/0005-recherche-vectorielle-en-memoire.md) |
+
+## 1. Contrat
+
+```kotlin
+interface SearchEngine {
+    /** Émet d'abord les résultats par mots-clés, puis les résultats hybrides. */
+    fun search(request: SearchRequest): Flow<SearchResults>
+}
+
+data class SearchRequest(
+    val rawQuery: String,
+    val filters: SearchFilters = SearchFilters(),   // filtres choisis par les pastilles de l'interface
+    val limit: Int = 50,
+    val now: Long,
+    val zone: ZoneId,
+)
+
+data class SearchFilters(val range: TimeRange? = null, val packages: Set<String> = emptySet())
+data class TimeRange(val from: Long, val to: Long)                // bornes incluses, époque en ms
+
+data class SearchResults(
+    val stage: Stage,                    // LEXICAL ou HYBRID
+    val parsed: ParsedQuery,
+    val hits: List<SearchHit>,
+    val relaxed: Relaxation?,            // TIME, ALL ou null
+    val semanticAvailable: Boolean,
+)
+
+data class SearchHit(
+    val captureId: Long,
+    val score: Double,
+    val packageName: String,
+    val windowTitle: String?,
+    val url: String?,
+    val firstSeenAt: Long,
+    val lastSeenAt: Long,
+    val snippet: Snippet,                // texte + intervalles à surligner
+    val textSource: Int,
+    val matchedBy: Set<MatchKind>,       // LEXICAL, SEMANTIC
+    val similarCount: Int,               // résultats quasi identiques repliés sous celui-ci
+)
+```
+
+## 2. Analyse de la requête
+
+`QueryParser.parse(raw, now, zone, apps): ParsedQuery`, Kotlin pur.
+
+```kotlin
+data class ParsedQuery(
+    val text: String,                // requête sans les expressions de temps et d'application
+    val tokens: List<String>,        // mots utiles (sans mots vides)
+    val codeTokens: List<String>,    // jetons en forme de code
+    val range: TimeRange?,
+    val rangeLabel: String?,         // « mardi soir », pour l'affichage
+    val packages: Set<String>,
+    val profile: QueryProfile,       // DEFAULT, CODE, NATURAL
+)
+```
+
+Étapes :
+
+1. Mise en forme : espaces réduites, guillemets et apostrophes typographiques normalisés.
+2. Extraction des expressions temporelles (§3), la plus longue d'abord ; l'expression est retirée du texte.
+3. Extraction de l'application (§4) ; l'expression est retirée du texte.
+4. Découpage en mots (mêmes règles que FTS5 : lettres et chiffres Unicode, minuscules, sans diacritiques).
+5. Retrait des mots vides (listes française et anglaise en ressources, environ 150 chacune, incluant
+   les verbes de perception : vu, aperçu, lu, reçu, trouvé, seen, saw, read, got). Si tous les mots sont
+   vides, ils sont tous conservés.
+6. Jeton **en forme de code** : au moins 5 caractères, au moins un chiffre, composé de lettres,
+   chiffres, tirets ou tirets bas (`SUMMER20`, `6A12345678901`, `1Z999AA10123456784`).
+7. Profil : `CODE` s'il existe un jeton en forme de code ; `NATURAL` si la requête compte au moins
+   5 mots utiles ; sinon `DEFAULT`.
+
+Les filtres explicites de `SearchRequest.filters` priment sur ceux extraits du texte.
+
+## 3. Expressions temporelles
+
+Toutes les bornes sont calculées dans le fuseau `zone`, à partir de `now`. Semaine du lundi au dimanche.
+
+| Français | Anglais | Intervalle |
+|---|---|---|
+| aujourd'hui | today | Jour courant |
+| hier | yesterday | Jour précédent |
+| avant-hier | the day before yesterday | Deux jours avant |
+| tout à l'heure | earlier, a moment ago | 6 dernières heures |
+| récemment, dernièrement | recently, lately | 14 derniers jours |
+| lundi … dimanche | monday … sunday | Occurrence la plus récente, jour courant inclus |
+| lundi dernier … | last monday … | Occurrence la plus récente, jour courant exclu |
+| cette semaine | this week | Du lundi au moment présent |
+| la semaine dernière | last week | Semaine précédente |
+| ce week-end | this weekend | Dernier samedi-dimanche commencé |
+| le week-end dernier | last weekend | Samedi-dimanche précédent |
+| ce mois-ci | this month | Du 1er au moment présent |
+| le mois dernier | last month | Mois civil précédent |
+| il y a N jours | N days ago | Le jour correspondant |
+| il y a N semaines | N weeks ago | Fenêtre de 7 jours centrée sur cette date |
+| il y a N mois | N months ago | Fenêtre de 30 jours centrée sur cette date |
+| en janvier … décembre | in january … december | Occurrence la plus récente du mois |
+| le 12 mars, 12 mars 2026 | march 12, 12 march 2026 | Ce jour (année la plus récente si absente) |
+| 12/03, 12/03/2026, 2026-03-12 | idem | Ce jour (ordre jour/mois en français, selon la locale en anglais) |
+
+Moments de la journée, combinables avec un jour (« mardi soir », « hier matin », « this morning ») :
+
+| Français | Anglais | Heures |
+|---|---|---|
+| matin | morning | 05:00 – 12:00 |
+| midi | noon, lunchtime | 11:00 – 14:00 |
+| après-midi | afternoon | 12:00 – 18:00 |
+| soir | evening, tonight | 18:00 – 02:00 le lendemain |
+| nuit | night | 22:00 – 06:00 le lendemain |
+
+« ce matin », « ce soir », « cette nuit » s'appliquent au jour courant. N s'écrit en chiffres ou en
+lettres de un à douze. Les mots de liaison adjacents (« vu », « le », « du », « on », « at ») partent
+avec l'expression. Une capture correspond à l'intervalle si `[first_seen_at, last_seen_at]` le recoupe.
+
+La table complète des cas, avec date de référence et intervalle attendu, est `testdata/temporal_cases.tsv`.
+
+## 4. Filtre d'application
+
+`AppCatalog` fournit, pour chaque application lançable : paquet, libellé, forme de comparaison
+(minuscules, sans diacritiques) et alias (ressource JSON : `insta` → Instagram, `yt` → YouTube,
+`wa` → WhatsApp, `fb` → Facebook, `twitter`/`x` → X, `gmaps` → Google Maps…).
+
+Motif reconnu : une préposition (`sur`, `dans`, `via`, `depuis`, `de l'appli`, `on`, `in`, `from`)
+suivie d'un libellé ou d'un alias, la plus longue correspondance d'abord. Sans préposition, rien n'est
+extrait (« chrome » peut être un mot de la requête) ; les pastilles de l'interface couvrent ce cas.
+
+## 5. Recherche par mots-clés
+
+`LexicalSearcher` construit l'expression FTS5 :
+
+- chaque jeton est mis entre guillemets doubles (guillemets internes doublés) : aucune syntaxe FTS5 ne
+  peut être injectée par la requête ;
+- les jetons sont reliés par `OR` : le classement BM25 favorise les captures qui en contiennent le plus ;
+- le dernier jeton reçoit un `*` de préfixe s'il compte au moins 3 caractères ;
+- un jeton en forme de code est ajouté tel quel **et** en préfixe.
+
+Exemple : `resto italien pâtes truffe` → `"resto" OR "italien" OR "pates" OR "truffe"*`.
+
+Requête SQL, pondération des colonnes et extrait : [stockage §5](stockage.md). Limite : 100 lignes.
+
+## 6. Recherche vectorielle
+
+### 6.1 Index en mémoire
+
+`VectorIndex` tient, pour chaque vecteur, dans des tableaux primitifs parallèles :
+
+| Tableau | Type | Par vecteur |
+|---|---|---|
+| Codes binaires | `LongArray` | 6 × 8 octets |
+| Identifiant de vecteur, identifiant de capture | `LongArray` ×2 | 16 octets |
+| Première et dernière vue | `LongArray` ×2 | 16 octets |
+| Indice de paquet | `IntArray` | 4 octets |
+
+Soit 84 octets par vecteur : 8 Mo pour 100 000 vecteurs, 25 Mo pour 300 000.
+
+- **Chargement** paresseux, au premier usage, hors thread principal, par pages de 5 000 lignes
+  (`VectorStore.binaryCodesAfter`). Cible : ≤ 500 ms pour 100 000 vecteurs.
+- **Mise à jour incrémentale** avant chaque recherche : lecture des vecteurs dont l'identifiant dépasse
+  le dernier chargé.
+- **Invalidation** : si `meta.index_generation` a changé (suppression de captures), rechargement complet.
+- L'index est libéré quand l'interface quitte le premier plan depuis plus de 60 s.
+
+### 6.2 Recherche
+
+1. `q = EmbeddingEngine.embedQuery(parsed.text)` ; code binaire de `q`.
+2. **Présélection** : parcours linéaire ; pour chaque vecteur passant les filtres (dates, paquets),
+   distance de Hamming sur 6 mots (`Long.bitCount`) ; conservation des `binaryTopK` (200) plus proches
+   dans un tas borné.
+3. **Rescore** : lecture des vecteurs int8 des candidats (`VectorStore.int8Vectors`) ; similarité
+   `(Σ q[i] × d[i]) / S`.
+4. Rejet des candidats sous `semanticFloor`.
+5. Regroupement par capture (meilleur fragment) ; conservation des `semanticTopK` (100) meilleures captures.
+
+Le modèle produit des similarités resserrées (souvent entre 0,70 et 0,90, y compris pour des textes sans
+rapport) : `semanticFloor` ne peut pas être fixé a priori. Valeur de départ 0,78, **calibrée au ticket
+M5-07** sur le jeu d'évaluation (plus haute valeur qui ne dégrade pas le Rappel@5).
+
+Si le moteur d'embeddings est indisponible ou qu'aucun vecteur n'existe encore, la recherche se limite
+aux mots-clés et `semanticAvailable = false`.
+
+## 7. Fusion
+
+*Reciprocal Rank Fusion* sur les deux listes ordonnées :
+
+```text
+rrf(d) = w_lex / (k + rang_lex(d)) + w_sem / (k + rang_sem(d))        k = 60
+score(d) = rrf(d) × (1 + 0,15 × exp(−âge_en_jours(d) / 30))
+```
+
+Un document absent d'une liste n'en reçoit aucun terme.
+
+| Profil | `w_lex` | `w_sem` |
+|---|---|---|
+| `DEFAULT` | 1,0 | 1,0 |
+| `CODE` | 2,0 | 0,5 |
+| `NATURAL` | 0,8 | 1,2 |
+
+Puis :
+
+1. Tri par score décroissant ; à égalité, la capture la plus récente d'abord.
+2. **Repli des quasi-doublons** : deux résultats du même paquet dont les SimHash diffèrent d'au plus
+   6 bits sont fusionnés ; le plus récent est conservé, `similarCount` incrémenté.
+3. Troncature à `limit`.
+4. **Extrait** : celui de FTS5 si la capture a correspondu par mots-clés ; sinon les 200 premiers
+   caractères du meilleur fragment sémantique.
+
+## 8. Assouplissement
+
+Si des filtres sont actifs et que la recherche hybride ne rend rien :
+
+1. relancer sans le filtre de dates (filtre d'application conservé) → `relaxed = TIME` ;
+2. si toujours rien, relancer sans aucun filtre → `relaxed = ALL`.
+
+L'interface l'annonce (EF-SRCH-07). Une recherche assouplie qui trouve des résultats est facturée
+normalement.
+
+## 9. Déroulement et émissions
+
+```text
+parsed ← QueryParser.parse(...)
+lancer en parallèle :
+    A) lexical ← LexicalSearcher.search(parsed)        → émettre SearchResults(LEXICAL, …)
+    B) sémantique ← VectorIndex.search(parsed)
+fusion(A, B) → assouplissement éventuel               → émettre SearchResults(HYBRID, …)
+```
+
+- L'annulation du `Flow` (nouvelle requête, écran quitté) interrompt les deux branches.
+- `SearchCache` conserve les 5 derniers résultats hybrides pendant 10 min, indexés par
+  `queryKey` (texte normalisé + filtres). La même clé sert à la gratuité des requêtes répétées
+  ([monetisation §2](monetisation.md)).
+
+## 10. Configuration
+
+```kotlin
+data class SearchConfig(
+    val lexicalLimit: Int = 100,
+    val binaryTopK: Int = 200,
+    val semanticTopK: Int = 100,
+    val semanticFloor: Float = 0.78f,
+    val rrfK: Int = 60,
+    val recencyBoost: Double = 0.15,
+    val recencyHalfLifeDays: Double = 30.0,
+    val collapseMaxHamming: Int = 6,
+    val indexPageSize: Int = 5_000,
+    val cacheSize: Int = 5,
+    val cacheTtlMs: Long = 600_000,
+)
+```
+
+## 11. Évaluation
+
+`./gradlew :engine:search:evalSearch` (JVM, modèle réel) charge `testdata/eval/corpus.jsonl` dans une
+base en mémoire, exécute `testdata/eval/queries.jsonl` et calcule Rappel@1, Rappel@5 et MRR, globalement
+et par type de requête, pour trois configurations : mots-clés seuls, sémantique seule, hybride.
+La tâche échoue sous les seuils de EF-SRCH-01 à 03 et publie `build/reports/search-eval.json`.
+Tout changement de `SearchConfig`, du tokenizer ou du modèle joint le rapport à la PR.
+
+## 12. Tests attendus
+
+- **JVM** : `QueryParser` (mots vides, codes, profils) ; expressions temporelles sur
+  `temporal_cases.tsv` avec horloge et fuseau fixés, y compris changements d'heure et passage d'année ;
+  filtre d'application ; constructeur d'expression FTS5 (échappement, préfixe, entrées hostiles) ;
+  `VectorIndex` (exactitude de la présélection face à une recherche exhaustive sur vecteurs aléatoires,
+  filtres, chargement incrémental, invalidation) ; fusion (tables de rangs, profils, repli, tri).
+- **Instrumenté** : chaîne complète sur une petite base chiffrée avec `FakeEmbeddingEngine`.
+- **Performance** : microbenchmark à 100 000 captures (ENF-PERF-03, 04).
+- **Évaluation** : §11.

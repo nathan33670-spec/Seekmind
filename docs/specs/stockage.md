@@ -1,0 +1,291 @@
+# Spec — Stockage (`core:database`)
+
+| | |
+|---|---|
+| **Exigences** | EF-IDX-01, EF-PRIV-08, EF-PRIV-09, ENF-PERF-05, ENF-STO-01, ENF-REL-02, INV-06 |
+| **Tickets** | M0-06 (prototype), M1-02 à M1-07 |
+| **Voir aussi** | [ADR-0004](../adr/0004-stockage-room-sqlcipher-fts5.md) · [07 §4](../07-securite-vie-privee.md#4-chiffrement) |
+
+## 1. Pile
+
+- **Room 2.8.5** pour les tables ordinaires (entités, DAO, migrations, observation par `Flow`).
+- **SQLCipher 4.20.0** (`net.zetetic:sqlcipher-android`) comme moteur, via
+  `net.zetetic.database.sqlcipher.SupportOpenHelperFactory`. La bibliothèque native est chargée
+  explicitement (`System.loadLibrary("sqlcipher")`) avant toute ouverture.
+- **FTS5** (compilé dans SQLCipher) pour le plein texte. Room ne génère pas de tables FTS5 : la table
+  virtuelle et ses déclencheurs sont créés par SQL brut et interrogés par requêtes brutes.
+- Un seul fichier : `databases/seekmind.db`. Une seule instance de base pour le processus.
+
+## 2. Ouverture
+
+1. `DbKeyStore.getOrCreateKey()` rend la clé de 32 octets (désenveloppée par le Keystore).
+2. La clé est passée à SQLCipher au format clé brute `x'<64 caractères hexadécimaux>'` : pas de
+   dérivation, ouverture immédiate. Le tableau d'octets est effacé après usage.
+3. Room est construit avec la fabrique SQLCipher, en mode WAL. `fallbackToDestructiveMigration` est interdit.
+4. Dans le rappel `onOpen` : `PRAGMA foreign_keys = ON; PRAGMA secure_delete = FAST; PRAGMA temp_store = MEMORY;`.
+5. Dans le rappel `onCreate` : exécution de `FtsSchema.CREATE` (§3.2).
+6. Échec d'ouverture (clé absente, fichier illisible) → `DatabaseState.Unavailable(reason)` ; l'interface
+   propose la réinitialisation (ENF-REL-02). Aucune tentative de réparation.
+
+## 3. Schéma — version 1
+
+Le SQL ci-dessous est normatif. Les entités Room le reproduisent exactement (noms de colonnes en
+`snake_case`, dates en millisecondes depuis l'époque, UTC).
+
+### 3.1 Tables
+
+```sql
+CREATE TABLE capture (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  first_seen_at INTEGER NOT NULL,
+  last_seen_at  INTEGER NOT NULL,
+  seen_count    INTEGER NOT NULL DEFAULT 1,
+  package_name  TEXT    NOT NULL,
+  activity_name TEXT,
+  window_title  TEXT,
+  url           TEXT,
+  text          TEXT    NOT NULL,          -- texte normalisé et masqué, lignes séparées par \n
+  text_source   INTEGER NOT NULL,          -- bits : 1 = arbre, 2 = OCR
+  simhash       INTEGER NOT NULL,          -- empreinte 64 bits (entier signé)
+  char_count    INTEGER NOT NULL
+);
+CREATE INDEX idx_capture_last_seen ON capture(last_seen_at);
+CREATE INDEX idx_capture_pkg_seen  ON capture(package_name, last_seen_at);
+
+CREATE TABLE chunk (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  capture_id   INTEGER NOT NULL REFERENCES capture(id) ON DELETE CASCADE,
+  ordinal      INTEGER NOT NULL,
+  start_offset INTEGER NOT NULL,           -- position dans capture.text
+  end_offset   INTEGER NOT NULL,
+  state        INTEGER NOT NULL DEFAULT 0, -- 0 en attente, 1 vectorisé, 2 en échec
+  attempts     INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX idx_chunk_capture ON chunk(capture_id);
+CREATE INDEX idx_chunk_state   ON chunk(state, id);
+
+CREATE TABLE embedding (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,   -- ordre d'insertion : sert au chargement incrémental
+  chunk_id   INTEGER NOT NULL UNIQUE REFERENCES chunk(id) ON DELETE CASCADE,
+  capture_id INTEGER NOT NULL,
+  model_id   INTEGER NOT NULL,
+  vec_i8     BLOB    NOT NULL,                    -- 384 octets
+  vec_bin    BLOB    NOT NULL                     -- 48 octets
+);
+CREATE INDEX idx_embedding_capture ON embedding(capture_id);
+
+CREATE TABLE app_rule (
+  package_name TEXT PRIMARY KEY,
+  mode         INTEGER NOT NULL,           -- 1 exclue, 2 incluse
+  updated_at   INTEGER NOT NULL
+);
+
+CREATE TABLE secure_probe (
+  package_name  TEXT NOT NULL,
+  activity_name TEXT NOT NULL,             -- '' si inconnue
+  is_secure     INTEGER NOT NULL,
+  probed_at     INTEGER NOT NULL,
+  PRIMARY KEY (package_name, activity_name)
+);
+
+CREATE TABLE credit_ledger (
+  id     INTEGER PRIMARY KEY AUTOINCREMENT,
+  at     INTEGER NOT NULL,
+  delta  INTEGER NOT NULL,
+  reason TEXT    NOT NULL,                 -- WELCOME, REWARD, SEARCH, REFUND
+  ref    TEXT                              -- nonce ou clé de requête
+);
+
+CREATE TABLE reward_request (
+  nonce       TEXT PRIMARY KEY,
+  created_at  INTEGER NOT NULL,
+  state       INTEGER NOT NULL,            -- 0 en attente, 1 utilisée, 2 expirée
+  redeemed_at INTEGER
+);
+
+CREATE TABLE license (
+  id           INTEGER PRIMARY KEY CHECK (id = 1),
+  license_id   TEXT    NOT NULL,
+  plan         TEXT    NOT NULL,
+  token        TEXT    NOT NULL,
+  activated_at INTEGER NOT NULL
+);
+
+CREATE TABLE search_history (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  at           INTEGER NOT NULL,
+  query        TEXT    NOT NULL,
+  query_key    TEXT    NOT NULL,           -- requête normalisée + filtres
+  result_count INTEGER NOT NULL,
+  charged      INTEGER NOT NULL            -- 0 ou 1
+);
+CREATE INDEX idx_search_history_at ON search_history(at);
+
+CREATE TABLE metric_daily (
+  day   TEXT    NOT NULL,                  -- AAAA-MM-JJ, heure locale
+  key   TEXT    NOT NULL,
+  value INTEGER NOT NULL,
+  PRIMARY KEY (day, key)
+);
+
+CREATE TABLE meta (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL                      -- schema_version, model_id, index_generation
+);
+```
+
+### 3.2 Plein texte
+
+```sql
+CREATE VIRTUAL TABLE capture_fts USING fts5(
+  text, window_title, url,
+  content = 'capture',
+  content_rowid = 'id',
+  tokenize = "unicode61 remove_diacritics 2"
+);
+
+CREATE TRIGGER capture_ai AFTER INSERT ON capture BEGIN
+  INSERT INTO capture_fts(rowid, text, window_title, url)
+  VALUES (new.id, new.text, new.window_title, new.url);
+END;
+
+CREATE TRIGGER capture_ad AFTER DELETE ON capture BEGIN
+  INSERT INTO capture_fts(capture_fts, rowid, text, window_title, url)
+  VALUES ('delete', old.id, old.text, old.window_title, old.url);
+END;
+
+-- Restreint aux colonnes indexées : la mise à jour de last_seen_at ne réindexe rien.
+CREATE TRIGGER capture_au AFTER UPDATE OF text, window_title, url ON capture BEGIN
+  INSERT INTO capture_fts(capture_fts, rowid, text, window_title, url)
+  VALUES ('delete', old.id, old.text, old.window_title, old.url);
+  INSERT INTO capture_fts(rowid, text, window_title, url)
+  VALUES (new.id, new.text, new.window_title, new.url);
+END;
+```
+
+- Table à **contenu externe** : l'index ne duplique pas le texte.
+- `remove_diacritics 2` : « pâtes » et « pates » se correspondent.
+- Pas d'index de préfixes : les requêtes par préfixe parcourent le dictionnaire de termes, ce qui
+  suffit à ce volume et évite de grossir l'index.
+- Le SQL de ce paragraphe vit dans un seul objet Kotlin (`FtsSchema`), utilisé par `onCreate` et par
+  les migrations.
+
+## 4. Interface du module
+
+`core:database` n'expose ni Room ni SQL. Il expose des dépôts suspendus.
+
+```kotlin
+interface CaptureStore {
+    suspend fun insert(capture: NewCapture, chunks: List<NewChunk>): Long     // une transaction
+    suspend fun touch(captureId: Long, seenAt: Long)                          // last_seen_at, seen_count + 1
+    suspend fun recentHashes(packageName: String, limit: Int): List<HashRef>  // id, simhash, first/last_seen_at
+    suspend fun get(captureId: Long): Capture?
+    suspend fun page(before: Long?, packageName: String?, limit: Int): List<CaptureSummary>  // curseur sur last_seen_at
+    suspend fun delete(captureId: Long)
+    suspend fun deleteByPackage(packageName: String)
+    suspend fun deleteByRange(from: Long, to: Long)
+    suspend fun stats(): StorageStats                                         // nombre, taille du fichier, plus ancienne capture
+}
+
+interface SearchStore {
+    suspend fun lexical(match: String, filters: SearchFilters, limit: Int): List<LexicalRow>
+    suspend fun captures(ids: List<Long>): List<Capture>
+}
+
+interface VectorStore {
+    suspend fun pendingChunks(limit: Int): List<PendingChunk>                 // les plus récents d'abord
+    suspend fun saveEmbeddings(rows: List<NewEmbedding>)                      // + chunk.state = 1, une transaction
+    suspend fun markFailed(chunkId: Long)
+    suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow>
+    suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row>
+    suspend fun pendingCount(): Int
+    suspend fun resetForModel(modelId: Int)                                   // vide embedding, remet chunk.state à 0
+}
+
+interface WipeService { suspend fun wipeEverything() }                        // base, clé, alias Keystore
+```
+
+Auxquels s'ajoutent `AppRuleStore`, `SecureProbeStore`, `MonetizationStore`, `SearchHistoryStore`,
+`MetricsStore` (un par table) et `SettingsRepository` (DataStore).
+
+Toute suppression de captures incrémente `meta.index_generation` dans la même transaction : c'est le
+signal de rechargement de l'index vectoriel en mémoire ([recherche §6](recherche.md)).
+
+## 5. Requête lexicale de référence
+
+```sql
+SELECT c.id,
+       bm25(capture_fts, 1.0, 2.0, 0.5)                            AS rank,   -- plus petit = meilleur
+       snippet(capture_fts, 0, char(2), char(3), '…', 24)          AS snip
+FROM capture_fts
+JOIN capture c ON c.id = capture_fts.rowid
+WHERE capture_fts MATCH :match
+  AND (:fromTs IS NULL OR c.last_seen_at  >= :fromTs)
+  AND (:toTs   IS NULL OR c.first_seen_at <= :toTs)
+  AND (:pkgFilter = 0 OR c.package_name IN (:packages))
+ORDER BY rank
+LIMIT :limit;
+```
+
+Les caractères `char(2)` et `char(3)` délimitent les termes à surligner ; ils sont retirés du texte à
+l'ingestion, donc ne peuvent pas apparaître dans une capture.
+
+## 6. Rétention et maintenance
+
+`MaintenanceWorker` : WorkManager, périodique 24 h, batterie non faible. Dans l'ordre :
+
+1. **Âge** : `DELETE FROM capture WHERE last_seen_at < :now − rétention` (sauf rétention illimitée).
+2. **Budget** : tant que la taille de la base dépasse `storageBudgetBytes`, supprimer les 500 captures
+   les plus anciennes.
+3. **Annexes** : `metric_daily` de plus de 30 jours, `search_history` de plus de 90 jours,
+   `reward_request` de plus de 24 h, `secure_probe` périmées.
+4. **Compactage** : si `freelist_count / page_count > 0,25` et que l'appareil est en charge,
+   `PRAGMA wal_checkpoint(TRUNCATE)` puis `VACUUM`.
+5. **Optimisation** : `INSERT INTO capture_fts(capture_fts) VALUES ('optimize')` une fois par semaine.
+
+Sans suppression massive, SQLite réutilise les pages libérées : la taille du fichier se stabilise.
+
+## 7. Migrations
+
+- `exportSchema = true` ; schémas JSON dans `core/database/schemas/`, versionnés.
+- Chaque changement de schéma : incrément de version, objet `Migration`, test `MigrationTestHelper`
+  exécuté avec la fabrique SQLCipher.
+- Les objets hors Room (table FTS5, déclencheurs) sont créés et modifiés par `FtsSchema` ; une migration
+  qui touche `capture` reconstruit l'index (`INSERT INTO capture_fts(capture_fts) VALUES ('rebuild')`).
+
+## 8. Ordres de grandeur
+
+Hypothèse d'un utilisateur intensif : 800 captures par jour, 600 caractères en moyenne.
+
+| Poste | Par jour | À 90 jours |
+|---|---|---|
+| Texte | ~0,5 Mo | ~45 Mo |
+| Index FTS5 | ~0,3 Mo | ~27 Mo |
+| Vecteurs (432 octets par fragment, ~1,2 fragment par capture) | ~0,4 Mo | ~37 Mo |
+| **Total** | **~1,2 Mo** | **~110 Mo** |
+
+## 9. Configuration
+
+```kotlin
+data class StorageConfig(
+    val retentionDays: Int? = 90,                      // null = illimitée
+    val storageBudgetBytes: Long = 500L * 1024 * 1024,
+    val budgetEvictionBatch: Int = 500,
+    val vacuumFreeRatio: Double = 0.25,
+    val historyRetentionDays: Int = 90,
+    val metricsRetentionDays: Int = 30,
+)
+```
+
+## 10. Tests attendus
+
+Tous instrumentés (SQLCipher est natif), sur émulateur en CI.
+
+- Ouverture avec clé ; fichier illisible sans la clé ; `PRAGMA compile_options` contient `ENABLE_FTS5`.
+- Insertion → ligne FTS présente ; suppression → ligne FTS absente ; `touch` → index inchangé.
+- Requête de référence : classement, extrait, filtres de dates et de paquets, diacritiques.
+- Suppression en cascade : fragments et vecteurs disparaissent ; `index_generation` incrémenté.
+- `MaintenanceWorker` avec horloge simulée : âge, budget, annexes.
+- Migrations : chaque version vers la suivante, données conservées.
+- `wipeEverything` : fichiers, clé et alias supprimés ; réouverture → base neuve.
+- Microbenchmark d'insertion (ENF-PERF-05) et de recherche lexicale à 100 000 captures (ENF-PERF-03).
