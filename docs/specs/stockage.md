@@ -18,7 +18,8 @@
 
 ## 2. Ouverture
 
-1. `DbKeyStore.getOrCreateKey()` rend la clé de 32 octets (désenveloppée par le Keystore).
+1. `DbKeyStore.getOrCreateKey(databaseExists)` rend la clé de 32 octets (désenveloppée par le Keystore) ;
+   si la base existe sans fichier de clé, il rend l'erreur `KeyMissing`, jamais une clé neuve.
 2. La clé est passée à SQLCipher au format clé brute `x'<64 caractères hexadécimaux>'` : pas de
    dérivation, ouverture immédiate. Le tableau d'octets est effacé après usage.
 3. Room est construit avec la fabrique SQLCipher, en mode WAL. `fallbackToDestructiveMigration` est interdit.
@@ -31,6 +32,14 @@
 
 Le SQL ci-dessous est normatif. Les entités Room le reproduisent exactement (noms de colonnes en
 `snake_case`, dates en millisecondes depuis l'époque, UTC).
+
+Une clé primaire qui n'est pas `INTEGER` porte `NOT NULL` explicitement : sans lui, SQLite y admet
+`NULL` (comportement hérité), et Room l'ajoute de toute façon. Deux points que Room ne sait pas
+exprimer, et qui sont les seuls écarts admis : la contrainte
+`UNIQUE` de `embedding.chunk_id` devient l'index unique `idx_embedding_chunk` ; la contrainte
+`CHECK (id = 1)` de `license` n'est pas déclarée, et le dépôt n'écrit que la ligne 1. Le test
+`SchemaConformanceTest` exécute le SQL de ce paragraphe et du §3.2, lu dans ce fichier, et compare
+colonne par colonne le schéma obtenu à celui que crée l'application.
 
 ### 3.1 Tables
 
@@ -75,7 +84,7 @@ CREATE TABLE embedding (
 CREATE INDEX idx_embedding_capture ON embedding(capture_id);
 
 CREATE TABLE app_rule (
-  package_name TEXT PRIMARY KEY,
+  package_name TEXT PRIMARY KEY NOT NULL,
   mode         INTEGER NOT NULL,           -- 1 exclue, 2 incluse
   updated_at   INTEGER NOT NULL
 );
@@ -122,7 +131,7 @@ CREATE TABLE metric_daily (
 );
 
 CREATE TABLE meta (
-  key   TEXT PRIMARY KEY,
+  key   TEXT PRIMARY KEY NOT NULL,
   value TEXT NOT NULL                      -- schema_version, model_id (modèle actif), index_generation
 );
 ```

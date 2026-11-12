@@ -31,7 +31,9 @@ androidx.loader:*
 androidx.navigationevent:*
 androidx.profileinstaller:*
 androidx.resourceinspection:*
+androidx.room:*
 androidx.savedstate:*
+androidx.sqlite:*
 androidx.startup:*
 androidx.tracing:*
 androidx.vectordrawable:*
@@ -70,4 +72,5 @@ com.google.mlkit:vision-interfaces                                  # ML Kit (M0
 com.microsoft.onnxruntime:onnxruntime-android                       # ONNX Runtime, embeddings on the CPU (M0-09)
 jakarta.inject:jakarta.inject-api                                   # Dagger
 javax.inject:javax.inject                                           # Dagger
+net.zetetic:sqlcipher-android                                       # SQLCipher, encrypted database with FTS5 (ADR-0004, M1-03)
 org.jspecify:jspecify                                               # AndroidX nullness annotations
