@@ -32,7 +32,7 @@ class StoresTest {
     fun clean() = test.delete()
 
     @Test
-    fun insertWritesTheCaptureAndItsChunksInOneTransaction() = runBlocking {
+    fun insertWritesTheCaptureAndItsChunksInOneTransaction() = runBlocking<Unit> {
         val id = handle.captures.insert(
             capture("un texte de capture assez long"),
             listOf(NewChunk(0, 0, 8), NewChunk(1, 9, 30)),
@@ -61,7 +61,7 @@ class StoresTest {
     }
 
     @Test
-    fun touchUpdatesLastSeenWithoutTouchingTheIndex() = runBlocking {
+    fun touchUpdatesLastSeenWithoutTouchingTheIndex() = runBlocking<Unit> {
         val id = handle.captures.insert(capture("écran revu plus tard", at = 1_000), emptyList())
         val segments = sql.long("SELECT count(*) FROM capture_fts_data")
         handle.captures.touch(id, seenAt = 5_000)
@@ -74,7 +74,7 @@ class StoresTest {
     }
 
     @Test
-    fun lexicalRanksFiltersAndIgnoresAccents() = runBlocking {
+    fun lexicalRanksFiltersAndIgnoresAccents() = runBlocking<Unit> {
         val long = handle.captures.insert(capture("truffe " + List(60) { "mot$it" }.joinToString(" ")), emptyList())
         val short = handle.captures.insert(capture("truffe noire et truffe blanche"), emptyList())
         handle.captures.insert(capture("aucun rapport"), emptyList())
@@ -107,7 +107,7 @@ class StoresTest {
     }
 
     @Test
-    fun capturesKeepsTheOrderOfTheIds() = runBlocking {
+    fun capturesKeepsTheOrderOfTheIds() = runBlocking<Unit> {
         val a = handle.captures.insert(capture("premier"), emptyList())
         val b = handle.captures.insert(capture("second"), emptyList())
         assertThat(handle.search.captures(listOf(b, 999, a)).map { it.id }).containsExactly(b, a).inOrder()
@@ -115,7 +115,7 @@ class StoresTest {
     }
 
     @Test
-    fun deletionCascadesAndBumpsTheGeneration() = runBlocking {
+    fun deletionCascadesAndBumpsTheGeneration() = runBlocking<Unit> {
         assertThat(handle.vectors.indexGeneration()).isEqualTo(0)
         val id = handle.captures.insert(capture("capture avec vecteur"), listOf(NewChunk(0, 0, 7)))
         val chunk = handle.vectors.pendingChunks(10).single()
@@ -133,7 +133,7 @@ class StoresTest {
     }
 
     @Test
-    fun deleteByPackageAndByRange() = runBlocking {
+    fun deleteByPackageAndByRange() = runBlocking<Unit> {
         val mail = handle.captures.insert(capture("courriel", at = 1_000, pkg = "com.example.mail"), emptyList())
         val early = handle.captures.insert(capture("matin", at = 1_000), emptyList())
         val late = handle.captures.insert(capture("soir", at = 9_000), emptyList())
@@ -147,7 +147,7 @@ class StoresTest {
     }
 
     @Test
-    fun pendingChunksNewestFirstAndSaveMarksThemEmbedded() = runBlocking {
+    fun pendingChunksNewestFirstAndSaveMarksThemEmbedded() = runBlocking<Unit> {
         val first = handle.captures.insert(capture("ancien texte", title = "Titre"), listOf(NewChunk(0, 0, 6)))
         val second = handle.captures.insert(capture("récent 🙂 texte"), listOf(NewChunk(0, 0, 9), NewChunk(1, 10, 15)))
         val pending = handle.vectors.pendingChunks(10)
@@ -162,7 +162,7 @@ class StoresTest {
     }
 
     @Test
-    fun aChunkFailsAfterThreeAttempts() = runBlocking {
+    fun aChunkFailsAfterThreeAttempts() = runBlocking<Unit> {
         handle.captures.insert(capture("texte difficile"), listOf(NewChunk(0, 0, 5)))
         val chunk = handle.vectors.pendingChunks(1).single()
         handle.vectors.markFailed(chunk.chunkId)
@@ -174,7 +174,7 @@ class StoresTest {
     }
 
     @Test
-    fun binaryCodesAfterPagesInInsertionOrder() = runBlocking {
+    fun binaryCodesAfterPagesInInsertionOrder() = runBlocking<Unit> {
         val ids = (1..5).map { i ->
             handle.captures.insert(capture("texte $i", at = i * 1_000L), listOf(NewChunk(0, 0, 5)))
         }
@@ -197,7 +197,7 @@ class StoresTest {
     }
 
     @Test
-    fun resetForModelEmptiesTheVectors() = runBlocking {
+    fun resetForModelEmptiesTheVectors() = runBlocking<Unit> {
         val id = handle.captures.insert(capture("texte"), listOf(NewChunk(0, 0, 5)))
         handle.vectors.saveEmbeddings(listOf(embedding(handle.vectors.pendingChunks(1).single().chunkId, id)))
         val generation = handle.vectors.indexGeneration()
@@ -209,7 +209,7 @@ class StoresTest {
     }
 
     @Test
-    fun pageRecentHashesAndStats() = runBlocking {
+    fun pageRecentHashesAndStats() = runBlocking<Unit> {
         val a = handle.captures.insert(capture("un", at = 1_000), emptyList())
         val b = handle.captures.insert(capture("deux", at = 2_000), emptyList())
         val c = handle.captures.insert(capture("trois", at = 3_000, pkg = "com.example.other"), emptyList())
