@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder launcher icon (magnifying glass); final artwork comes with the store listing (M11-01). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M48,32a16,16 0,1 0,0.01 0zM48,37a11,11 0,1 1,-0.01 0zM58.5,61.5l4,-4l13,13l-4,4z" />
+</vector>

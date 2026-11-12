@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window theme only; the UI itself is Compose (core:designsystem, ticket M6-01). -->
+    <style name="Theme.SeekMind" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
