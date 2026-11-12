@@ -48,8 +48,19 @@ Le texte est stocké tel quel (casse et accents conservés) ; FTS5 se charge du 
 5. **Empreinte** : bit `i` à 1 si `v[i] > 0`.
 
 Similarité de deux empreintes : `1 − distance de Hamming / 64`. Seuil de doublon : similarité ≥ 0,85,
-soit **distance ≤ 9**. Le ticket M4-01 vérifie ce seuil sur des paires du corpus d'évaluation
-(mêmes écrans avec une ligne modifiée, écrans voisins d'un défilement) et l'ajuste si nécessaire.
+soit **distance ≤ 9**, confirmé au ticket M4-01 (`SimHashThresholdTest`, écrans synthétiques de
+12 lignes, 2 000 paires par catégorie) :
+
+| Paires | Médiane | p90 | ≤ 9 |
+|---|---|---|---|
+| Écrans identiques | 0 | 0 | 100 % |
+| Une ligne modifiée | 7 | 11 | 77 % |
+| Défilement de 1 à 3 lignes | 9 | 15 | 53 % |
+| Écrans sans rapport du corpus (gabarits partagés) | 25 | 30 | 0 % (minimum 13) |
+| Textes indépendants | 32 | 37 | 0 % (moyenne 31,7) |
+
+Aucun faux doublon ; la marge entre le seuil et le minimum des écrans sans rapport est de 4. Un seuil
+plus haut attraperait plus de défilements au prix de cette marge : il reste à 9.
 
 ## 4. Déduplication
 
