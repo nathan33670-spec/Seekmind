@@ -61,6 +61,38 @@ class StoresTest {
     }
 
     @Test
+    fun insertAllWritesABatchInOneTransaction() = runBlocking {
+        val ids = handle.captures.insertAll(
+            listOf(
+                capture("lot un") to listOf(NewChunk(0, 0, 3)),
+                capture("lot deux") to emptyList(),
+            ),
+        )
+        assertThat(ids).hasSize(2)
+        assertThat(handle.search.captures(ids).map { it.text }).containsExactly("lot un", "lot deux").inOrder()
+        assertThat(sql.long("SELECT count(*) FROM chunk")).isEqualTo(1)
+        sql.execSQL(
+            "CREATE TRIGGER test_fail_second BEFORE INSERT ON capture WHEN new.text = 'échec' BEGIN SELECT RAISE(ABORT, 'test'); END",
+        )
+        try {
+            assertThrows(Exception::class.java) {
+                runBlocking {
+                    handle.captures.insertAll(
+                        listOf(
+                            capture("passe") to emptyList(),
+                            capture("échec") to emptyList(),
+                        ),
+                    )
+                }
+            }
+        } finally {
+            sql.execSQL("DROP TRIGGER test_fail_second")
+        }
+        assertThat(sql.long("SELECT count(*) FROM capture")).isEqualTo(2) // the whole batch was rolled back
+        assertThat(handle.captures.insertAll(emptyList())).isEmpty()
+    }
+
+    @Test
     fun touchUpdatesLastSeenWithoutTouchingTheIndex() = runBlocking {
         val id = handle.captures.insert(capture("écran revu plus tard", at = 1_000), emptyList())
         val segments = sql.long("SELECT count(*) FROM capture_fts_data")

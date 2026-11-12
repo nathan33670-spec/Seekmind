@@ -79,6 +79,9 @@ interface CaptureStore {
     /** The capture, its full-text entry (trigger) and its pending chunks, in one transaction. */
     suspend fun insert(capture: NewCapture, chunks: List<NewChunk>): Long
 
+    /** Several captures and their chunks in one transaction: imports and synthetic databases. */
+    suspend fun insertAll(items: List<Pair<NewCapture, List<NewChunk>>>): List<Long>
+
     /** last_seen_at and seen_count + 1; the full-text index is untouched. */
     suspend fun touch(captureId: Long, seenAt: Long)
 

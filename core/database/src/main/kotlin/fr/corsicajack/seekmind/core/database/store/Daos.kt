@@ -69,6 +69,14 @@ internal abstract class CaptureDao {
         return id
     }
 
+    @Transaction
+    open suspend fun insertAll(items: List<Pair<CaptureEntity, (Long) -> List<ChunkEntity>>>): List<Long> =
+        items.map { (capture, chunks) ->
+            val id = insertCapture(capture)
+            insertChunks(chunks(id))
+            id
+        }
+
     @Query("UPDATE capture SET last_seen_at = :seenAt, seen_count = seen_count + 1 WHERE id = :id")
     abstract suspend fun touch(id: Long, seenAt: Long)
 

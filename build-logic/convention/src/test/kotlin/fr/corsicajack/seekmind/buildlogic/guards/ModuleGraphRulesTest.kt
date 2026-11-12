@@ -66,4 +66,20 @@ class ModuleGraphRulesTest {
             violations(":engine:search|implementation|:core:testing").single().contains("test configurations only"),
         )
     }
+
+    @Test
+    fun `the benchmark module measures core modules only`() {
+        assertEquals(
+            emptyList(),
+            violations(
+                ":benchmark|androidTestImplementation|:core:testing",
+                ":benchmark|implementation|:core:database",
+            ),
+        )
+        assertTrue(
+            violations(
+                ":benchmark|implementation|:engine:search",
+            ).single().contains(":benchmark may only measure core modules"),
+        )
+    }
 }

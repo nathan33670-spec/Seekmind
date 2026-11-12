@@ -147,7 +147,7 @@ schéma, plein texte, dépôts, purge, effacement.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-04 | `core:testing`, `benchmark` | [tests §2, §6](../06-qualite-tests-ci.md) · ENF-PERF-03, ENF-PERF-05 |
+| En cours — mesures de CI à consigner | M1-04 | `core:testing`, `benchmark` | [tests §2, §6](../06-qualite-tests-ci.md) · ENF-PERF-03, ENF-PERF-05 |
 
 **À faire**
 

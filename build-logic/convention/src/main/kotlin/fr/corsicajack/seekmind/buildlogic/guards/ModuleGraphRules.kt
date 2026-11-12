@@ -51,6 +51,9 @@ object ModuleGraphRules {
 
             from == ":fixtureapp" -> ":fixtureapp must stay independent of the product modules"
 
+            // Microbenchmarks of the core modules (ticket M1-07), shipped nowhere.
+            from == ":benchmark" -> if (to.startsWith(":core:")) null else ":benchmark may only measure core modules"
+
             from.startsWith(":feature:") -> when {
                 to.startsWith(
                     ":feature:",

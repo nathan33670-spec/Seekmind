@@ -10,24 +10,38 @@ import fr.corsicajack.seekmind.core.model.SearchFilters
 import fr.corsicajack.seekmind.core.model.config.IndexConfig
 
 internal class RoomCaptureStore(private val dao: CaptureDao) : CaptureStore {
-    override suspend fun insert(capture: NewCapture, chunks: List<NewChunk>): Long = dao.insert(
-        CaptureEntity(
-            firstSeenAt = capture.firstSeenAt,
-            lastSeenAt = capture.lastSeenAt,
-            packageName = capture.packageName,
-            activityName = capture.activityName,
-            windowTitle = capture.windowTitle,
-            url = capture.url,
-            text = capture.text,
-            textSource = capture.textSource,
-            simhash = capture.simhash,
-            charCount = capture.text.length,
-        ),
-    ) { id ->
+    override suspend fun insert(capture: NewCapture, chunks: List<NewChunk>): Long =
+        dao.insert(capture.toEntity(), chunkRows(chunks))
+
+    override suspend fun insertAll(items: List<Pair<NewCapture, List<NewChunk>>>): List<Long> = if (items.isEmpty()) {
+        emptyList()
+    } else {
+        dao.insertAll(
+            items.map { (capture, chunks) ->
+                capture.toEntity() to
+                    chunkRows(chunks)
+            },
+        )
+    }
+
+    private fun chunkRows(chunks: List<NewChunk>): (Long) -> List<ChunkEntity> = { id ->
         chunks.map {
             ChunkEntity(captureId = id, ordinal = it.ordinal, startOffset = it.startOffset, endOffset = it.endOffset)
         }
     }
+
+    private fun NewCapture.toEntity() = CaptureEntity(
+        firstSeenAt = firstSeenAt,
+        lastSeenAt = lastSeenAt,
+        packageName = packageName,
+        activityName = activityName,
+        windowTitle = windowTitle,
+        url = url,
+        text = text,
+        textSource = textSource,
+        simhash = simhash,
+        charCount = text.length,
+    )
 
     override suspend fun touch(captureId: Long, seenAt: Long) = dao.touch(captureId, seenAt)
 

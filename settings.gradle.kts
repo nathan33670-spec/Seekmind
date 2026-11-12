@@ -44,3 +44,6 @@ include(":feature:settings")
 include(":feature:paywall")
 
 include(":fixtureapp")
+
+// Microbenchmarks (ticket M1-07), test tooling like :fixtureapp.
+include(":benchmark")
