@@ -3,19 +3,32 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+android {
+    sourceSets {
+        // Exported schemas, for MigrationTestHelper; the spec, for SchemaConformanceTest.
+        getByName("androidTest").assets.directories.add(file("schemas").path)
+        getByName("androidTest").assets.directories.add(rootProject.file("docs/specs").path)
+    }
+}
+
+ksp {
+    // docs/specs/stockage.md §7: exported schemas are versioned in core/database/schemas/.
+    arg("room.schemaLocation", file("schemas").path)
+    arg("room.generateKotlin", "true")
+}
+
 dependencies {
     implementation(project(":core:model"))
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.sqlite)
+    implementation(libs.sqlcipher.android)
+    ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)
     testImplementation(libs.truth)
 
-    // Prototype S1 (ticket M0-06): Room on SQLCipher with FTS5, in the instrumented tests only.
-    // The production stack arrives with the M1 tickets.
-    androidTestImplementation(libs.androidx.room.runtime)
-    androidTestImplementation(libs.androidx.sqlite)
-    androidTestImplementation(libs.sqlcipher.android)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.truth)
-    kspAndroidTest(libs.androidx.room.compiler)
 }

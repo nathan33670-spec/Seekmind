@@ -59,7 +59,7 @@ schéma, plein texte, dépôts, purge, effacement.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-02 | `core:database` | [stockage §1 à §3, §7](../specs/stockage.md) |
+| Fait | M1-02 | `core:database` | [stockage §1 à §3, §7](../specs/stockage.md) |
 
 **À faire**
 
@@ -70,10 +70,10 @@ schéma, plein texte, dépôts, purge, effacement.
 
 **Critères d'acceptation**
 
-- [ ] Le schéma créé correspond au SQL de la spec (test comparant `sqlite_master`).
-- [ ] Insertion, mise à jour de `last_seen_at` et suppression laissent l'index FTS5 cohérent
+- [x] Le schéma créé correspond au SQL de la spec (test comparant `sqlite_master`).
+- [x] Insertion, mise à jour de `last_seen_at` et suppression laissent l'index FTS5 cohérent
       (`INSERT INTO capture_fts(capture_fts) VALUES('integrity-check')` ne signale rien).
-- [ ] Base illisible → `Unavailable`, sans plantage.
+- [x] Base illisible → `Unavailable`, sans plantage.
 
 ---
 
