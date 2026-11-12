@@ -2,8 +2,10 @@
 
     python tools/model/compare_embedding_golden.py [--min-cosine 0.9999]
 
-Token ids and texts must be identical; vectors may differ in their last decimals from one processor to
-another (int8 kernels of ONNX Runtime), so they are compared by cosine.
+Token ids and texts must be identical. Vectors are compared by cosine, at the tolerance of the engine
+tests (docs/specs/embeddings.md §10): on an x86 processor without VNNI, the u8s8 int8 kernels of ONNX
+Runtime saturate, and vectors differ from the references (made with exact int8 arithmetic, as on ARM)
+by a cosine of about 0.995.
 """
 
 from __future__ import annotations
@@ -42,7 +44,7 @@ def compare(model_id: str, min_cosine: float) -> list[str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--min-cosine", type=float, default=0.9999)
+    parser.add_argument("--min-cosine", type=float, default=0.99)
     args = parser.parse_args()
     problems = [p for model_id in common.MODELS for p in compare(model_id, args.min_cosine)]
     if problems:

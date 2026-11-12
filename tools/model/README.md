@@ -44,5 +44,13 @@ empreintes d'eux-mêmes : ils sont les seuls à écrire ces fichiers.
 
 Manuel, hebdomadaire, et sur toute PR qui touche cet outillage : reconstruit les deux modèles sans
 cache, vérifie qu'ils correspondent au fichier de verrouillage, régénère les jeux de référence (les
-identifiants de jetons doivent être identiques ; les vecteurs, à un cosinus ≥ 0,9999 près, car les
-noyaux int8 varient d'un processeur à l'autre) et alimente le cache que `ci` et `device-tests` restaurent.
+identifiants de jetons doivent être identiques ; les vecteurs, à un cosinus ≥ 0,99 près, la tolérance
+des tests du moteur) et alimente le cache que `ci` et `device-tests` restaurent.
+
+## Arithmétique int8 et vecteurs de référence
+
+Sur un processeur x86 **sans VNNI**, les noyaux int8 (u8s8) d'ONNX Runtime saturent : les vecteurs
+s'écartent de ceux d'un téléphone (arithmétique exacte des instructions ARM) d'un cosinus d'environ
+0,995. `gen_embedding_golden.py` refuse donc de tourner sur un tel processeur ; il faut une machine ARM,
+ou x86 avec AVX-VNNI ou AVX512-VNNI. Le workflow `model`, dont les exécuteurs n'ont pas toujours VNNI,
+ne fait que comparer (`--allow-inexact-int8`).

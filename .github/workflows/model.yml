@@ -37,6 +37,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Processor
+        run: |
+          grep -m1 "model name" /proc/cpuinfo
+          grep -m1 -o -w -E "avx512_vnni|avx_vnni" /proc/cpuinfo || echo "no VNNI: int8 kernels saturate, vectors compared at the engine tolerance"
+
       - name: Install the pinned tooling
         run: python -m pip install -r tools/model/requirements.txt
 
@@ -51,11 +56,11 @@ jobs:
           python tools/model/gen_sentences.py
           for model in fr multi; do
             python tools/model/gen_tokenizer_golden.py --model "$model"
-            python tools/model/gen_embedding_golden.py --model "$model"
+            python tools/model/gen_embedding_golden.py --model "$model" --allow-inexact-int8
           done
 
-      # Token ids must be identical. Vectors may differ in the last decimals from one processor to
-      # another (int8 kernels): they are compared by cosine, then the committed files are restored.
+      # Token ids must be identical. Vectors are compared by cosine at the engine tolerance (0.99): an
+      # x86 runner without VNNI saturates in its int8 kernels. The committed files are then restored.
       - name: Compare with the committed references
         run: |
           git diff --exit-code -- tools/model/data testdata/tokenizer_golden_fr.jsonl testdata/tokenizer_golden_multi.jsonl

@@ -44,7 +44,7 @@ Scripts Python, versions figées dans `tools/model/requirements.txt`. Un jeu d'a
 | `verify.py` | Contrôles de qualité ci-dessous |
 | `pack_model.py --model <id>` | Produit l'archive `.smpack` (§5.2) : ZIP sans compression, entrées `MODEL_MANIFEST.json`, `vocab.bin`, `model.onnx`, date fixe (archive reproductible) |
 | `gen_sentences.py` | Produit les phrases sources versionnées de `tools/model/data/` (générateur déterministe, valeurs fictives) |
-| `compare_embedding_golden.py` | Workflow `model` : compare les vecteurs régénérés aux vecteurs committés (cosinus ≥ 0,9999) |
+| `compare_embedding_golden.py` | Workflow `model` : compare les vecteurs régénérés aux vecteurs committés (identifiants identiques, cosinus ≥ 0,99) |
 
 Quantification : `onnxruntime.quantization.quantize_dynamic(..., weight_type=QuantType.QInt8,
 per_channel=False, reduce_range=False)`.
@@ -63,6 +63,14 @@ donnent les mêmes empreintes.
 Chaque jeu contient `model.onnx`, `vocab.bin` et `MODEL_MANIFEST.json` (identifiant, révision source,
 empreintes des sorties, versions des outils). Les empreintes attendues de `model.onnx` et `vocab.bin`, et
 celles des jeux de référence de `testdata/`, sont versionnées dans `engine/embedding/model.lock.json`.
+
+**Arithmétique int8.** Sur un processeur x86 sans VNNI, les noyaux int8 (u8s8) d'ONNX Runtime saturent :
+les vecteurs s'écartent de ceux d'un téléphone (arithmétique exacte des instructions ARM) d'un cosinus
+d'environ 0,995, mesuré sur un exécuteur GitHub. Les vecteurs de référence de `testdata/` sont donc
+produits sur une machine ARM ou x86 avec VNNI (le générateur refuse les autres), et toute comparaison
+faite sur un exécuteur x86 quelconque (workflow `model`, évaluation de la recherche sur JVM) tolère cet
+écart. `reduce_range=True` éviterait la saturation au prix d'une précision moindre sur les téléphones :
+écarté.
 
 Valeurs relevées à la construction (M0-10) :
 

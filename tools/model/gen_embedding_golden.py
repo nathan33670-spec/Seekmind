@@ -20,6 +20,24 @@ import runtime
 DECIMALS = 6
 
 
+def exact_int8_arithmetic() -> bool:
+    """False on an x86 processor without VNNI, where the u8s8 kernels of ONNX Runtime saturate.
+
+    The references must reflect the exact int8 arithmetic of the phones (ARM dot-product instructions),
+    which x86 offers only with AVX-VNNI or AVX512-VNNI.
+    """
+    import platform
+    from pathlib import Path
+
+    if platform.machine().lower() not in ("x86_64", "amd64"):
+        return True
+    cpuinfo = Path("/proc/cpuinfo")
+    if not cpuinfo.exists():
+        return False
+    flags = cpuinfo.read_text(encoding="utf-8", errors="replace")
+    return "avx512_vnni" in flags or "avx_vnni" in flags
+
+
 def golden(source: common.ModelSource) -> dict:
     if problems := common.check_against_lock(source, source.out_dir):
         raise SystemExit(f"{source.id}: the set does not match model.lock.json: {problems}")
@@ -46,7 +64,13 @@ def golden(source: common.ModelSource) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--model", required=True, choices=sorted(common.MODELS))
+    parser.add_argument("--allow-inexact-int8", action="store_true", help="run on an x86 processor without VNNI (not for committed files)")
     args = parser.parse_args()
+    if not args.allow_inexact_int8 and not exact_int8_arithmetic():
+        raise SystemExit(
+            "this processor has no exact int8 arithmetic (x86 without VNNI): the vectors would differ from those "
+            "of a phone; generate the references on an ARM or VNNI machine, or pass --allow-inexact-int8 to compare only"
+        )
     source = common.model(args.model)
     target = common.TESTDATA / f"embedding_golden_{source.id}.json"
     value = golden(source)
