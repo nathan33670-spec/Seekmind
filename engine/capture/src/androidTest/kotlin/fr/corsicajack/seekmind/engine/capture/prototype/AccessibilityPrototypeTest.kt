@@ -181,22 +181,31 @@ class AccessibilityPrototypeTest {
 
     /**
      * Cold-starts a fixture activity through the shell (`am start -W` returns once it is displayed),
-     * then waits until the service sees that very activity and, when given, its marker text.
+     * then waits until the service sees that very activity and, when given, its marker text. On a
+     * loaded emulator a system dialog can hide the activity: system dialogs are closed and the
+     * activity started again, up to [LAUNCH_ATTEMPTS] times.
      */
     private fun open(activity: String, marker: String?): AccessibilityNodeInfo {
         val className = "$FIXTURE_PACKAGE.$activity"
-        ProbeAccessibilityService.seenWindowClasses.clear()
-        shell("am start -W -S -n $FIXTURE_PACKAGE/$className")
-        var root: AccessibilityNodeInfo? = null
-        waitUntil("$activity on screen") {
-            root = service().rootInActiveWindow
-                ?.takeIf { className in ProbeAccessibilityService.seenWindowClasses }
-                ?.takeIf { it.packageName == FIXTURE_PACKAGE }
-                // A screen without marker (the image screen) may expose no child node at all.
-                ?.takeIf { node -> marker == null || readTree(node).text.any { it.contains(marker) } }
-            root != null
+        repeat(LAUNCH_ATTEMPTS) { attempt ->
+            ProbeAccessibilityService.seenWindowClasses.clear()
+            if (attempt > 0) shell("am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS")
+            shell("am start -W -S -n $FIXTURE_PACKAGE/$className")
+            var root: AccessibilityNodeInfo? = null
+            val shown = poll(TIMEOUT_MS / LAUNCH_ATTEMPTS) {
+                root = service().rootInActiveWindow
+                    ?.takeIf { className in ProbeAccessibilityService.seenWindowClasses }
+                    ?.takeIf { it.packageName == FIXTURE_PACKAGE }
+                    // A screen without marker (the image screen) may expose no child node at all.
+                    ?.takeIf { node -> marker == null || readTree(node).text.any { it.contains(marker) } }
+                root != null
+            }
+            if (shown) {
+                measure("launch_attempts", attempt + 1.0)
+                return root!!
+            }
         }
-        return root!!
+        error("timed out waiting for $activity on screen")
     }
 
     /** Lets the window finish drawing before a screenshot. */
@@ -277,11 +286,17 @@ class AccessibilityPrototypeTest {
     }
 
     private fun waitUntil(what: String, condition: () -> Boolean) {
-        val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
+        check(poll(TIMEOUT_MS, condition)) { "timed out waiting for $what" }
+    }
+
+    /** Polls [condition] every 100 ms; false once [timeoutMs] has elapsed. */
+    private fun poll(timeoutMs: Long, condition: () -> Boolean): Boolean {
+        val deadline = SystemClock.uptimeMillis() + timeoutMs
         while (!condition()) {
-            check(SystemClock.uptimeMillis() < deadline) { "timed out waiting for $what" }
+            if (SystemClock.uptimeMillis() >= deadline) return false
             SystemClock.sleep(100)
         }
+        return true
     }
 
     private fun measure(name: String, value: Double) {
@@ -293,7 +308,8 @@ class AccessibilityPrototypeTest {
         const val PLAIN_MARKER = "SEEKMIND_FIXTURE_PLAIN"
         const val SECURE_MARKER = "SEEKMIND_FIXTURE_SECURE"
         const val TAG = "SeekMindProto"
-        const val TIMEOUT_MS = 15_000L
+        const val TIMEOUT_MS = 30_000L
+        const val LAUNCH_ATTEMPTS = 3
         const val SETTLE_MS = 1_000L
         const val RESET_MS = 3_000L
         const val GRID = 24

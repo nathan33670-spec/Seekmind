@@ -59,8 +59,9 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             adb install -r fixtureapp/build/outputs/apk/debug/fixtureapp-debug.apk
-            adb logcat -c
-            ./gradlew -PskipModel --continue :engine:capture:connectedDebugAndroidTest :core:database:connectedDebugAndroidTest; status=$?; mkdir -p build/device; adb logcat -d -s SeekMindProto:I > build/device/measurements-api${{ matrix.api-level }}.txt; exit $status
+            adb logcat -G 16M; adb logcat -c
+            # One Gradle invocation per module: two suites must never share the emulator at the same time.
+            status=0; for task in :engine:capture:connectedDebugAndroidTest :core:database:connectedDebugAndroidTest; do ./gradlew -PskipModel $task || status=1; done; mkdir -p build/device; adb logcat -d -s SeekMindProto:I > build/device/measurements-api${{ matrix.api-level }}.txt; exit $status
 
       - name: Upload reports and measurements
         if: always()
