@@ -104,7 +104,7 @@ schéma, plein texte, dépôts, purge, effacement.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-03 | `core:database` | [stockage §3.1, §4](../specs/stockage.md) · [capture §7, §8](../specs/capture.md) |
+| Fait | M1-03 | `core:database` | [stockage §3.1, §4](../specs/stockage.md) · [capture §7, §8](../specs/capture.md) |
 
 **À faire**
 
@@ -116,8 +116,8 @@ schéma, plein texte, dépôts, purge, effacement.
 
 **Critères d'acceptation**
 
-- [ ] Chaque dépôt a ses tests instrumentés (lecture, écriture, cas limites).
-- [ ] `SettingsRepository` : valeurs par défaut conformes aux specs ; aucune donnée capturée n'y transite (INV-06).
+- [x] Chaque dépôt a ses tests instrumentés (lecture, écriture, cas limites).
+- [x] `SettingsRepository` : valeurs par défaut conformes aux specs ; aucune donnée capturée n'y transite (INV-06).
 
 ---
 
