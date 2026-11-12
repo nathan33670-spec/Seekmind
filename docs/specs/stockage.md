@@ -208,11 +208,12 @@ signal de rechargement de l'index vectoriel en mémoire ([recherche §6](recherc
 
 ```sql
 SELECT c.id,
-       bm25(capture_fts, 1.0, 2.0, 0.5)                            AS rank,   -- plus petit = meilleur
-       snippet(capture_fts, 0, char(2), char(3), '…', 24)          AS snip
+       rank,                                                       -- plus petit = meilleur
+       snippet(capture_fts, 0, char(2), char(3), '…', 24) AS snip
 FROM capture_fts
-JOIN capture c ON c.id = capture_fts.rowid
+CROSS JOIN capture c ON c.id = capture_fts.rowid
 WHERE capture_fts MATCH :match
+  AND rank MATCH 'bm25(1.0, 2.0, 0.5)'
   AND (:fromTs IS NULL OR c.last_seen_at  >= :fromTs)
   AND (:toTs   IS NULL OR c.first_seen_at <= :toTs)
   AND (:pkgFilter = 0 OR c.package_name IN (:packages))
@@ -222,6 +223,16 @@ LIMIT :limit;
 
 Les caractères `char(2)` et `char(3)` délimitent les termes à surligner ; ils sont retirés du texte à
 l'ingestion, donc ne peuvent pas apparaître dans une capture.
+
+Cette forme est **obligatoire** ([prototype S1](../prototypes/S1-sqlcipher-fts5.md)) :
+
+- `rank MATCH 'bm25(…)'` choisit les poids du classement, et `ORDER BY rank` laisse FTS5 trier
+  lui-même. Les lignes sortent dans l'ordre, et `snippet` n'est calculé que pour celles que garde
+  `LIMIT`.
+- `CROSS JOIN` interdit au planificateur de mettre `capture` en boucle externe.
+- La forme naïve, `ORDER BY bm25(capture_fts, …)` avec une jointure ordinaire, calcule l'extrait de
+  **chaque** ligne trouvée avant le tri. Sur 10 000 captures, un mot fréquent y coûte 100 à 190 ms au
+  p95, contre 9 ms pour la forme ci-dessus ; un préfixe, 120 à 145 ms contre 22 à 27 ms.
 
 ## 6. Rétention et maintenance
 
@@ -276,7 +287,8 @@ Tous instrumentés (SQLCipher est natif), sur émulateur en CI.
 
 - Ouverture avec clé ; fichier illisible sans la clé ; `PRAGMA compile_options` contient `ENABLE_FTS5`.
 - Insertion → ligne FTS présente ; suppression → ligne FTS absente ; `touch` → index inchangé.
-- Requête de référence : classement, extrait, filtres de dates et de paquets, diacritiques.
+- Requête de référence : classement, extrait, filtres de dates et de paquets, diacritiques ; mêmes rangs
+  que la forme naïve `ORDER BY bm25(…)` sur un jeu de requêtes.
 - Suppression en cascade : fragments et vecteurs disparaissent ; `index_generation` incrémenté.
 - `MaintenanceWorker` avec horloge simulée : âge, budget, annexes.
 - Migrations : chaque version vers la suivante, données conservées.
