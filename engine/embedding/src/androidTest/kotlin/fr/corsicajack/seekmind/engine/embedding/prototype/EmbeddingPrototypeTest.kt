@@ -38,20 +38,23 @@ class EmbeddingPrototypeTest {
     @Test
     fun frMatchesTheReferenceVectors() {
         val loaded = loader.open(ModelLocation.Asset(FR_ASSET), intraOpThreads = 2)
-        assertThat(loaded.path).isEqualTo(LoadPath.MEMORY_MAPPED_ASSET)
-        loaded.session.use { checkAgainstGolden(it, "fr") }
+        assertThat(loaded.path).isEqualTo(LoadPath.COPIED_ASSET)
+        loaded.session.use { checkAgainstGolden(it, "fr", label = "fr_copy") }
     }
 
     @Test
-    fun frCopiedFromTheAssetMatchesToo() {
-        val copy = loader.copyAsset(FR_ASSET)
-        try {
-            OrtEnvironment.getEnvironment().createSession(copy.path, OrtSession.SessionOptions()).use {
-                checkAgainstGolden(it, "fr", label = "fr_copy")
-            }
-        } finally {
-            copy.delete()
-        }
+    fun frMappedFromTheAssetMatchesToo() {
+        loader.openMapped(FR_ASSET, intraOpThreads = 2).session.use { checkAgainstGolden(it, "fr") }
+    }
+
+    @Test
+    fun theCopyIsReusedWhileTheManifestIsUnchanged() {
+        val first = loader.copyAsset(FR_ASSET)
+        val stamp = first.lastModified()
+        SystemClock.sleep(1_100)
+        assertThat(loader.copyAsset(FR_ASSET).lastModified()).isEqualTo(stamp)
+        File(first.parentFile, "MODEL_MANIFEST.json").writeText("{}") // as if the application shipped another model
+        assertThat(loader.copyAsset(FR_ASSET).lastModified()).isGreaterThan(stamp)
     }
 
     @Test
@@ -62,15 +65,12 @@ class EmbeddingPrototypeTest {
 
     @Test
     fun measuresFr() {
-        measureLoad("fr_mapped") { loader.open(ModelLocation.Asset(FR_ASSET), it) }
+        measureLoad("fr_mapped") { loader.openMapped(FR_ASSET, it) }
+        File(context.noBackupFilesDir, "model/fr").deleteRecursively()
         val copyStart = SystemClock.elapsedRealtime()
-        val copy = loader.copyAsset(FR_ASSET)
+        loader.copyAsset(FR_ASSET)
         measure("fr_asset_copy_ms", (SystemClock.elapsedRealtime() - copyStart).toDouble())
-        try {
-            measureLoad("fr_copied") { loader.open(ModelLocation.Path(copy), it) }
-        } finally {
-            copy.delete()
-        }
+        measureLoad("fr_copied") { loader.open(ModelLocation.Asset(FR_ASSET), it) }
         measureLatencies("fr") { loader.open(ModelLocation.Asset(FR_ASSET), it).session }
     }
 

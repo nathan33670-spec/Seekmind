@@ -23,9 +23,10 @@ enum class LoadPath { MEMORY_MAPPED_ASSET, COPIED_ASSET, FILE }
 class LoadedSession(val session: OrtSession, val path: LoadPath)
 
 /**
- * Opens an ONNX Runtime session on the CPU (docs/specs/embeddings.md §4): an asset is memory-mapped
- * from the APK, or copied once to `noBackupFilesDir/model/` when it cannot be mapped (compressed entry);
- * a pack is opened by its file path.
+ * Opens an ONNX Runtime session on the CPU (docs/specs/embeddings.md §4). An asset is copied once to
+ * `noBackupFilesDir/model/` and opened by its path: ONNX Runtime copies the weights of a memory-mapped
+ * buffer, which costs twice the model size (prototype S4). Mapping the asset is the fallback when the
+ * copy fails. A pack is opened by its file path.
  */
 class OrtModelLoader(private val context: Context) {
     private val environment: OrtEnvironment = OrtEnvironment.getEnvironment()
@@ -59,20 +60,43 @@ class OrtModelLoader(private val context: Context) {
         }
     }
 
-    /** Copies an asset once to `noBackupFilesDir/model/`, then reuses the copy. */
+    /**
+     * Copies an asset to `noBackupFilesDir/model/` and reuses the copy while the `MODEL_MANIFEST.json`
+     * next to the asset is unchanged; a new application version with another model triggers a new copy.
+     */
     fun copyAsset(path: String): File {
         val target = File(context.noBackupFilesDir, path.removePrefix("model/").let { "model/$it" })
-        if (target.isFile) return target
-        target.parentFile?.mkdirs() ?: throw IOException("no parent for $target")
+        val directory = target.parentFile ?: throw IOException("no parent for $target")
+        val manifestAsset = path.substringBeforeLast('/', "") + "/" + MANIFEST
+        val manifest = runCatching { context.assets.open(manifestAsset).use { it.readBytes() } }.getOrNull()
+        val copiedManifest = File(directory, MANIFEST)
+        if (target.isFile && manifest != null && copiedManifest.isFile &&
+            copiedManifest.readBytes().contentEquals(manifest)
+        ) {
+            return target
+        }
+        if (!directory.isDirectory && !directory.mkdirs()) throw IOException("cannot create $directory")
+        copiedManifest.delete()
         val partial = File(target.path + ".part")
         context.assets.open(path).use { input -> partial.outputStream().use { input.copyTo(it) } }
         if (!partial.renameTo(target)) throw IOException("cannot rename $partial")
+        manifest?.let { copiedManifest.writeBytes(it) }
         return target
     }
+
+    /** Session on the memory-mapped asset: the fallback path, kept public for the measurements. */
+    fun openMapped(path: String, intraOpThreads: Int): LoadedSession = LoadedSession(
+        environment.createSession(mapAsset(path), sessionOptions(intraOpThreads)),
+        LoadPath.MEMORY_MAPPED_ASSET,
+    )
 
     private fun sessionOptions(intraOpThreads: Int) = OrtSession.SessionOptions().apply {
         setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
         setInterOpNumThreads(1)
         setIntraOpNumThreads(intraOpThreads)
+    }
+
+    private companion object {
+        const val MANIFEST = "MODEL_MANIFEST.json"
     }
 }
