@@ -37,7 +37,7 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `engine:capture` | [capture §3](../specs/capture.md) · EF-CAP-01 |
+| Fait | M1-01 | `engine:capture` | [capture §3](../specs/capture.md) · EF-CAP-01 |
 
 **À faire**
 
@@ -47,7 +47,7 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 **Critères d'acceptation**
 
-- [ ] Tests en temps virtuel : délai de calme ; attente maximale sous un flux continu d'événements ;
+- [x] Tests en temps virtuel : délai de calme ; attente maximale sous un flux continu d'événements ;
       intervalle minimal ; un seul déclenchement mémorisé ; doublement puis remise à zéro de l'attente maximale.
 
 ---

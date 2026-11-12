@@ -70,7 +70,7 @@ class Debouncer(private val config: CaptureConfig, private val clock: Clock, pri
 ### 3.2 Ralentissement adaptatif
 
 Quand trois captures consécutives de la même fenêtre sont dédupliquées (rien de nouveau),
-`currentMaxWaitMs()` double, jusqu'à 60 000. Il revient à `maxWaitMs` dès qu'une capture est stockée ou
+`currentMaxWaitMs()` double, puis double encore à chaque nouvelle capture dédupliquée, jusqu'à 60 000. Il revient à `maxWaitMs` dès qu'une capture est stockée ou
 que la fenêtre change. Effet : une vidéo regardée dix minutes coûte une dizaine de lectures, pas soixante-quinze.
 
 ## 4. Lecture de l'arbre
