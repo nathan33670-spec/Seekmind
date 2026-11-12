@@ -41,15 +41,16 @@ class OrtModelLoader(private val context: Context) {
             )
 
             is ModelLocation.Asset -> {
-                val mapped = runCatching { mapAsset(location.path) }.getOrNull()
-                if (mapped != null) {
-                    LoadedSession(environment.createSession(mapped, options), LoadPath.MEMORY_MAPPED_ASSET)
-                } else {
-                    LoadedSession(
-                        environment.createSession(copyAsset(location.path).path, options),
-                        LoadPath.COPIED_ASSET,
+                val copy = try {
+                    copyAsset(location.path)
+                } catch (cause: IOException) {
+                    return LoadedSession(
+                        environment.createSession(mapAsset(location.path), options),
+                        LoadPath.MEMORY_MAPPED_ASSET,
+                        cause,
                     )
                 }
+                LoadedSession(environment.createSession(copy.path, options), LoadPath.COPIED_ASSET)
             }
         }
     }
