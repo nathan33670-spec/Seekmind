@@ -89,7 +89,8 @@ pas modifié.
 - Au plus `maxChunksPerCapture` (4) fragments ; le texte restant est ignoré pour la recherche sémantique
   (il reste trouvable par mots-clés).
 - Chaque fragment est décrit par ses positions `[start, end)` dans le texte de la capture : le texte
-  n'est pas dupliqué en base.
+  n'est pas dupliqué en base. Les fragments sont contigus : chacun garde la fin de ligne qui le termine,
+  si bien que leurs tranches mises bout à bout redonnent exactement le texte couvert.
 
 Texte soumis au modèle pour un fragment : `"passage: " + titre + " · " + fragment`, le titre étant
 `window_title` s'il existe (sinon le préfixe seul).
@@ -101,7 +102,12 @@ lignes `chunk` en état « en attente ». À la sortie de la transaction la capt
 mots-clés (EF-IDX-01).
 
 Ensuite, hors transaction : si des fragments sont en attente, s'assurer que le travail unique
-`embedding-charging` est planifié (§7).
+`embedding-charging` est planifié (§7), par l'interface `EmbeddingScheduler.requestCharging()` ; son
+implémentation WorkManager arrive avec `EmbeddingWorker` (M4-05).
+
+Le cache des empreintes par paquet est vidé par `IngestService.forget()` après toute suppression de
+captures (journal, « tout effacer ») : un nouvel écran ne doit jamais être rattaché à une capture
+supprimée.
 
 ## 7. Calcul différé des vecteurs
 
