@@ -1,0 +1,71 @@
+# Continuous integration of every pull request and of main (ticket M0-03, docs/04-prerequis.md §6).
+# Needs no secret. Instrumented tests run in the separate `device-tests` workflow (ticket M0-08).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build, static analysis and JVM tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Install Android SDK packages
+        run: bash scripts/setup-android-sdk.sh
+
+      # -PskipModel: these tasks do not need the embedding model (docs/specs/embeddings.md §2).
+      - name: Formatting, lint, JVM tests and build of both variants
+        run: >
+          ./gradlew --continue -PskipModel
+          spotlessCheck
+          lint
+          test
+          :build-logic:convention:test
+          assembleAdsDebug assembleOfflineDebug
+          assembleAdsRelease assembleOfflineRelease
+          :fixtureapp:assembleDebug
+
+      - name: Set up Python
+        if: hashFiles('tools/**/requirements*.txt') != ''
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Python tools tests
+        if: hashFiles('tools/**/requirements*.txt') != ''
+        run: |
+          for req in tools/*/requirements*.txt; do pip install -r "$req"; done
+          python -m pytest tools
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports
+          path: |
+            **/build/reports/**
+            **/build/test-results/**
+          if-no-files-found: ignore
+          retention-days: 14
