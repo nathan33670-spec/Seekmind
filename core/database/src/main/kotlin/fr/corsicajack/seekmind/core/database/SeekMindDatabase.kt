@@ -3,6 +3,7 @@ package fr.corsicajack.seekmind.core.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
+import fr.corsicajack.seekmind.core.database.maintenance.MaintenanceDao
 import fr.corsicajack.seekmind.core.database.schema.AppRuleEntity
 import fr.corsicajack.seekmind.core.database.schema.CaptureEntity
 import fr.corsicajack.seekmind.core.database.schema.ChunkEntity
@@ -44,6 +45,8 @@ internal abstract class SeekMindDatabase : RoomDatabase() {
     abstract fun vectorDao(): VectorDao
 
     abstract fun sideDao(): SideDao
+
+    abstract fun maintenanceDao(): MaintenanceDao
 
     companion object {
         const val VERSION = 1

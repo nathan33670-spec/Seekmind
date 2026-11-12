@@ -37,6 +37,18 @@
             </intent-filter>
         </activity>
 
+        <!-- WorkManager is initialised on demand by SeekMindApp, with the worker factory of the Hilt graph. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
         <!-- ML Kit telemetry (docs/specs/ocr.md §4.1, prototype S2): the transport components are
              removed in both variants. Without TransportBackendDiscovery no upload backend is
              registered, so ML Kit's usage logs are dropped before any job or alarm is scheduled.

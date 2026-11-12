@@ -96,6 +96,9 @@ class SettingsRepository(private val store: DataStore<Preferences>, private val 
 
     suspend fun setHistoryEnabled(enabled: Boolean) = store.edit { it[HISTORY_ENABLED] = enabled }
 
+    /** Back to the defaults, consent withdrawn: part of "erase everything". */
+    suspend fun reset() = store.edit { it.clear() }
+
     private fun read(prefs: Preferences): Settings {
         val version = prefs[CONSENT_VERSION]
         val at = prefs[CONSENT_AT]
