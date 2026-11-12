@@ -272,13 +272,24 @@ Cette forme est **obligatoire** ([prototype S1](../prototypes/S1-sqlcipher-fts5.
 `MaintenanceWorker` : WorkManager, périodique 24 h, batterie non faible. Dans l'ordre :
 
 1. **Âge** : `DELETE FROM capture WHERE last_seen_at < :now − rétention` (sauf rétention illimitée).
-2. **Budget** : tant que la taille de la base dépasse `storageBudgetBytes`, supprimer les 500 captures
-   les plus anciennes.
+2. **Budget** : tant que la taille utilisée dépasse `storageBudgetBytes`, supprimer les 500 captures
+   les plus anciennes (par `last_seen_at`), puis optimiser l'index FTS5. La taille utilisée vaut
+   `(page_count − freelist_count) × page_size` : le fichier, lui, ne rétrécit pas après une suppression,
+   et les marques de suppression de FTS5 occupent de la place jusqu'à la fusion des segments.
 3. **Annexes** : `metric_daily` de plus de 30 jours, `search_history` de plus de 90 jours,
    `secure_probe` périmées.
 4. **Compactage** : si `freelist_count / page_count > 0,25` et que l'appareil est en charge,
    `PRAGMA wal_checkpoint(TRUNCATE)` puis `VACUUM`.
-5. **Optimisation** : `INSERT INTO capture_fts(capture_fts) VALUES ('optimize')` une fois par semaine.
+5. **Optimisation** : `INSERT INTO capture_fts(capture_fts) VALUES ('optimize')` une fois par semaine
+   (date de la dernière dans `meta.fts_optimized_at`), et après toute suppression pour budget.
+
+`secure_probe` périmées : sondes de plus de `OcrConfig.probeCacheTtlMs` (24 h). Le travail ne porte
+aucune contrainte de réseau (`NetworkType.NOT_REQUIRED`) : la variante `offline` n'a pas
+`ACCESS_NETWORK_STATE`. Il est planifié au démarrage de l'application (`KEEP`) ; WorkManager y est
+initialisé à la demande, avec la fabrique de workers du graphe Hilt.
+
+« Tout effacer » (`DatabaseWipeService`) ferme la base, supprime ses fichiers (WAL compris), la clé
+enveloppée et l'alias du Keystore, puis remet les réglages à leurs valeurs par défaut.
 
 Sans suppression massive, SQLite réutilise les pages libérées : la taille du fichier se stabilise.
 

@@ -41,6 +41,7 @@ androidx.vectordrawable:*
 androidx.versionedparcelable:*
 androidx.viewpager:*
 androidx.window:*
+androidx.work:*
 org.jetbrains:*
 org.jetbrains.kotlin:*
 org.jetbrains.kotlinx:*

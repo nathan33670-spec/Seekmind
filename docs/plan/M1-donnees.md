@@ -125,7 +125,7 @@ schéma, plein texte, dépôts, purge, effacement.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-04, M1-05 | `core:database` | [stockage §6](../specs/stockage.md) · EF-PRIV-08, EF-PRIV-09 |
+| Fait | M1-04, M1-05 | `core:database` | [stockage §6](../specs/stockage.md) · EF-PRIV-08, EF-PRIV-09 |
 
 **À faire**
 
@@ -135,10 +135,10 @@ schéma, plein texte, dépôts, purge, effacement.
 
 **Critères d'acceptation**
 
-- [ ] Avec une horloge simulée : les captures hors rétention disparaissent ; rétention illimitée → rien n'est supprimé.
-- [ ] Dépassement du budget → suppression des plus anciennes jusqu'au retour sous le budget.
-- [ ] Après `wipeEverything` : aucun fichier de base ni de clé ; la réouverture crée une base neuve.
-- [ ] Aucune tâche WorkManager n'emploie de contrainte de réseau : la variante `offline` n'a pas
+- [x] Avec une horloge simulée : les captures hors rétention disparaissent ; rétention illimitée → rien n'est supprimé.
+- [x] Dépassement du budget → suppression des plus anciennes jusqu'au retour sous le budget.
+- [x] Après `wipeEverything` : aucun fichier de base ni de clé ; la réouverture crée une base neuve.
+- [x] Aucune tâche WorkManager n'emploie de contrainte de réseau : la variante `offline` n'a pas
       `ACCESS_NETWORK_STATE` ([prototype S2](../prototypes/S2-mlkit-sans-telemetrie.md), constat 3).
 
 ---

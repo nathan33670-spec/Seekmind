@@ -39,6 +39,9 @@ object FtsSchema {
     /** Rebuilds the index from `capture`: for a migration that touches `capture` (spec §7). */
     const val REBUILD = "INSERT INTO capture_fts(capture_fts) VALUES ('rebuild')"
 
+    /** Merges the index segments, tombstones included: weekly, and after a mass deletion (spec §6). */
+    const val OPTIMIZE = "INSERT INTO capture_fts(capture_fts) VALUES ('optimize')"
+
     /** Throws an SQLite error if the index does not match `capture` (rank = 1: compare with the content). */
     const val INTEGRITY_CHECK = "INSERT INTO capture_fts(capture_fts, rank) VALUES ('integrity-check', 1)"
 }
