@@ -263,7 +263,7 @@ retient la combinaison stable la plus récente qui compile et corrige le tableau
 | SDK | `compileSdk` | 37 (plateforme `android-37.0`) |
 | | `targetSdk` | 36 (exigence Google Play depuis le 31 août 2026) |
 | | `minSdk` | 30 |
-| | Build-tools | 37.0.0 |
+| | Build-tools | 37.0.0 (fixé dans le catalogue : sans cela, AGP 9.5.1 télécharge sa version par défaut, 36.0.0) |
 | Interface | Compose BOM | 2026.09.00 (Material 3) |
 | | Activity Compose | 1.13.0 |
 | | Navigation Compose | 2.10.2 |

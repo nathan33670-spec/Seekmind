@@ -14,8 +14,15 @@ set -euo pipefail
 ANDROID_HOME="${ANDROID_HOME:-/opt/android-sdk}"
 # Archive « cmdline-tools;latest » (cf. https://developer.android.com/studio#command-line-tools-only)
 CLT_ZIP="${CLT_ZIP:-commandlinetools-linux-16111833_latest.zip}"
-# Doit rester aligné sur compileSdk / buildToolsVersion (docs/03-architecture.md §8)
-PACKAGES=("platform-tools" "platforms;android-37.0" "build-tools;37.0.0")
+
+# Versions lues dans le catalogue Gradle (source unique, docs/03-architecture.md §8).
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+catalog="$repo_root/gradle/libs.versions.toml"
+catalog_version() { sed -n "s/^$1 = \"\(.*\)\"$/\1/p" "$catalog" | head -1; }
+COMPILE_SDK="$(catalog_version compileSdk)"
+BUILD_TOOLS="$(catalog_version buildTools)"
+[ -n "$COMPILE_SDK" ] && [ -n "$BUILD_TOOLS" ] || { echo "Versions introuvables dans $catalog" >&2; exit 1; }
+PACKAGES=("platform-tools" "platforms;android-$COMPILE_SDK.0" "build-tools;$BUILD_TOOLS")
 
 SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
 
@@ -38,7 +45,6 @@ echo "==> Installation : ${PACKAGES[*]}"
 
 # Gradle lit sdk.dir dans local.properties (fichier ignoré par git) quand
 # ANDROID_HOME n'est pas exporté dans le shell qui lance le build.
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [ ! -f "$repo_root/local.properties" ]; then
   echo "sdk.dir=$ANDROID_HOME" > "$repo_root/local.properties"
   echo "==> local.properties créé ($repo_root/local.properties)"

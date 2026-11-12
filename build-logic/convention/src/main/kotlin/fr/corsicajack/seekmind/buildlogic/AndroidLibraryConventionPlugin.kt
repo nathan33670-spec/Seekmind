@@ -13,6 +13,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
         extensions.configure<LibraryExtension> {
             namespace = derivedNamespace
             compileSdk = libs.intVersion("compileSdk")
+            buildToolsVersion = libs.findVersion("buildTools").get().requiredVersion
             defaultConfig {
                 minSdk = libs.intVersion("minSdk")
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

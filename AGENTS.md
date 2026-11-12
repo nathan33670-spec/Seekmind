@@ -74,6 +74,7 @@ Disponibles à partir du jalon M0 (les tickets M0 les créent) :
 
 ```bash
 scripts/setup-android-sdk.sh                # installe le SDK Android (une fois par machine)
+scripts/doctor.sh                           # vérifie les prérequis et indique comment corriger un manque
 ./gradlew assembleAdsDebug                  # compile la variante publiée
 ./gradlew assembleOfflineDebug              # compile la variante sans réseau
 ./gradlew spotlessApply                     # formate

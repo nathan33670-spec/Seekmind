@@ -13,6 +13,7 @@ class AndroidTestConventionPlugin : Plugin<Project> {
         extensions.configure<TestExtension> {
             namespace = derivedNamespace
             compileSdk = libs.intVersion("compileSdk")
+            buildToolsVersion = libs.findVersion("buildTools").get().requiredVersion
             defaultConfig {
                 minSdk = libs.intVersion("minSdk")
                 targetSdk = libs.intVersion("targetSdk")

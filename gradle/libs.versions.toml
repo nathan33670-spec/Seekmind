@@ -6,6 +6,7 @@
 compileSdk = "37"
 targetSdk = "36"
 minSdk = "30"
+buildTools = "37.0.0"
 jvmTarget = "17"
 
 # Build

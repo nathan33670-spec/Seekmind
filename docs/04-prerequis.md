@@ -83,6 +83,8 @@ Les développements sont réalisés par des agents dans des environnements cloud
 - **JDK 17+ et Python 3.11+.**
 - **Le SDK Android.** Le dépôt fournit `scripts/setup-android-sdk.sh` (idempotent, non interactif,
   environ 500 Mo, une minute). Vérifié le 12 novembre 2026 dans un environnement cloud vierge.
+  Il lit les versions de la plateforme et des build-tools dans `gradle/libs.versions.toml`.
+  `scripts/doctor.sh` vérifie ensuite les prérequis et donne la commande qui corrige chaque manque.
   À appeler depuis le script d'initialisation de l'environnement, qui s'exécute un répertoire au-dessus du dépôt :
 
   ```bash

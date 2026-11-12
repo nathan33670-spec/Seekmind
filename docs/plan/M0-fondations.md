@@ -127,7 +127,7 @@ requise) et autorise la fusion automatique.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01 | `scripts` | [prérequis §4, §5](../04-prerequis.md#5-environnement-des-agents-ia) |
+| Fait | M0-01 | `scripts` | [prérequis §4, §5](../04-prerequis.md#5-environnement-des-agents-ia) |
 
 **À faire**
 
@@ -139,8 +139,8 @@ requise) et autorise la fusion automatique.
 
 **Critères d'acceptation**
 
-- [ ] Dans un environnement vierge : `scripts/setup-android-sdk.sh && ./gradlew assembleAdsDebug -PskipModel` réussit.
-- [ ] `scripts/doctor.sh` rend un code de sortie non nul et un message utile pour chaque prérequis manquant.
+- [x] Dans un environnement vierge : `scripts/setup-android-sdk.sh && ./gradlew assembleAdsDebug -PskipModel` réussit.
+- [x] `scripts/doctor.sh` rend un code de sortie non nul et un message utile pour chaque prérequis manquant.
 
 ---
 
