@@ -107,18 +107,34 @@ class Encoding(val inputIds: IntArray, val attentionMask: IntArray)
 
 ### 3.1 Algorithme
 
-1. **Normalisation** (approximation du jeu de règles `nmt_nfkc`) : NFKC ; caractères de contrôle
-   supprimés ; tabulations, retours à la ligne, espaces insécables et espaces de largeur nulle remplacés
-   par une espace ; espaces multiples réduites ; espaces de bord retirées.
+Implémentation : `UnigramTokenizer`, `Vocabulary` et `UnigramNormalizer`, paquet
+`fr.corsicajack.seekmind.engine.embedding.tokenizer`. Le tokenizer est sans état et partageable entre threads.
+
+1. **Normalisation** (approximation du jeu de règles `nmt_nfkc`, établie point de code par point de code
+   contre la référence) :
+   - caractères de contrôle supprimés : U+0001 à U+0008, U+000B, U+000E à U+001F, U+007F, U+008F,
+     U+009F (U+0000 et les autres contrôles C1, dont U+0085, sont conservés, comme par la référence) ;
+   - remplacés par une espace : tabulation, saut de ligne, saut de page, retour chariot, U+1680,
+     U+200B à U+200F (espaces et liants de largeur nulle), U+2028, U+2029, U+2581, U+FEFF, U+FFFD ;
+   - NFKC sur le reste (les espaces insécables, fines et idéographiques deviennent ainsi une espace),
+     sauf pour quelques caractères ajoutés à Unicode après la compilation du jeu de règles, que la
+     référence laisse tels quels (par exemple U+FF5E) ;
+   - toute suite d'au moins deux espaces réduite à une seule. Les espaces de bord sont **conservées** :
+     la référence ne les retire pas (une espace finale produit un jeton `▁` isolé).
 2. **Pré-découpage** : chaque espace devient `▁` (U+2581) ; un `▁` est ajouté en tête ; le texte est
-   découpé en mots commençant chacun par `▁`.
+   découpé en mots commençant chacun par `▁`. Un texte vide après normalisation ne donne aucun mot.
 3. **Segmentation** de chaque mot par l'algorithme de Viterbi : parmi tous les découpages en jetons du
-   vocabulaire, retenir celui dont la somme des scores est maximale. Un caractère absent du vocabulaire
-   produit le jeton inconnu (`<unk>`, identifiant 3) avec le score `score minimal du vocabulaire − 10` ;
-   des inconnus consécutifs sont fusionnés en un seul.
+   vocabulaire, retenir celui dont la somme des scores est maximale (parcours et comparaisons stricts
+   identiques à la référence, pour départager les égalités de la même façon). Une position sans jeton
+   d'un seul caractère reçoit le jeton inconnu (`<unk>`, identifiant 3) avec le score
+   `score minimal du vocabulaire − 10` ; des inconnus consécutifs sont fusionnés en un seul, dont le texte
+   est recherché dans le vocabulaire (identifiant trouvé, sinon `<unk>`), comme le fait la référence.
 4. **Identifiants** : la position du jeton dans le vocabulaire. Jetons spéciaux : `<s>` = 0,
-   `<pad>` = 1, `</s>` = 2, `<unk>` = 3.
-5. **Gabarit** : `<s>` + jetons + `</s>`. **Troncature** : au plus `maxTokens`, `</s>` final conservé.
+   `<pad>` = 1, `</s>` = 2, `<unk>` = 3. Ils ne sont jamais reconnus dans le texte : un texte qui
+   contient `</s>` est découpé comme du texte ordinaire (la référence, elle, le transformerait en jeton
+   spécial).
+5. **Gabarit** : `<s>` + jetons + `</s>`. **Troncature** : au plus `maxTokens` (au moins 2), `</s>` final
+   conservé. Les mots étant indépendants, la segmentation s'arrête dès que le budget est atteint.
 6. `attentionMask` : 1 pour chaque jeton.
 
 ### 3.2 Vocabulaire binaire
@@ -130,13 +146,27 @@ pour `fr`, 4,1 Mo pour `multi`.
 Chargement en structures compactes : un tableau d'octets unique, un tableau de positions, un tableau de
 scores, et une table de hachage à adressage ouvert (hachage 64 bits des octets du jeton → identifiant,
 vérification des octets à chaque succès). **Budget mémoire : 16 Mo** pour le plus grand vocabulaire.
-Pas de `HashMap<String, Int>`.
+Pas de `HashMap<String, Int>`. Hachage FNV-1a 64 bits, calculé octet par octet pendant la segmentation ;
+taux de remplissage de la table au plus 1/2 ; les jetons spéciaux (0 à 3) n'y figurent pas. Le lecteur
+refuse un fichier mal formé (magique, longueurs, octets en trop, jetons spéciaux absents de 0 à 3).
+
+Mesures (M4-03, JVM) : structures de 1,0 Mo pour `fr`, 6,4 Mo pour `multi` (8 Mo de croissance du tas
+au chargement).
 
 ### 3.3 Parité
 
 Pour **chaque** modèle, le tokenizer doit produire exactement les mêmes identifiants que la référence
 Python sur au moins **99,5 %** des 1 000 phrases de `testdata/tokenizer_golden_<id>.jsonl`. Les écarts
-restants sont listés dans le rapport de test. Si le seuil n'est pas atteint (risque R-12), repli :
+restants sont listés dans le rapport de test (`build/reports/tokenizer/parity-<id>.txt`). Les tests JVM lisent
+le `vocab.bin` produit par `tools/model` (`tools/model/out/<id>/`, ou l'asset installé pour `fr`) et
+vérifient son empreinte contre `model.lock.json` ; sans vocabulaire, ils sont ignorés en local et
+échouent en CI. Résultat (M4-03) : 1 000/1 000 phrases identiques pour chacun des deux modèles.
+
+Limite connue de l'approximation : le jeu `nmt_nfkc` traite certaines suites de diacritiques combinants
+par graphème, sans le réordonnancement canonique de NFKC (par exemple `é` + U+0330 reste tel quel, et
+`e` + U+0330 + U+0301 devient U+1E1B seul). Sur 20 000 phrases altérées par insertion aléatoire de
+caractères rares, 0,2 % (`fr`) et 0,3 % (`multi`) divergent, toutes pour cette raison (diacritiques
+combinants isolés, jamos hangûl) ; aucun texte réaliste n'est concerné. Si le seuil n'est pas atteint (risque R-12), repli :
 embarquer une bibliothèque native de tokenisation, par un ADR.
 
 ## 4. Moteur
