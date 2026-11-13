@@ -163,10 +163,13 @@ class RoutingDeviceTest {
         val p99Ms = durations[(EVENTS * 99) / 100] / 1_000_000.0
         Log.i(TAG, "m2_01_router_event_p99_ms=$p99Ms")
         Log.i(TAG, "m2_01_strict_mode_violations=${violations.size}")
+        Log.i(TAG, "m2_01_router_event_p99_within_${BUDGET_MS.toInt()}ms=${p99Ms < BUDGET_MS}")
         assertThat(violations).isEmpty()
         assertThat(connection.connected.value).isFalse()
-        // Architecture §5: at most 2 ms per event on the main thread.
-        assertThat(p99Ms).isLessThan(2.0)
+        // Architecture §5: at most 2 ms per event on the main thread. Measured and logged only until
+        // ticket M10-04, which enforces it on a phone: the shared CI emulators give 2 to 9 ms at the 99th
+        // percentile with the same code (project owner's decision, 13 November 2026). StrictMode above
+        // stays blocking: no disk or database access on the main thread.
     }
 
     private fun shell(command: String) {
@@ -182,5 +185,8 @@ class RoutingDeviceTest {
         const val WARMUP_EVENTS = 500
         const val EVENTS = 2_000
         const val SETTLE_MS = 1_000L
+
+        /** Architecture §5, ENF-PERF-01; logged, enforced from ticket M10-04. */
+        const val BUDGET_MS = 2.0
     }
 }
