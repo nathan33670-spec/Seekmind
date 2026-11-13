@@ -23,6 +23,13 @@ data class NewCapture(
 /** A fragment of the capture text, by its positions `[startOffset, endOffset)` (docs/specs/indexation.md §5). */
 data class NewChunk(val ordinal: Int, val startOffset: Int, val endOffset: Int)
 
+/** Position in the journal: the last row of a page. Two captures seen at the same time are ordered by id. */
+data class JournalCursor(val lastSeenAt: Long, val captureId: Long) {
+    companion object {
+        fun after(summary: CaptureSummary) = JournalCursor(summary.lastSeenAt, summary.id)
+    }
+}
+
 /** Deduplication candidate (docs/specs/indexation.md §4). */
 data class HashRef(val captureId: Long, val simhash: Long, val firstSeenAt: Long, val lastSeenAt: Long)
 
@@ -93,8 +100,14 @@ interface CaptureStore {
 
     suspend fun get(captureId: Long): Capture?
 
-    /** Journal page, most recent first: captures last seen strictly before [before] (cursor). */
-    suspend fun page(before: Long?, packageName: String?, limit: Int): List<CaptureSummary>
+    /**
+     * Journal page, most recent first by (last_seen_at, id): the captures after the cursor [before],
+     * built from the last row of the previous page; null for the first page.
+     */
+    suspend fun page(before: JournalCursor?, packageName: String?, limit: Int): List<CaptureSummary>
+
+    /** Packages that have captures, most recently seen first: the application filter of the journal. */
+    suspend fun packages(): List<String>
 
     suspend fun delete(captureId: Long)
 
