@@ -53,7 +53,7 @@ jobs:
 
       # Built before the emulator starts, so that emulator time is spent on tests only.
       - name: Build the fixture app and the test APKs
-        run: ./gradlew :fixtureapp:assembleDebug :engine:capture:assembleDebugAndroidTest :core:database:assembleDebugAndroidTest :engine:embedding:assembleDebugAndroidTest :core:testing:assembleDebugAndroidTest :benchmark:assembleDebugAndroidTest :app:assembleAdsDebugAndroidTest :app:assembleOfflineDebugAndroidTest :app:assembleAdsDebug :app:assembleOfflineDebug
+        run: ./gradlew :fixtureapp:assembleDebug :engine:capture:assembleDebugAndroidTest :engine:ocr:assembleDebugAndroidTest :core:database:assembleDebugAndroidTest :engine:embedding:assembleDebugAndroidTest :core:testing:assembleDebugAndroidTest :benchmark:assembleDebugAndroidTest :app:assembleAdsDebugAndroidTest :app:assembleOfflineDebugAndroidTest :app:assembleAdsDebug :app:assembleOfflineDebug
 
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@v2
@@ -68,7 +68,7 @@ jobs:
             adb shell mkdir -p /data/local/tmp/seekmind/multi && adb push tools/model/out/multi/model.onnx /data/local/tmp/seekmind/multi/model.onnx
             adb logcat -G 16M; adb logcat -c
             # One Gradle invocation per module: two suites must never share the emulator at the same time.
-            status=0; for task in :engine:capture:connectedDebugAndroidTest :core:database:connectedDebugAndroidTest :core:testing:connectedDebugAndroidTest :engine:embedding:connectedDebugAndroidTest :app:connectedAdsDebugAndroidTest :app:connectedOfflineDebugAndroidTest; do ./gradlew $task || status=1; done; ./gradlew :benchmark:connectedDebugAndroidTest || status=1; mkdir -p build/device; adb logcat -d -s SeekMindProto:I SeekMindBench:I > build/device/measurements-api${{ matrix.api-level }}.txt; exit $status
+            status=0; for task in :engine:capture:connectedDebugAndroidTest :engine:ocr:connectedDebugAndroidTest :core:database:connectedDebugAndroidTest :core:testing:connectedDebugAndroidTest :engine:embedding:connectedDebugAndroidTest :app:connectedAdsDebugAndroidTest :app:connectedOfflineDebugAndroidTest; do ./gradlew $task || status=1; done; ./gradlew :benchmark:connectedDebugAndroidTest || status=1; mkdir -p build/device; adb logcat -d -s SeekMindProto:I SeekMindBench:I > build/device/measurements-api${{ matrix.api-level }}.txt; exit $status
 
       - name: Upload reports and measurements
         if: always()
