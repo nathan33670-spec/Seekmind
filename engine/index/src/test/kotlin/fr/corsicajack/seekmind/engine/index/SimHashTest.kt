@@ -24,8 +24,15 @@ class SimHashTest {
         val text = "Le restaurant italien de la rue Paradis sert des pâtes à la truffe le mardi soir."
         assertThat(SimHash.of(text)).isEqualTo(SimHash.of(text))
         assertThat(SimHash.hamming(SimHash.of(text), SimHash.of(String(text.toCharArray())))).isEqualTo(0)
-        // Frozen value: a change of the algorithm must be deliberate (stored fingerprints depend on it).
         assertThat(SimHash.of("pâtes à la truffe")).isEqualTo(SimHash.of("PATES A LA TRUFFE"))
+    }
+
+    @Test
+    fun `fingerprints match reference values computed independently from the spec`() {
+        // Stored fingerprints depend on these values: a change of the algorithm must be deliberate.
+        assertThat(SimHash.of("pâtes à la truffe")).isEqualTo(0x808da1800200c020uL.toLong())
+        assertThat(SimHash.of("Le restaurant italien de la rue Paradis sert des pâtes à la truffe le mardi soir."))
+            .isEqualTo(0x920c89ba9204c825uL.toLong())
     }
 
     @Test

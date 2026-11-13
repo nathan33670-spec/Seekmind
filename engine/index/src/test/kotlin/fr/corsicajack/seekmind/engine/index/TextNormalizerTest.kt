@@ -23,6 +23,13 @@ class TextNormalizerTest {
         "prix$NBSP:${NARROW_NBSP}12$NBSP€" to "prix : 12 €",
         // Empty lines removed; identical lines kept once, the first one.
         "a\n\n   \nb\na\nc\nb" to "a\nb\nc",
+        // Invisible format characters removed: direction marks, isolates, soft hyphen.
+        "${LRM}abc$RLM ${ISOLATE}déf$POP_ISOLATE co${SOFT_HYPHEN}pain" to "abc déf copain",
+        // A lone \r and the Unicode separators end a line.
+        "a\rb${LINE_SEPARATOR}c${PARAGRAPH_SEPARATOR}d" to "a\nb\nc\nd",
+        // A removed character between a letter and its accent: composed in one pass.
+        "e$STX$ACUTE" to "$E_ACUTE",
+        "e$ZWSP$ACUTE" to "$E_ACUTE",
         // Case and accents kept.
         "Crème Brûlée" to "Crème Brûlée",
         "" to "",
@@ -40,6 +47,8 @@ class TextNormalizerTest {
         val samples = cases.map { it.first } + listOf(
             "\t${STX}Mixte$ETX$ZWSP\n\n  e${ACUTE}té  $NBSP\nMixte\nfin\r",
             (1..300).joinToString("\n") { "ligne numéro $it avec du texte" },
+            "e$STX${ACUTE}t${ZWSP}e$ACUTE",
+            "a\r\rb$SOFT_HYPHEN$ACUTE",
         )
         for (text in samples) {
             val once = normalizer.normalize(text)
@@ -54,6 +63,15 @@ class TextNormalizerTest {
         assertThat(small.normalize("dix chars!\nneuf char")).isEqualTo("dix chars!\nneuf char")
         // A first line longer than the limit is cut at the limit.
         assertThat(small.normalize("x".repeat(30) + "\ny")).isEqualTo("x".repeat(20))
+    }
+
+    @Test
+    fun `a cut never splits a surrogate pair`() {
+        val small = TextNormalizer(IndexConfig(maxTextChars = 5))
+        val emoji = String(Character.toChars(0x1F600)) // two chars
+        val result = small.normalize("abcd$emoji$emoji")
+        assertThat(result).isEqualTo("abcd")
+        assertThat(result.last().isSurrogate()).isFalse()
     }
 
     @Test
@@ -76,5 +94,12 @@ class TextNormalizerTest {
         val BOM = Char(0xFEFF)
         val NBSP = Char(0x00A0)
         val NARROW_NBSP = Char(0x202F)
+        val LRM = Char(0x200E)
+        val RLM = Char(0x200F)
+        val ISOLATE = Char(0x2068)
+        val POP_ISOLATE = Char(0x2069)
+        val SOFT_HYPHEN = Char(0x00AD)
+        val LINE_SEPARATOR = Char(0x2028)
+        val PARAGRAPH_SEPARATOR = Char(0x2029)
     }
 }

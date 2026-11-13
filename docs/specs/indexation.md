@@ -28,12 +28,17 @@ sealed interface IngestResult {
 
 `TextNormalizer.normalize(text): String`, Kotlin pur :
 
-1. Normalisation Unicode NFC.
-2. Suppression des caractères de contrôle (sauf `\n`), des caractères de largeur nulle, et des
-   caractères U+0002 et U+0003 (réservés au surlignage des extraits).
-3. Par ligne : tabulations et espaces multiples réduits à une espace ; espaces de bord retirées.
-4. Lignes vides retirées ; lignes strictement identiques dédoublonnées (première occurrence conservée).
-5. Troncature à `maxTextChars`, sur une fin de ligne.
+1. Fins de ligne : `\r\n`, `\r` seul, U+2028 et U+2029 deviennent `\n`.
+2. Suppression des caractères de contrôle (sauf `\n` ; dont U+0002 et U+0003, réservés au surlignage
+   des extraits) et des caractères de format invisibles (catégorie `Cf` : largeur nulle, marques et
+   isolats de direction, trait d'union conditionnel).
+3. Normalisation Unicode NFC, **après** la suppression : un caractère retiré entre une lettre et son
+   accent laisserait sinon la composition au passage suivant, et la normalisation ne serait pas
+   idempotente.
+4. Par ligne : tabulations et espaces multiples réduits à une espace ; espaces de bord retirées.
+5. Lignes vides retirées ; lignes strictement identiques dédoublonnées (première occurrence conservée).
+6. Troncature à `maxTextChars`, sur une fin de ligne (une première ligne plus longue est coupée, sans
+   jamais séparer une paire de substituts).
 
 Le texte est stocké tel quel (casse et accents conservés) ; FTS5 se charge du pliage à l'indexation.
 
