@@ -275,9 +275,25 @@ les résultats, présélection puis rescore int8) :
 
 Le code de signes perd de l'information quand tous les vecteurs partagent une direction : avec 200
 candidats, le cas proche des vecteurs e5 restait sous la cible de 0,90. **`binaryTopK` vaut donc 400**
-(décision du porteur, 13 novembre 2026), au prix de 200 lectures int8 de plus par recherche (coût mesuré
-sur appareil par `VectorIndexDeviceTest`, journalisé sous `m5_05_search_20000_top*`). Le ticket M5-07 le
-recalibre sur les vrais vecteurs. Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour
+(décision du porteur, 13 novembre 2026), au prix de 200 lectures int8 de plus par recherche. Le ticket
+M5-07 le recalibre sur les vrais vecteurs.
+
+Coût sur la base chiffrée (`VectorIndexDeviceTest`, 20 000 vecteurs, médiane de 15 recherches sans
+filtre, émulateurs x86_64 de la CI, APK de test debuggable, exécution `device-tests` 43518022426) :
+
+| | API 30 | API 34 | API 36 |
+|---|---|---|---|
+| Recherche, 400 candidats | 54 ms | 29 ms | 30 ms |
+| Recherche, 200 candidats | 22 ms | 17 ms | 14 ms |
+| Chargement de l'index (20 000 vecteurs) | 2,0 à 2,7 s | 1,2 à 1,4 s | 1,2 à 1,9 s |
+
+**À suivre (M5-08, mesures à 100 000 captures).** Avec 400 candidats, la branche sémantique atteint
+déjà, à 20 000 vecteurs, le budget de 30 ms d'ENF-PERF-04 (recherche hors embedding de la requête). Le
+temps vient surtout de la lecture des vecteurs int8 en base (le parcours binaire est de l'ordre de la
+milliseconde). Le chargement est lui aussi loin de la cible de l'ADR-0005 (≤ 500 ms pour 100 000
+vecteurs). Pistes : lire les int8 en une requête par lot d'identifiants plus larges, garder les int8 en
+mémoire (384 octets par vecteur), ou paginer le chargement par plus grosses pages. Ces mesures sur
+émulateur debuggable sont à confirmer sur le téléphone. Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour
 10 parcours, mesurés par `ThreadMXBean`).
 
 ## 7. Fusion
