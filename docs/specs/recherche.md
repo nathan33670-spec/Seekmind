@@ -51,7 +51,11 @@ data class SearchHit(
 
 ## 2. Analyse de la requête
 
-`QueryParser.parse(raw, now, zone, apps): ParsedQuery`, Kotlin pur.
+`QueryParser.parse(raw, now, zone, apps): ParsedQuery`, Kotlin pur. Les mots vides et l'analyseur
+temporel (`TemporalExtractor`, §3) sont donnés à la construction ; `apps` est un `AppExtractor` (§4),
+construit à partir des applications installées, donc passé à chaque appel. Chacun renvoie l'intervalle
+ou les paquets reconnus et le texte privé de l'expression, ou `null`. La surcharge
+`parse(request: SearchRequest, apps)` applique en plus les filtres explicites.
 
 ```kotlin
 data class ParsedQuery(
@@ -70,7 +74,9 @@ data class ParsedQuery(
 1. Mise en forme : espaces réduites, guillemets et apostrophes typographiques normalisés.
 2. Extraction des expressions temporelles (§3), la plus longue d'abord ; l'expression est retirée du texte.
 3. Extraction de l'application (§4) ; l'expression est retirée du texte.
-4. Découpage en mots (mêmes règles que FTS5 : lettres et chiffres Unicode, minuscules, sans diacritiques).
+4. Découpage en mots (mêmes règles que FTS5 : lettres et chiffres Unicode, minuscules, sans diacritiques ;
+   comme `remove_diacritics 2`, seules les lettres latines perdent leurs diacritiques). Un mot répété
+   n'est gardé qu'une fois.
 5. Retrait des mots vides (listes française et anglaise en ressources, environ 150 chacune, incluant
    les verbes de perception : vu, aperçu, lu, reçu, trouvé, seen, saw, read, got). Si tous les mots sont
    vides, ils sont tous conservés.
@@ -79,7 +85,12 @@ data class ParsedQuery(
 7. Profil : `CODE` s'il existe un jeton en forme de code ; `NATURAL` si la requête compte au moins
    5 mots utiles ; sinon `DEFAULT`.
 
-Les filtres explicites de `SearchRequest.filters` priment sur ceux extraits du texte.
+Les filtres explicites de `SearchRequest.filters` priment sur ceux extraits du texte : un intervalle
+explicite remplace l'intervalle extrait (et son libellé), des paquets explicites remplacent les paquets
+extraits. Les expressions reconnues sont retirées du texte dans tous les cas.
+
+Un jeton en forme de code est cherché dans les mots du texte séparés par les espaces, ponctuation
+d'encadrement retirée (`(PROMO10)` → `PROMO10`), et garde sa casse.
 
 ## 3. Expressions temporelles
 

@@ -7,7 +7,11 @@ import fr.corsicajack.seekmind.core.model.CaptureStatus
 import fr.corsicajack.seekmind.core.testing.FakeClock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 /** docs/specs/capture.md §8 (ticket M2-01). */
@@ -55,6 +59,37 @@ class CaptureStatusRepositoryTest {
         val now = clock.now
         assertThat(CaptureStatusRepository.resolve(true, true, pausedUntil = now, now = now, lastCaptureAt = 5))
             .isEqualTo(CaptureStatus.Active(5))
+    }
+
+    @Test
+    fun `a scheduled pause ends on time`() = runTest {
+        settings.value = settings.value.copy(pausedUntil = clock.now + 3_600_000)
+        val seen = mutableListOf<CaptureStatus>()
+        backgroundScope.launch { repository.status.collect(seen::add) }
+        runCurrent()
+        assertThat(seen).containsExactly(CaptureStatus.Paused(clock.now + 3_600_000))
+
+        // Virtual time and the fake wall clock move together.
+        clock.advance(3_599_999)
+        advanceTimeBy(3_599_999)
+        runCurrent()
+        assertThat(seen).hasSize(1)
+
+        clock.advance(1)
+        advanceTimeBy(1)
+        runCurrent()
+        assertThat(seen.last()).isEqualTo(CaptureStatus.Active(null))
+    }
+
+    @Test
+    fun `a pause without limit never ends by itself`() = runTest {
+        settings.value = settings.value.copy(pausedUntil = Long.MAX_VALUE)
+        val seen = mutableListOf<CaptureStatus>()
+        backgroundScope.launch { repository.status.collect(seen::add) }
+        clock.advance(365L * 24 * 3_600_000)
+        advanceTimeBy(365L * 24 * 3_600_000)
+        runCurrent()
+        assertThat(seen).containsExactly(CaptureStatus.Paused(until = null))
     }
 
     private suspend fun status() = repository.status.first()
