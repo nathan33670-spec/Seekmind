@@ -152,18 +152,20 @@ class SearchViewModel(
                     failedAfterResults = false,
                 )
             }
-            val searchEngine = withContext(io) { engine() }
-            if (searchEngine == null) {
-                _state.update { it.copy(phase = SearchPhase.UNAVAILABLE, refining = false) }
-                return@launch
-            }
-            val authorization = gate.authorize(key)
-            if (authorization is Authorization.NoCredit) {
-                _state.update { it.copy(phase = SearchPhase.NO_CREDIT, refining = false) }
-                return@launch
-            }
             var last: SearchResults? = null
+            val authorization: Authorization
             try {
+                // Opening the search (providers, native library) and the gate can fail too: same outcome.
+                val searchEngine = withContext(io) { engine() }
+                if (searchEngine == null) {
+                    _state.update { it.copy(phase = SearchPhase.UNAVAILABLE, refining = false) }
+                    return@launch
+                }
+                authorization = gate.authorize(key)
+                if (authorization is Authorization.NoCredit) {
+                    _state.update { it.copy(phase = SearchPhase.NO_CREDIT, refining = false) }
+                    return@launch
+                }
                 searchEngine.search(SearchRequest(query, filters, LIMIT, now(), zone())).collect { results ->
                     last = results
                     show(results, final = results.stage == Stage.HYBRID || !results.semanticAvailable)
@@ -183,16 +185,23 @@ class SearchViewModel(
                 return@launch
             }
             val final = last ?: return@launch
-            gate.commit(key, final.hits.size)
-            val willCharge = (authorization as Authorization.Granted).willCharge && final.hits.isNotEmpty()
             _state.update { it.copy(notCharged = final.hits.isEmpty()) }
-            if (recordHistory) {
-                withContext(io) {
-                    history()?.add(SearchHistoryEntry(now(), query, key, final.hits.size, willCharge))
+            // The results are shown: a failure of what follows is only logged.
+            try {
+                gate.commit(key, final.hits.size)
+                val willCharge = (authorization as Authorization.Granted).willCharge && final.hits.isNotEmpty()
+                if (recordHistory) {
+                    withContext(io) {
+                        history()?.add(SearchHistoryEntry(now(), query, key, final.hits.size, willCharge))
+                    }
                 }
+                val pending = withContext(io) { pendingVectors() }
+                _state.update { it.copy(pendingVectors = pending) }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                SmLog.w(TAG, "after_search_failed", failure)
             }
-            val pending = withContext(io) { runCatching { pendingVectors() }.getOrDefault(0) }
-            _state.update { it.copy(pendingVectors = pending) }
         }
     }
 

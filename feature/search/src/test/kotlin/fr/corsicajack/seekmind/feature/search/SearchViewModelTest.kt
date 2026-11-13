@@ -233,6 +233,42 @@ class SearchViewModelTest {
     }
 
     @Test
+    fun aFailingOpeningOrGateIsAFailedSearch() = runTest(dispatcher) {
+        val vm = SearchViewModel(
+            engine = { throw IllegalStateException("native library not loaded") },
+            gate = gate,
+            history = { history },
+            historyEnabled = historyEnabled,
+            pendingVectors = { 0 },
+            indexedApps = { emptyList() },
+            labels = { it },
+            now = { NOW },
+            zone = { ZoneId.of("Europe/Paris") },
+            io = StandardTestDispatcher(testScheduler),
+        )
+        vm.submit("tarte")
+        advanceUntilIdle()
+        assertThat(vm.state.value.phase).isEqualTo(SearchPhase.FAILED)
+
+        gate.authorizeFailure = IllegalStateException("ledger")
+        val other = viewModel()
+        other.submit("tarte")
+        advanceUntilIdle()
+        assertThat(other.state.value.phase).isEqualTo(SearchPhase.FAILED)
+    }
+
+    @Test
+    fun aFailingHistoryKeepsTheResults() = runTest(dispatcher) {
+        engine.respond = { request -> flow { emit(results(Stage.HYBRID, request, hit(1))) } }
+        history.failure = IllegalStateException("disk full")
+        val vm = viewModel()
+        vm.submit("tarte")
+        advanceUntilIdle()
+        assertThat(vm.state.value.phase).isEqualTo(SearchPhase.RESULTS)
+        assertThat(vm.state.value.failedAfterResults).isFalse()
+    }
+
+    @Test
     fun aFailureAfterTheKeywordResultsKeepsThem() = runTest(dispatcher) {
         engine.respond = { request ->
             flow {
@@ -344,10 +380,13 @@ class SearchViewModelTest {
         override val state: StateFlow<Entitlement> = MutableStateFlow(Entitlement.Free(5))
         var authorization: Authorization = Authorization.Granted(willCharge = false)
         var willCharge = false
+        var authorizeFailure: Exception? = null
         val commits = mutableListOf<Pair<String, Int>>()
 
-        override suspend fun authorize(queryKey: String): Authorization =
-            (authorization as? Authorization.Granted)?.copy(willCharge = willCharge) ?: authorization
+        override suspend fun authorize(queryKey: String): Authorization {
+            authorizeFailure?.let { throw it }
+            return (authorization as? Authorization.Granted)?.copy(willCharge = willCharge) ?: authorization
+        }
 
         override suspend fun commit(queryKey: String, resultCount: Int) {
             commits += queryKey to resultCount
@@ -357,8 +396,10 @@ class SearchViewModelTest {
     private class FakeHistory : SearchHistoryStore {
         private val flow = MutableStateFlow<List<SearchHistoryEntry>>(emptyList())
         val entries: List<SearchHistoryEntry> get() = flow.value
+        var failure: Exception? = null
 
         override suspend fun add(entry: SearchHistoryEntry) {
+            failure?.let { throw it }
             flow.value = listOf(entry) + flow.value
         }
 
