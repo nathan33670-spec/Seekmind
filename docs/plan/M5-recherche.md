@@ -30,7 +30,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-01 | `engine:search`, `testdata` | [recherche §3](../specs/recherche.md) · EF-SRCH-04 |
+| Fait | M5-01 | `engine:search`, `testdata` | [recherche §3](../specs/recherche.md) · EF-SRCH-04 |
 
 **À faire**
 
@@ -40,9 +40,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Tous les cas du fichier passent, avec horloge et fuseau fixés.
-- [ ] Cas particuliers couverts : changement d'heure, passage d'année, « mardi » un mardi, « soir » à cheval sur deux jours.
-- [ ] Une requête sans expression temporelle n'est pas modifiée.
+- [x] Tous les cas du fichier passent, avec horloge et fuseau fixés.
+- [x] Cas particuliers couverts : changement d'heure, passage d'année, « mardi » un mardi, « soir » à cheval sur deux jours.
+- [x] Une requête sans expression temporelle n'est pas modifiée.
 
 ---
 
@@ -50,7 +50,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-01 | `engine:search` | [recherche §4](../specs/recherche.md) · EF-SRCH-05 |
+| Fait | M5-01 | `engine:search` | [recherche §4](../specs/recherche.md) · EF-SRCH-05 |
 
 **À faire**
 
@@ -60,9 +60,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] « sur Instagram », « dans WhatsApp », « on YouTube », alias (« insta ») → bon paquet, expression retirée du texte.
-- [ ] Sans préposition, rien n'est extrait (« chrome » reste un mot de la requête).
-- [ ] Application non installée → pas de filtre.
+- [x] « sur Instagram », « dans WhatsApp », « on YouTube », alias (« insta ») → bon paquet, expression retirée du texte.
+- [x] Sans préposition, rien n'est extrait (« chrome » reste un mot de la requête).
+- [x] Application non installée → pas de filtre.
 
 ---
 
@@ -70,7 +70,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-01, M1-04 | `engine:search` | [recherche §5](../specs/recherche.md) · [stockage §5](../specs/stockage.md) · EF-SRCH-02 |
+| Fait | M5-01, M1-04 | `engine:search` | [recherche §5](../specs/recherche.md) · [stockage §5](../specs/stockage.md) · EF-SRCH-02 |
 
 **À faire**
 
@@ -79,9 +79,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Entrées hostiles (guillemets, parenthèses, `NEAR`, `*`, `:`) : aucune erreur de syntaxe FTS5, aucune injection.
-- [ ] Recherche sans accents retrouvant un texte accentué, et l'inverse.
-- [ ] Un code exact (`SUMMER20`) arrive en première position sur le corpus de test.
+- [x] Entrées hostiles (guillemets, parenthèses, `NEAR`, `*`, `:`) : aucune erreur de syntaxe FTS5, aucune injection.
+- [x] Recherche sans accents retrouvant un texte accentué, et l'inverse.
+- [x] Un code exact (`SUMMER20`) arrive en première position sur le corpus de test.
 
 ---
 
