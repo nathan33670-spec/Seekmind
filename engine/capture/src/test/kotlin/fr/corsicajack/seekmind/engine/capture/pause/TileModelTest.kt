@@ -55,4 +55,15 @@ class TileModelTest {
             Subtitle.Active,
         ).inOrder()
     }
+
+    @Test
+    fun `resuming from the lock screen asks for the unlock, pausing does not`() {
+        val active = TileModel.of(CaptureStatus.Active(null))
+        val paused = TileModel.of(CaptureStatus.Paused(null))
+        val notSetUp = TileModel.of(CaptureStatus.ConsentMissing)
+        assertThat(paused.needsUnlock(locked = true)).isTrue()
+        assertThat(paused.needsUnlock(locked = false)).isFalse()
+        assertThat(active.needsUnlock(locked = true)).isFalse()
+        assertThat(notSetUp.needsUnlock(locked = true)).isFalse()
+    }
 }
