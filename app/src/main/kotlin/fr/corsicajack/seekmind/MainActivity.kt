@@ -9,8 +9,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import fr.corsicajack.seekmind.apps.PackageManagerAppLabels
+import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
 import fr.corsicajack.seekmind.core.designsystem.theme.SeekMindTheme
+import fr.corsicajack.seekmind.di.ApplicationScope
+import fr.corsicajack.seekmind.feature.journal.JournalRoute
+import fr.corsicajack.seekmind.feature.journal.JournalViewModel
 import fr.corsicajack.seekmind.feature.settings.SecuritySettingsRoute
 import fr.corsicajack.seekmind.feature.settings.SecuritySettingsViewModel
 import fr.corsicajack.seekmind.lock.AppLock
@@ -18,7 +23,12 @@ import fr.corsicajack.seekmind.lock.BiometricAuthenticator
 import fr.corsicajack.seekmind.lock.LockGate
 import fr.corsicajack.seekmind.lock.LockState
 import fr.corsicajack.seekmind.ui.SeekMindRoot
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
+import javax.inject.Provider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Launcher activity, host of every screen. Its window is secure ([SecureActivity]) and its content
@@ -29,6 +39,12 @@ class MainActivity : SecureActivity() {
     @Inject lateinit var appLock: AppLock
 
     @Inject lateinit var settings: SettingsRepository
+
+    /** Opened on first use, off the main thread. */
+    @Inject lateinit var database: Provider<DatabaseState>
+
+    @Inject @ApplicationScope
+    lateinit var applicationScope: CoroutineScope
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -42,10 +58,28 @@ class MainActivity : SecureActivity() {
                     state = lockState,
                     onUnlock = { BiometricAuthenticator.authenticate(this, appLock::onAuthenticated) },
                 ) {
-                    SeekMindRoot(navController = navController, settingsContent = { SettingsContent() })
+                    SeekMindRoot(
+                        navController = navController,
+                        journalContent = { JournalContent() },
+                        settingsContent = { SettingsContent() },
+                    )
                 }
             }
         }
+    }
+
+    @Composable
+    private fun JournalContent() {
+        val journal = viewModel {
+            JournalViewModel(
+                store = { (database.get() as? DatabaseState.Ready)?.database?.captures },
+                labels = PackageManagerAppLabels(packageManager),
+                zone = ZoneId::systemDefault,
+                io = Dispatchers.IO,
+                commitScope = applicationScope,
+            )
+        }
+        JournalRoute(viewModel = journal, zone = ZoneId.systemDefault(), today = { LocalDate.now() })
     }
 
     @Composable

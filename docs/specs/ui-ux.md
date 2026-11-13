@@ -98,9 +98,16 @@ avec les termes de la recherche surlignés ; actions : retour à la source, copi
 
 ### 3.4 Journal (`feature:journal`)
 
-Liste regroupée par jour (en-têtes collants), une ligne par capture (application, heure, titre ou début
-du texte). Filtre par application. Suppression par balayage avec annulation. Menu : « Supprimer cette
-journée ». Chargement par pages de 50 (curseur sur la date). Jamais soumis aux crédits.
+Liste regroupée par jour de dernière vue (en-têtes collants : « Aujourd'hui », « Hier », puis le jour
+en toutes lettres), une ligne par capture (application, heure, titre de la fenêtre ou première ligne du
+texte). Filtre par application (pastilles des applications présentes dans le journal). Suppression par
+balayage, ou par l'action d'accessibilité « Supprimer », avec « Annuler » dans une barre
+d'information : la ligne est masquée, puis supprimée de la base quand la barre disparaît, quand une
+autre ligne est supprimée ou quand l'écran est quitté. Menu de l'en-tête : « Supprimer cette
+journée », avec confirmation, qui efface toute capture vue ce jour-là (`deleteByRange`). Chargement par
+pages de 50 (curseur `(last_seen_at, id)`), la page suivante étant demandée à 15 lignes de la fin ;
+seules les pages atteintes sont en mémoire. Jamais soumis aux crédits : `feature:journal` ne dépend
+pas de `engine:monetization`.
 
 ### 3.5 Réglages (`feature:settings`)
 

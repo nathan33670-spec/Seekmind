@@ -24,18 +24,22 @@ import fr.corsicajack.seekmind.core.designsystem.theme.Spacing
 fun screenTag(destination: TopLevelDestination): String = "screen_${destination.name.lowercase()}"
 
 /**
- * Navigation graph of [fr.corsicajack.seekmind.MainActivity]. Search and Journal are empty placeholders
- * until their tickets (M6-03, M6-05) replace them; [settingsContent] holds the settings sections.
+ * Navigation graph of [fr.corsicajack.seekmind.MainActivity]. Search is an empty placeholder until its
+ * ticket (M6-03) replaces it; [journalContent] is the journal (M6-05) and [settingsContent] holds the
+ * settings sections.
  */
 @Composable
 fun SeekMindNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    journalContent: @Composable () -> Unit = {},
     settingsContent: @Composable () -> Unit = {},
 ) {
     NavHost(navController = navController, startDestination = SearchRoute, modifier = modifier) {
         composable<SearchRoute> { Placeholder(TopLevelDestination.SEARCH) }
-        composable<JournalRoute> { Placeholder(TopLevelDestination.JOURNAL) }
+        composable<JournalRoute> {
+            ContentWidth(modifier = Modifier.testTag(screenTag(TopLevelDestination.JOURNAL))) { journalContent() }
+        }
         composable<SettingsRoute> {
             // The sections arrive with their tickets: Security (M6-07), the others with M6-06.
             ContentWidth(modifier = Modifier.testTag(screenTag(TopLevelDestination.SETTINGS))) { settingsContent() }

@@ -3,6 +3,7 @@ package fr.corsicajack.seekmind.core.database
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.database.schema.FtsSchema
+import fr.corsicajack.seekmind.core.database.store.JournalCursor
 import fr.corsicajack.seekmind.core.database.store.NewCapture
 import fr.corsicajack.seekmind.core.database.store.NewChunk
 import fr.corsicajack.seekmind.core.database.store.NewEmbedding
@@ -241,6 +242,24 @@ class StoresTest {
         assertThat(handle.vectors.indexGeneration()).isEqualTo(generation + 1)
     }
 
+    /** Captures seen at the same millisecond on both sides of a page boundary: none is skipped. */
+    @Test
+    fun pagesNeverSkipCapturesSeenAtTheSameTime() = runBlocking<Unit> {
+        val ids = (0 until 7).map { handle.captures.insert(capture("même instant $it", at = 5_000), emptyList()) }
+        val older = handle.captures.insert(capture("avant", at = 4_000), emptyList())
+
+        val seen = mutableListOf<Long>()
+        var cursor: JournalCursor? = null
+        do {
+            val page = handle.captures.page(before = cursor, packageName = null, limit = 3)
+            seen += page.map { it.id }
+            cursor = page.lastOrNull()?.let(JournalCursor::after)
+        } while (page.size == 3)
+
+        assertThat(seen).containsExactlyElementsIn(ids.reversed() + older).inOrder()
+        assertThat(handle.captures.packages()).containsExactly("com.example.notes")
+    }
+
     @Test
     fun pageRecentHashesAndStats() = runBlocking<Unit> {
         val a = handle.captures.insert(capture("un", at = 1_000), emptyList())
@@ -249,7 +268,7 @@ class StoresTest {
         val first = handle.captures.page(before = null, packageName = null, limit = 2)
         assertThat(first.map { it.id }).containsExactly(c, b).inOrder()
         assertThat(
-            handle.captures.page(before = first.last().lastSeenAt, packageName = null, limit = 2).map {
+            handle.captures.page(before = JournalCursor.after(first.last()), packageName = null, limit = 2).map {
                 it.id
             },
         ).containsExactly(a)

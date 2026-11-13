@@ -17,4 +17,8 @@ object SeekMindIcons {
     @DrawableRes val Check = R.drawable.designsystem_ic_check
 
     @DrawableRes val Info = R.drawable.designsystem_ic_info
+
+    @DrawableRes val More = R.drawable.designsystem_ic_more_vert
+
+    @DrawableRes val Delete = R.drawable.designsystem_ic_delete
 }
