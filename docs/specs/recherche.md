@@ -244,6 +244,39 @@ M5-07** sur le jeu d'évaluation (plus haute valeur qui ne dégrade pas le Rappe
 Si le moteur d'embeddings est indisponible ou qu'aucun vecteur n'existe encore, la recherche se limite
 aux mots-clés et `semanticAvailable = false`.
 
+### 6.3 Implémentation (M5-05)
+
+Paquet `fr.corsicajack.seekmind.engine.search.vector` :
+
+- `VectorIndex.search(query, filters)` prend le vecteur de la requête (calculé par la recherche hybride,
+  M5-06) et rend des `SemanticHit(captureId, embeddingId, similarity)` : meilleur fragment de chaque
+  capture, trié par similarité puis par dernière vue. `refresh()` met l'index à jour sans chercher (à
+  l'ouverture de l'écran), `release()` le libère, `isEmpty()` sert à `semanticAvailable`.
+- `BinaryCodes` tient les tableaux du §6.1, qui grandissent par doublement ; les noms de paquets sont
+  remplacés par un indice dans une table. Les filtres sont appliqués pendant le parcours : dates
+  (`last_seen_at ≥ from` et `first_seen_at ≤ to`, comme la requête lexicale) et paquets (masque sur la
+  table). Le tas borné des candidats est fait de deux `IntArray` alloués une fois : le parcours
+  n'alloue rien. À distance égale, le vecteur le plus récent est gardé.
+- Codes et rescore : `VectorCodec` de `engine:embedding`.
+
+Limite connue : les dates de première et dernière vue sont celles du chargement. Une capture revue
+(`touch`) n'a pas de nouveau vecteur et garde son ancienne dernière vue jusqu'au prochain rechargement
+complet. Un filtre de dates peut donc l'exclure de la branche sémantique ; la branche lexicale, elle, la
+trouve.
+
+Mesures (JVM, 20 000 vecteurs normalisés, 100 requêtes, rappel des 10 plus proches voisins exacts parmi
+les résultats, `binaryTopK` = 200 puis rescore int8) :
+
+| Jeu de vecteurs | Rappel@10 |
+|---|---|
+| 2 000 groupes de 10 vecteurs, requêtes tirées près d'un centre | 0,995 |
+| Mêmes groupes autour d'une direction commune (similarité moyenne 0,64, comme les vecteurs e5) | 0,878 (0,924 avec `binaryTopK` = 400) |
+| Vecteurs isotropes (cas le plus défavorable pour un code de signes) | 0,677 |
+
+Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour 10 parcours, mesurés par
+`ThreadMXBean`). Le code de signes perd de l'information quand tous les vecteurs partagent une direction :
+`binaryTopK` est à calibrer sur les vrais vecteurs au ticket M5-07.
+
 ## 7. Fusion
 
 *Reciprocal Rank Fusion* sur les deux listes ordonnées :

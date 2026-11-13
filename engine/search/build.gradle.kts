@@ -5,9 +5,12 @@ plugins {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:database"))
+    // VectorCodec: the binary and int8 forms of the vectors (docs/specs/embeddings.md §6).
+    implementation(project(":engine:embedding"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.serialization.json)
 
+    testImplementation(project(":core:testing"))
     testImplementation(libs.junit)
     testImplementation(libs.truth)
     testImplementation(libs.kotlinx.coroutines.test)
