@@ -11,7 +11,7 @@ sécurisées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M2-01 | `engine:ocr` | [ocr §2](../specs/ocr.md) · INV-03 |
+| Fait | M2-01 | `engine:ocr` | [ocr §2](../specs/ocr.md) · INV-03 |
 
 **À faire**
 
@@ -22,9 +22,9 @@ sécurisées.
 
 **Critères d'acceptation**
 
-- [ ] Le bitmap n'est accessible que pendant `block` ; il est recyclé même si `block` échoue.
-- [ ] Deux demandes rapprochées → `RateLimited`, sans appel au système.
-- [ ] Après 200 captures consécutives, la mémoire native du processus ne croît pas au-delà de 10 Mo.
+- [x] Le bitmap n'est accessible que pendant `block` ; il est recyclé même si `block` échoue.
+- [x] Deux demandes rapprochées → `RateLimited`, sans appel au système.
+- [x] Après 200 captures consécutives, la mémoire native du processus ne croît pas au-delà de 10 Mo.
 
 ---
 
