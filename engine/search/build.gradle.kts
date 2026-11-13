@@ -4,9 +4,16 @@ plugins {
 
 dependencies {
     implementation(project(":core:model"))
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.truth)
+
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.truth)
+    androidTestImplementation(libs.kotlinx.coroutines.core)
 }
 
 // Reference sets of testdata/ (docs/06-qualite-tests-ci.md): read by the JVM tests from the repository.

@@ -171,6 +171,19 @@ Motif reconnu : une préposition (`sur`, `dans`, `via`, `depuis`, `de l'appli`, 
 suivie d'un libellé ou d'un alias, la plus longue correspondance d'abord. Sans préposition, rien n'est
 extrait (« chrome » peut être un mot de la requête) ; les pastilles de l'interface couvrent ce cas.
 
+Précisions (M5-03) :
+
+- `AndroidAppCatalog` lit les applications lançables (`MAIN` + `LAUNCHER`, déclarées dans
+  `<queries>`) hors du thread principal, les garde en mémoire et les relit après une installation,
+  une mise à jour ou une désinstallation (diffusions `PACKAGE_*`). `AppMatcher`, Kotlin pur, fait
+  l'extraction.
+- Prépositions : `sur`, `dans`, `via`, `depuis`, `de l'appli`, `de l'application`, `on`, `in`, `from`.
+  La comparaison porte sur les mots du libellé (mêmes règles que FTS5 : minuscules, sans diacritiques) :
+  « dans meteo » trouve « Météo », « sur Google Maps » l'emporte sur « sur Google ».
+- Alias : `res/raw/search_app_aliases.json`, alias → paquets. Un alias ne vaut que pour les paquets
+  installés : une application absente du téléphone ne donne aucun filtre. Deux applications de même
+  libellé donnent un filtre sur les deux paquets.
+
 ## 5. Recherche par mots-clés
 
 `LexicalSearcher` construit l'expression FTS5 :
