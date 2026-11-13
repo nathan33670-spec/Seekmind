@@ -101,7 +101,7 @@ installé sur le téléphone de test ; corriger la table ; consigner le tableau 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En cours | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
+| En revue — validation manuelle en attente | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
 
 **À faire**
 
@@ -122,9 +122,8 @@ installé sur le téléphone de test ; corriger la table ; consigner le tableau 
 
 **Validation manuelle** — marqueurs de navigation privée observés sur Chrome et Firefox ; table mise à jour.
 
-**Reste à faire** — `sensitive_apps.json` compte 87 identifiants, plus les motifs. Il faut atteindre au
-moins 250 entrées pour les sept pays, en vérifiant chaque identifiant sur le Play Store. S'y ajoute la
-validation manuelle ci-dessus.
+**Reste à faire** — la validation manuelle ci-dessus. `sensitive_apps.json` compte 308 identifiants pour
+les sept pays, tous vérifiés par `tools/privacy/verify_sensitive_apps.py` (spec §3.2).
 
 ---
 

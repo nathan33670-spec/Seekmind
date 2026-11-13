@@ -26,6 +26,8 @@ class PrivacyAssetsTest {
         for (name in SOFT_EXAMPLES) {
             assertWithMessage(name).that(apps.levelOf(name)).isEqualTo(SensitiveApps.Level.SOFT)
         }
+        // docs/specs/confidentialite.md §3.2: at least 250 entries for the seven countries of the launch.
+        assertThat(apps.packageCount).isAtLeast(250)
         assertThat(apps.levelOf("com.android.chrome")).isNull()
         assertThat(apps.levelOf("com.whatsapp")).isNull()
     }
@@ -50,9 +52,9 @@ class PrivacyAssetsTest {
     private companion object {
         /** docs/specs/confidentialite.md §3.2. */
         val STRICT_EXAMPLES = listOf(
-            "com.x8bit.bitwarden", "com.onepassword.android", "com.agilebits.onepassword", "com.lastpass.lpandroid",
+            "com.x8bit.bitwarden", "com.onepassword.android", "com.lastpass.lpandroid",
             "com.dashlane", "keepass2android.keepass2android", "com.kunzisoft.keepass.free",
-            "com.kunzisoft.keepass.libre", "proton.android.pass", "com.nordpass.android.app",
+            "com.kunzisoft.keepass.libre", "proton.android.pass", "com.nordpass.android.app.password.manager",
             "com.samsung.android.samsungpass", "com.google.android.apps.authenticator2", "com.azure.authenticator",
             "com.authy.authy", "com.beemdevelopment.aegis",
         )
@@ -64,6 +66,9 @@ class PrivacyAssetsTest {
             "com.fortuneo.android", "com.revolut.revolut", "de.number26.android", "com.paypal.android.p2pmobile",
             "com.lydia", "com.transferwise.android", "com.google.android.apps.walletnfcrel",
             "com.samsung.android.spay", "com.android.settings",
+            // One per country of the launch market, besides France.
+            "be.bmid.itsme", "ch.twint.payment", "lu.bcee.snetmobile", "es.bizum.wallet", "de.fiduciagad.banking.vr",
+            "com.posteitaliane.spim",
         )
     }
 }

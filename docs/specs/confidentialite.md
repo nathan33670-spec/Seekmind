@@ -86,19 +86,33 @@ d'images) est exclu ; l'utilisateur peut l'inclure.
 
 ### 3.2 Contenu initial
 
-À compléter et à **vérifier identifiant par identifiant** au ticket M2-05. Marché de lancement
-(décision D-12) : France, Belgique, Suisse, Luxembourg, Espagne, Allemagne, Italie. Objectif : au moins
-250 entrées, dont les principales banques de détail, néobanques et applications de paiement de chacun
-de ces pays.
+Marché de lancement (décision D-12) : France, Belgique, Suisse, Luxembourg, Espagne, Allemagne,
+Italie. La version du ticket M2-05 compte **308 identifiants** : 47 dans la liste stricte (gestionnaires
+de mots de passe, applications d'authentification, applications de validation bancaire de type photoTAN
+ou SecureGo), 261 dans la liste souple (banques de détail, banques en ligne, néobanques, paiement, bourse,
+cryptomonnaies, mutuelles et caisses d'assurance maladie, prise de rendez-vous médicaux, impôts,
+identité numérique et services publics de chacun des sept pays).
+
+Chaque identifiant est **vérifié** par `tools/privacy/verify_sensitive_apps.py`, qui interroge la page
+publique du Play Store dans les sept pays et échoue si une page manque. Trois identifiants ne sont pas
+distribués par le Play Store et le script les connaît comme tels : `com.android.settings` et
+`com.samsung.android.samsungpass` (applications système), `com.kunzisoft.keepass.libre` (vérifié sur
+F-Droid). Les identifiants ont été relevés dans les résultats de recherche du Play Store, puis retenus un
+à un d'après le titre et la catégorie de leur page (Finance, Médecine, Santé, services publics).
+
+Une application de validation bancaire (TAN, signature) est rangée dans la liste **stricte** : elle
+affiche des codes à usage unique, comme une application d'authentification. Une application bancaire
+complète reste dans la liste souple, même quand elle sait aussi valider une opération.
 
 | Liste | Exemples d'identifiants |
 |---|---|
-| Stricte — mots de passe | `com.x8bit.bitwarden`, `com.onepassword.android`, `com.agilebits.onepassword`, `com.lastpass.lpandroid`, `com.dashlane`, `keepass2android.keepass2android`, `com.kunzisoft.keepass.free`, `com.kunzisoft.keepass.libre`, `proton.android.pass`, `com.nordpass.android.app`, `com.samsung.android.samsungpass` |
+| Stricte — mots de passe | `com.x8bit.bitwarden`, `com.onepassword.android`, `com.lastpass.lpandroid`, `com.dashlane`, `keepass2android.keepass2android`, `com.kunzisoft.keepass.free`, `com.kunzisoft.keepass.libre`, `proton.android.pass`, `com.nordpass.android.app.password.manager`, `com.samsung.android.samsungpass` |
 | Stricte — authentification | `com.google.android.apps.authenticator2`, `com.azure.authenticator`, `com.authy.authy`, `com.beemdevelopment.aegis` |
 | Souple — banque (France) | `com.boursorama.android.clients`, `fr.creditagricole.androidapp`, `net.bnpparibas.mescomptes`, `mobi.societegenerale.mobile.lappli`, `fr.lcl.android.customerarea`, `com.caisseepargne.android.mobilebanking`, `fr.banquepopulaire.cyberplus`, `com.fullsix.android.labanquepostale.accountaccess`, `com.cm_prod.bad`, `com.cic_prod.bad`, `com.fortuneo.android` |
 | Souple — paiement et néobanques | `com.revolut.revolut`, `de.number26.android`, `com.paypal.android.p2pmobile`, `com.lydia`, `com.transferwise.android`, `com.google.android.apps.walletnfcrel`, `com.samsung.android.spay` |
-| Souple — banque (six autres pays du lancement) | À établir au ticket, pays par pays |
-| Souple — santé et administration | À établir au ticket, pour chaque pays (assurance maladie, impôts, identité numérique, prise de rendez-vous médicaux) |
+| Stricte — validation bancaire | `de.fiduciagad.securego.vr`, `com.starfinanz.mobile.android.pushtan`, `com.commerzbank.photoTAN`, `de.postbank.bestsign`, `ch.raiffeisen.phototan`, `ch.zkb.digipass` |
+| Souple — banque (six autres pays du lancement) | Belgique : `com.kbc.mobile.android.phone.kbc`, `be.belfius.directmobile.android`, `com.bnpp.easybanking`, `be.argenta.bankieren` ; Suisse : `ch.postfinance.android`, `ch.raiffeisen.android`, `ch.zkb.slv.mobile.client.android`, `ch.twint.payment` ; Luxembourg : `lu.bcee.snetmobile`, `com.bil.android`, `lu.bgl.spm.retail` ; Espagne : `es.lacaixa.mobile.android.newwapicon`, `com.bbva.bbvacontigo`, `es.bancosantander.apps`, `es.bizum.wallet` ; Allemagne : `com.starfinanz.smob.android.sfinanzstatus`, `de.fiduciagad.banking.vr`, `de.commerzbanking.mobil`, `de.ingdiba.bankingapp` ; Italie : `com.latuabancaperandroid`, `com.unicredit`, `com.posteitaliane.spim`, `com.satispay.customer` |
+| Souple — santé et administration | `fr.cnamts.it.activity`, `fr.doctolib.www`, `fr.gouv.finances.smartphone.android`, `fr.gouv.franceidentite`, `be.bmid.itsme`, `ch.helsana.myHelsana`, `com.LuxTrustMobile`, `es.gob.carpeta`, `de.elster.elsterapp.release`, `com.governikus.ausweisapp2`, `de.tk.tkapp`, `it.pagopa.io.app`, `it.inps.mobile.app.servizi.activity` |
 | Souple — système | `com.android.settings` |
 
 ### 3.3 Règles de l'utilisateur
