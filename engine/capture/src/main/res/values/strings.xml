@@ -5,4 +5,10 @@
     <string name="a11y_service_label">SeekMind — screen memory</string>
     <string name="a11y_service_summary">Reads the text on your screen so that you can find it again. Nothing leaves this phone.</string>
     <string name="a11y_service_description">SeekMind reads the text displayed in the apps you use, the app name, the screen title and the address of web pages. When a screen mostly contains images, it occasionally analyses the image of the screen in memory, without ever saving it.\n\nThis is only used to build your personal search index on this phone, in an encrypted database. Nothing is ever sent, shared or sold. Ads are never chosen from what SeekMind has read.\n\nSeekMind does not read password fields, private browsing, protected screens or sensitive apps, and never performs actions in other apps. You can pause it, exclude apps and erase everything at any time.</string>
+    <!-- Quick settings tile (docs/specs/capture.md §7). -->
+    <string name="tile_label">Screen memory</string>
+    <string name="tile_subtitle_active">On</string>
+    <string name="tile_subtitle_paused">Paused</string>
+    <string name="tile_subtitle_paused_until">Paused until %1$s</string>
+    <string name="tile_subtitle_not_set_up">Not set up</string>
 </resources>

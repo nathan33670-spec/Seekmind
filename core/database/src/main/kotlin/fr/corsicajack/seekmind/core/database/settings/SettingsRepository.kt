@@ -57,47 +57,69 @@ class SettingsRepository(private val store: DataStore<Preferences>, private val 
 
     suspend fun current(): Settings = settings.first()
 
-    suspend fun acceptConsent(consent: Consent) = store.edit {
-        it[CONSENT_VERSION] = consent.version
-        it[CONSENT_AT] = consent.acceptedAt
+    suspend fun acceptConsent(consent: Consent) {
+        store.edit {
+            it[CONSENT_VERSION] = consent.version
+            it[CONSENT_AT] = consent.acceptedAt
+        }
     }
 
-    suspend fun withdrawConsent() = store.edit {
-        it.remove(CONSENT_VERSION)
-        it.remove(CONSENT_AT)
+    suspend fun withdrawConsent() {
+        store.edit {
+            it.remove(CONSENT_VERSION)
+            it.remove(CONSENT_AT)
+        }
     }
 
-    suspend fun setEnabledFamilies(families: Set<AppFamily>) = store.edit { prefs ->
-        prefs[ENABLED_FAMILIES] = families.mapTo(mutableSetOf()) { it.name }
+    suspend fun setEnabledFamilies(families: Set<AppFamily>) {
+        store.edit { prefs ->
+            prefs[ENABLED_FAMILIES] = families.mapTo(mutableSetOf()) { it.name }
+        }
     }
 
-    suspend fun setPausedUntil(until: Long?) = store.edit { prefs ->
-        if (until == null) prefs.remove(PAUSED_UNTIL) else prefs[PAUSED_UNTIL] = until
+    suspend fun setPausedUntil(until: Long?) {
+        store.edit { prefs ->
+            if (until == null) prefs.remove(PAUSED_UNTIL) else prefs[PAUSED_UNTIL] = until
+        }
     }
 
-    suspend fun setRetentionDays(days: Int?) = store.edit { prefs ->
-        require(days == null || days > 0) { "retention of $days days" }
-        prefs[RETENTION_DAYS] = days ?: UNLIMITED_RETENTION
+    suspend fun setRetentionDays(days: Int?) {
+        store.edit { prefs ->
+            require(days == null || days > 0) { "retention of $days days" }
+            prefs[RETENTION_DAYS] = days ?: UNLIMITED_RETENTION
+        }
     }
 
-    suspend fun setStorageBudgetBytes(bytes: Long) = store.edit { prefs ->
-        require(bytes > 0) { "budget of $bytes bytes" }
-        prefs[STORAGE_BUDGET] = bytes
+    suspend fun setStorageBudgetBytes(bytes: Long) {
+        store.edit { prefs ->
+            require(bytes > 0) { "budget of $bytes bytes" }
+            prefs[STORAGE_BUDGET] = bytes
+        }
     }
 
-    suspend fun setLockEnabled(enabled: Boolean) = store.edit { it[LOCK_ENABLED] = enabled }
-
-    suspend fun setLockGraceMs(ms: Long) = store.edit { prefs ->
-        require(ms >= 0) { "grace of $ms ms" }
-        prefs[LOCK_GRACE_MS] = ms
+    suspend fun setLockEnabled(enabled: Boolean) {
+        store.edit { it[LOCK_ENABLED] = enabled }
     }
 
-    suspend fun setActiveModelId(id: String) = store.edit { it[ACTIVE_MODEL] = id }
+    suspend fun setLockGraceMs(ms: Long) {
+        store.edit { prefs ->
+            require(ms >= 0) { "grace of $ms ms" }
+            prefs[LOCK_GRACE_MS] = ms
+        }
+    }
 
-    suspend fun setHistoryEnabled(enabled: Boolean) = store.edit { it[HISTORY_ENABLED] = enabled }
+    suspend fun setActiveModelId(id: String) {
+        store.edit { it[ACTIVE_MODEL] = id }
+    }
+
+    suspend fun setHistoryEnabled(enabled: Boolean) {
+        store.edit { it[HISTORY_ENABLED] = enabled }
+    }
 
     /** Back to the defaults, consent withdrawn: part of "erase everything". */
-    suspend fun reset() = store.edit { it.clear() }
+    suspend fun reset() {
+        store.edit { it.clear() }
+    }
 
     private fun read(prefs: Preferences): Settings {
         val version = prefs[CONSENT_VERSION]
