@@ -82,8 +82,11 @@ interface CaptureStore {
     /** Several captures and their chunks in one transaction: imports and synthetic databases. */
     suspend fun insertAll(items: List<Pair<NewCapture, List<NewChunk>>>): List<Long>
 
-    /** last_seen_at and seen_count + 1; the full-text index is untouched. */
-    suspend fun touch(captureId: Long, seenAt: Long)
+    /**
+     * last_seen_at and seen_count + 1; the full-text index is untouched. False when the capture no longer
+     * exists (deleted since its fingerprint was cached).
+     */
+    suspend fun touch(captureId: Long, seenAt: Long): Boolean
 
     /** The most recently seen captures of [packageName]. */
     suspend fun recentHashes(packageName: String, limit: Int): List<HashRef>

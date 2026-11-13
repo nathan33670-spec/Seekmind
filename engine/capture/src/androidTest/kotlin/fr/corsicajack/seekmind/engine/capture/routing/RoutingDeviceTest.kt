@@ -134,7 +134,10 @@ class RoutingDeviceTest {
                     .build(),
             )
             try {
-                for (i in 0 until EVENTS) {
+                // The first WARMUP_EVENTS are not measured: they let the runtime compile the
+                // event path, so that the percentile reflects the steady state (same protocol as
+                // the M4-02 bench). StrictMode watches them too.
+                for (i in 0 until WARMUP_EVENTS + EVENTS) {
                     val start = SystemClock.elapsedRealtimeNanos()
                     val packageName = if (i % 2 == 0) "com.android.systemui" else FIXTURE
                     val type = if (i % 10 == 1) {
@@ -143,7 +146,7 @@ class RoutingDeviceTest {
                         AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
                     }
                     router.onEvent(type, packageName, "$FIXTURE.PlainTextActivity", 1)
-                    durations[i] = SystemClock.elapsedRealtimeNanos() - start
+                    if (i >= WARMUP_EVENTS) durations[i - WARMUP_EVENTS] = SystemClock.elapsedRealtimeNanos() - start
                 }
                 router.detach()
             } finally {
@@ -176,6 +179,7 @@ class RoutingDeviceTest {
         const val TAG = "SeekMindProto"
         const val FIXTURE = "fr.corsicajack.seekmind.fixture"
         const val SETTINGS_FILE = "routing_test_settings"
+        const val WARMUP_EVENTS = 500
         const val EVENTS = 2_000
         const val SETTLE_MS = 1_000L
     }
