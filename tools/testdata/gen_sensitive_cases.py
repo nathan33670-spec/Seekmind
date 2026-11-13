@@ -27,8 +27,11 @@ TEST_CARDS = [
     "6250941006528599",  # UnionPay
 ]
 
-# Example IBANs of the ISO 13616 registry, one per country with a fixed length in the spec.
+# Example IBANs of the ISO 13616 registry.
 EXAMPLE_IBANS = [
+    "MC5811222000010123456789030",
+    "AT611904300234573201",
+    "PL61109010140000071219812874",
     "FR1420041010050500013M02606",
     "DE89370400440532013000",
     "ES9121000418450200051332",
@@ -82,6 +85,10 @@ def main() -> None:
             ("card", "masked", f"Card number: {grouped(card)}"),
             ("card", "masked", f"N° {grouped(card, sep='-')}."),
             ("card", "intact", f"Carte {bump_last(card)} refusée"),  # Luhn fails
+            # A number touching the card: the greedy candidate takes it in.
+            ("card", "masked", f"Carte {grouped(card)} 12/27"),
+            ("card", "masked", f"1 {grouped(card)}"),
+            ("card", "masked", f"Qté 2 {card}"),
         ]
     for iban in EXAMPLE_IBANS:
         assert iban_ok(iban), iban

@@ -29,11 +29,34 @@ class Redactor(private val mark: String) {
         return Redaction(out.toString(), merged.size)
     }
 
-    /** §5.1: plausible (prefix, length), then Luhn. */
-    private fun cards(text: String): List<IntRange> = CARD.findAll(text).mapNotNull { match ->
-        val digits = match.value.filter(Char::isDigit)
-        match.range.takeIf { plausibleCard(digits) && luhn(digits) }
+    /**
+     * §5.1: plausible (prefix, length), then Luhn. The candidate pattern is greedy and takes in a number
+     * that touches the card ("4111 1111 1111 1111 12/27"): when the whole candidate fails, every run of
+     * contiguous digit groups inside it is tried, longest first, from left to right.
+     */
+    private fun cards(text: String): List<IntRange> = CARD.findAll(text).flatMap { match ->
+        if (isCard(match.value)) return@flatMap sequenceOf(match.range)
+        val groups = GROUP.findAll(match.value).map { it.range }.toList()
+        val found = mutableListOf<IntRange>()
+        var i = 0
+        while (i < groups.size) {
+            val j = (groups.lastIndex downTo i).firstOrNull { j ->
+                isCard(match.value.substring(groups[i].first, groups[j].last + 1))
+            }
+            if (j == null) {
+                i++
+            } else {
+                found += (match.range.first + groups[i].first)..(match.range.first + groups[j].last)
+                i = j + 1
+            }
+        }
+        found.asSequence()
     }.toList()
+
+    private fun isCard(candidate: String): Boolean {
+        val digits = candidate.filter(Char::isDigit)
+        return digits.length in 13..19 && plausibleCard(digits) && luhn(digits)
+    }
 
     /** §5.2: exact length for known countries, then modulo 97. */
     private fun ibans(text: String): List<IntRange> {
@@ -78,9 +101,20 @@ class Redactor(private val mark: String) {
         val NIR = Regex(
             "\\b[12][ ]?\\d{2}[ ]?(?:0[1-9]|1[0-2]|[2-9]\\d)[ ]?(?:\\d{2}|2[AB])[ ]?\\d{3}[ ]?\\d{3}[ ]?\\d{2}\\b",
         )
+        val GROUP = Regex("\\d+")
+
+        /** ISO 13616 registry: IBAN length by country. */
         val IBAN_LENGTHS = mapOf(
-            "FR" to 27, "DE" to 22, "ES" to 24, "IT" to 27, "BE" to 16,
-            "NL" to 18, "LU" to 20, "CH" to 21, "GB" to 22, "PT" to 25,
+            "AD" to 24, "AE" to 23, "AL" to 28, "AT" to 20, "AZ" to 28, "BA" to 20, "BE" to 16, "BG" to 22,
+            "BH" to 22, "BR" to 29, "BY" to 28, "CH" to 21, "CR" to 22, "CY" to 28, "CZ" to 24, "DE" to 22,
+            "DK" to 18, "DO" to 28, "EE" to 20, "EG" to 29, "ES" to 24, "FI" to 18, "FO" to 18, "FR" to 27,
+            "GB" to 22, "GE" to 22, "GI" to 23, "GL" to 18, "GR" to 27, "GT" to 28, "HR" to 21, "HU" to 28,
+            "IE" to 22, "IL" to 23, "IQ" to 23, "IS" to 26, "IT" to 27, "JO" to 30, "KW" to 30, "KZ" to 20,
+            "LB" to 28, "LC" to 32, "LI" to 21, "LT" to 20, "LU" to 20, "LV" to 21, "MC" to 27, "MD" to 24,
+            "ME" to 22, "MK" to 19, "MR" to 27, "MT" to 31, "MU" to 30, "NL" to 18, "NO" to 15, "PK" to 24,
+            "PL" to 28, "PS" to 29, "PT" to 25, "QA" to 29, "RO" to 24, "RS" to 22, "SA" to 24, "SC" to 31,
+            "SE" to 24, "SI" to 19, "SK" to 24, "SM" to 27, "ST" to 25, "SV" to 28, "TL" to 23, "TN" to 24,
+            "TR" to 26, "UA" to 29, "VA" to 22, "VG" to 24, "XK" to 20,
         )
 
         fun plausibleCard(digits: String): Boolean {

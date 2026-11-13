@@ -83,10 +83,24 @@ class AppFamilies(
     private var snapshot: Snapshot? = null
     private val cache = ConcurrentHashMap<String, Any>()
 
-    fun familyOf(packageName: String): AppFamily? =
-        cache.getOrPut(packageName) { compute(packageName) ?: NONE } as? AppFamily
+    /** Bumped by [invalidate]: an answer computed before it is not cached. */
+    @Volatile
+    private var generation = 0
 
+    fun familyOf(packageName: String): AppFamily? {
+        cache[packageName]?.let { return it as? AppFamily }
+        val before = generation
+        val answer = compute(packageName) ?: NONE
+        if (generation == before) cache[packageName] = answer
+        return answer as? AppFamily
+    }
+
+    /**
+     * At every installation or removal, and when the default SMS application changes
+     * (`Telephony.Sms.Intents.ACTION_DEFAULT_SMS_PACKAGE_CHANGED`, wired with the pipeline in M2-06).
+     */
     fun invalidate() {
+        generation++
         snapshot = null
         cache.clear()
     }

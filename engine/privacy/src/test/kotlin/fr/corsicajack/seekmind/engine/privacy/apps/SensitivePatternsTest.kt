@@ -5,7 +5,7 @@ import org.junit.Test
 
 /**
  * The patterns of sensitive_apps.json against real-looking package names (ticket M2-05): sensitive ones
- * are caught, common applications are not. Kept in step with the asset by SensitiveAppsAssetTest.
+ * are caught, common applications are not. The patterns are read from the shipped asset.
  */
 class SensitivePatternsTest {
     private val apps = SensitiveApps(
@@ -49,9 +49,23 @@ class SensitivePatternsTest {
     }
 
     companion object {
-        /** The patterns of the asset, which SensitiveAppsAssetTest compares. */
-        val STRICT = listOf("keepass", "authenticator", "password", "passwd", "\\.vault(\\.|$)", "\\.otp(\\.|$)")
-        val SOFT =
-            listOf("bank", "banque", "banking", "\\.wallet(\\.|$)", "\\.pay(ment)?s?(\\.|$)", "crypto", "credit")
+        /** The patterns of `sensitive_apps.json`, read from the asset itself (org.json is not on the JVM). */
+        private val asset: String by lazy {
+            val dir = checkNotNull(System.getProperty("seekmind.privacy.assets")) { "seekmind.privacy.assets not set" }
+            java.io.File(dir, "sensitive_apps.json").readText()
+        }
+
+        val STRICT: List<String> by lazy { patterns("strict") }
+        val SOFT: List<String> by lazy { patterns("soft") }
+
+        /** The `patterns` array of the [list] object: JSON strings, unescaped. */
+        private fun patterns(list: String): List<String> {
+            val section = asset.substringAfter("\"$list\"").substringAfter("\"patterns\"").substringAfter('[')
+                .substringBefore(']')
+            return Regex("\"((?:[^\"\\\\]|\\\\.)*)\"").findAll(section)
+                .map { it.groupValues[1].replace("\\\\", "\\") }
+                .toList()
+                .also { check(it.isNotEmpty()) { "no pattern for $list" } }
+        }
     }
 }

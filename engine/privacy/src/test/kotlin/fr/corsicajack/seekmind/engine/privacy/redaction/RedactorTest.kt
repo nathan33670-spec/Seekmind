@@ -32,9 +32,9 @@ class RedactorTest {
                 "masked" -> {
                     assertWithMessage("%s should be masked: %s", kind, text).that(result.maskedCount).isEqualTo(1)
                     assertWithMessage("mark in %s", text).that(result.text).contains(mark)
-                    // What is left of the text has fewer digits than the number had: it was replaced whole.
+                    // No long run of digits is left: the number was replaced whole (an expiry date may stay).
                     assertWithMessage("digits left in %s", result.text)
-                        .that(result.text.count(Char::isDigit)).isLessThan(4)
+                        .that(LONG_DIGIT_RUN.containsMatchIn(result.text)).isFalse()
                 }
 
                 "intact" -> {
@@ -78,5 +78,9 @@ class RedactorTest {
     fun `text without numbers is returned as is`() {
         val text = "Le restaurant italien de la rue Paradis sert des pâtes à la truffe."
         assertThat(redactor.redact(text)).isEqualTo(fr.corsicajack.seekmind.core.model.Redaction(text, 0))
+    }
+
+    private companion object {
+        val LONG_DIGIT_RUN = Regex("(?:\\d[ \\-]?){7}\\d")
     }
 }

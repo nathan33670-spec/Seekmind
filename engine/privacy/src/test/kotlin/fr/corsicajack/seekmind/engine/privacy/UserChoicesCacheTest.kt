@@ -6,6 +6,7 @@ import fr.corsicajack.seekmind.core.database.store.AppRuleMode
 import fr.corsicajack.seekmind.core.model.AppFamily
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -29,5 +30,20 @@ class UserChoicesCacheTest {
         families.value = setOf(AppFamily.MESSAGING)
         runCurrent()
         assertThat(cache.current?.enabledFamilies).containsExactly(AppFamily.MESSAGING)
+    }
+
+    @Test
+    fun `a failing source leaves no stale choices`() = runTest {
+        val rules = MutableSharedFlow<List<AppRule>>(replay = 1)
+        val families = MutableStateFlow(setOf(AppFamily.OTHER))
+        // The database fails when "boom" shows up.
+        val failing = rules.map { list -> list.also { check(it.none { rule -> rule.packageName == "boom" }) } }
+        val cache = UserChoicesCache(backgroundScope, failing, families)
+        rules.emit(emptyList())
+        runCurrent()
+        assertThat(cache.current).isNotNull()
+        rules.emit(listOf(AppRule("boom", AppRuleMode.EXCLUDED, -1)))
+        runCurrent()
+        assertThat(cache.current).isNull()
     }
 }

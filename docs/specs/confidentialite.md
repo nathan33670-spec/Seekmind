@@ -165,14 +165,20 @@ le calcul du SimHash et avant tout stockage.
    | UnionPay | 62 | 16 à 19 |
 
 3. Somme de contrôle de Luhn valide → masqué.
+4. Le motif de candidats est glouton : il absorbe un nombre qui touche la carte (« 4111 1111 1111 1111
+   12/27 », « Qté 2 4111… »). Quand le candidat entier échoue, chaque suite de groupes de chiffres
+   contigus qu'il contient est essayée, de la plus longue à la plus courte, de gauche à droite ; celles
+   qui passent les étapes 2 et 3 sont masquées.
 
 Le filtrage par préfixe évite de masquer les numéros de suivi et de commande purement numériques.
 
 ### 5.2 IBAN (PG-12)
 
 1. Candidats : `\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,4})?\b` (après mise en majuscules).
-2. Espaces retirés ; longueur entre 15 et 34 ; si le pays est connu, longueur exacte (FR 27, DE 22,
-   ES 24, IT 27, BE 16, NL 18, LU 20, CH 21, GB 22, PT 25).
+2. Espaces retirés ; longueur entre 15 et 34 ; si le pays figure au registre ISO 13616 (table complète
+   dans `Redactor`, dont FR 27, DE 22, ES 24, IT 27, BE 16, NL 18, LU 20, CH 21, GB 22, PT 25, MC 27,
+   AT 20, PL 28), longueur exacte. Le candidat est alors coupé à cette longueur, ce qui écarte un mot
+   qui le suit (« … 189 EUR »).
 3. Contrôle modulo 97 égal à 1 → masqué.
 
 ### 5.3 Numéro de sécurité sociale français (PG-13)

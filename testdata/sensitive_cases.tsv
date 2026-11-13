@@ -4,46 +4,91 @@ card	masked	Carte 4111111111111111 enregistrée
 card	masked	Card number: 4111 1111 1111 1111
 card	masked	N° 4111-1111-1111-1111.
 card	intact	Carte 4111111111111112 refusée
+card	masked	Carte 4111 1111 1111 1111 12/27
+card	masked	1 4111 1111 1111 1111
+card	masked	Qté 2 4111111111111111
 card	masked	Carte 4012888888881881 enregistrée
 card	masked	Card number: 4012 8888 8888 1881
 card	masked	N° 4012-8888-8888-1881.
 card	intact	Carte 4012888888881882 refusée
+card	masked	Carte 4012 8888 8888 1881 12/27
+card	masked	1 4012 8888 8888 1881
+card	masked	Qté 2 4012888888881881
 card	masked	Carte 5555555555554444 enregistrée
 card	masked	Card number: 5555 5555 5555 4444
 card	masked	N° 5555-5555-5555-4444.
 card	intact	Carte 5555555555554445 refusée
+card	masked	Carte 5555 5555 5555 4444 12/27
+card	masked	1 5555 5555 5555 4444
+card	masked	Qté 2 5555555555554444
 card	masked	Carte 5105105105105100 enregistrée
 card	masked	Card number: 5105 1051 0510 5100
 card	masked	N° 5105-1051-0510-5100.
 card	intact	Carte 5105105105105101 refusée
+card	masked	Carte 5105 1051 0510 5100 12/27
+card	masked	1 5105 1051 0510 5100
+card	masked	Qté 2 5105105105105100
 card	masked	Carte 2223003122003222 enregistrée
 card	masked	Card number: 2223 0031 2200 3222
 card	masked	N° 2223-0031-2200-3222.
 card	intact	Carte 2223003122003223 refusée
+card	masked	Carte 2223 0031 2200 3222 12/27
+card	masked	1 2223 0031 2200 3222
+card	masked	Qté 2 2223003122003222
 card	masked	Carte 378282246310005 enregistrée
 card	masked	Card number: 3782 8224 6310 005
 card	masked	N° 3782-8224-6310-005.
 card	intact	Carte 378282246310006 refusée
+card	masked	Carte 3782 8224 6310 005 12/27
+card	masked	1 3782 8224 6310 005
+card	masked	Qté 2 378282246310005
 card	masked	Carte 371449635398431 enregistrée
 card	masked	Card number: 3714 4963 5398 431
 card	masked	N° 3714-4963-5398-431.
 card	intact	Carte 371449635398432 refusée
+card	masked	Carte 3714 4963 5398 431 12/27
+card	masked	1 3714 4963 5398 431
+card	masked	Qté 2 371449635398431
 card	masked	Carte 6011111111111117 enregistrée
 card	masked	Card number: 6011 1111 1111 1117
 card	masked	N° 6011-1111-1111-1117.
 card	intact	Carte 6011111111111118 refusée
+card	masked	Carte 6011 1111 1111 1117 12/27
+card	masked	1 6011 1111 1111 1117
+card	masked	Qté 2 6011111111111117
 card	masked	Carte 6011000990139424 enregistrée
 card	masked	Card number: 6011 0009 9013 9424
 card	masked	N° 6011-0009-9013-9424.
 card	intact	Carte 6011000990139425 refusée
+card	masked	Carte 6011 0009 9013 9424 12/27
+card	masked	1 6011 0009 9013 9424
+card	masked	Qté 2 6011000990139424
 card	masked	Carte 6200000000000005 enregistrée
 card	masked	Card number: 6200 0000 0000 0005
 card	masked	N° 6200-0000-0000-0005.
 card	intact	Carte 6200000000000006 refusée
+card	masked	Carte 6200 0000 0000 0005 12/27
+card	masked	1 6200 0000 0000 0005
+card	masked	Qté 2 6200000000000005
 card	masked	Carte 6250941006528599 enregistrée
 card	masked	Card number: 6250 9410 0652 8599
 card	masked	N° 6250-9410-0652-8599.
 card	intact	Carte 6250941006528590 refusée
+card	masked	Carte 6250 9410 0652 8599 12/27
+card	masked	1 6250 9410 0652 8599
+card	masked	Qté 2 6250941006528599
+iban	masked	IBAN : MC5811222000010123456789030
+iban	masked	Virement vers MC58 1122 2000 0101 2345 6789 030 EUR
+iban	masked	iban mc5811222000010123456789030 ok
+iban	intact	IBAN : MC5911222000010123456789030
+iban	masked	IBAN : AT611904300234573201
+iban	masked	Virement vers AT61 1904 3002 3457 3201 EUR
+iban	masked	iban at611904300234573201 ok
+iban	intact	IBAN : AT621904300234573201
+iban	masked	IBAN : PL61109010140000071219812874
+iban	masked	Virement vers PL61 1090 1014 0000 0712 1981 2874 EUR
+iban	masked	iban pl61109010140000071219812874 ok
+iban	intact	IBAN : PL62109010140000071219812874
 iban	masked	IBAN : FR1420041010050500013M02606
 iban	masked	Virement vers FR14 2004 1010 0505 0001 3M02 606 EUR
 iban	masked	iban fr1420041010050500013m02606 ok
