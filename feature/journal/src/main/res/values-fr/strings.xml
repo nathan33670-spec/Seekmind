@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="journal_all_apps">Toutes les applications</string>
+    <string name="journal_today">Aujourd\'hui</string>
+    <string name="journal_yesterday">Hier</string>
+    <string name="journal_day_menu">Options de %1$s</string>
+    <string name="journal_delete_day">Supprimer cette journée</string>
+    <string name="journal_delete_day_title">Supprimer %1$s&#160;?</string>
+    <string name="journal_delete_day_text">Tous les écrans mémorisés ce jour-là seront définitivement retirés de votre mémoire.</string>
+    <string name="journal_delete">Supprimer</string>
+    <string name="journal_cancel">Annuler</string>
+    <string name="journal_deleted">Écran supprimé</string>
+    <string name="journal_undo">Annuler</string>
+    <string name="journal_empty_title">Aucun écran mémorisé pour l\'instant</string>
+    <string name="journal_empty_message">Les écrans que vous consultez pendant que la mémorisation est active apparaîtront ici, jour par jour.</string>
+    <string name="journal_unavailable_title">Votre mémoire ne peut pas être ouverte</string>
+    <string name="journal_unavailable_message">SeekMind ne parvient pas à lire ses données sur ce téléphone.</string>
+
+    <!-- Contenu d'exemple des aperçus Compose uniquement. -->
+    <string name="journal_preview_app">Messages</string>
+    <string name="journal_preview_line">Dîner de vendredi au petit restaurant</string>
+</resources>

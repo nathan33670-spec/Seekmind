@@ -188,7 +188,8 @@ interface CaptureStore {
     suspend fun touch(captureId: Long, seenAt: Long): Boolean                 // last_seen_at, seen_count + 1 ; false si la capture n'existe plus
     suspend fun recentHashes(packageName: String, limit: Int): List<HashRef>  // id, simhash, first/last_seen_at
     suspend fun get(captureId: Long): Capture?
-    suspend fun page(before: Long?, packageName: String?, limit: Int): List<CaptureSummary>  // curseur sur last_seen_at
+    suspend fun page(before: JournalCursor?, packageName: String?, limit: Int): List<CaptureSummary>  // curseur (last_seen_at, id)
+    suspend fun packages(): List<String>                                      // paquets présents, le plus récent d'abord
     suspend fun delete(captureId: Long)
     suspend fun deleteByPackage(packageName: String)
     suspend fun deleteByRange(from: Long, to: Long)
@@ -234,8 +235,13 @@ Précisions (M1-04) :
 - `deleteByRange(from, to)` supprime toute capture **vue** pendant l'intervalle :
   `first_seen_at ≤ to` et `last_seen_at ≥ from`. C'est le choix le plus protecteur : un écran affiché
   pendant la période à effacer disparaît, même s'il avait été vu avant.
-- `page` : curseur strict sur `last_seen_at` ; l'aperçu (`CaptureSummary.preview`) est fait des
-  160 premiers caractères du texte.
+- `page` : ordre `(last_seen_at DESC, id DESC)` et curseur strict sur ce couple (`JournalCursor`, fait
+  de la dernière ligne de la page précédente), comparé par valeurs de ligne SQLite
+  (`(last_seen_at, id) < (?, ?)`). Un curseur sur `last_seen_at` seul sauterait les captures vues à la
+  même milliseconde que la dernière ligne d'une page (M6-05). L'aperçu (`CaptureSummary.preview`) est
+  fait des 160 premiers caractères du texte.
+- `packages` : paquets ayant au moins une capture, du plus récemment vu au plus ancien ; c'est le
+  filtre par application du journal.
 - `pendingChunks` : fragments en attente par identifiant décroissant (derniers insérés d'abord), avec le
   texte du fragment découpé en Kotlin dans `capture.text`. Les positions sont des indices de `String`
   (UTF-16), que `substr` de SQLite ne connaît pas.
