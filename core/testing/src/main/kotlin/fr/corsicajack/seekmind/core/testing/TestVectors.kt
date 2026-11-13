@@ -7,7 +7,8 @@ import kotlin.random.Random
 /**
  * Pseudo-random unit vectors and their stored forms, for tests and synthetic databases. The int8 and
  * binary encodings follow docs/specs/embeddings.md §6 with the starting scale S = 400; the production
- * codec (VectorCodec, M4-05) owns them.
+ * codec (VectorCodec of engine:embedding, M4-04) owns them; it rounds ties to even, which random
+ * vectors never hit.
  */
 object TestVectors {
     const val DIMENSIONS = 384

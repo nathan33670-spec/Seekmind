@@ -201,9 +201,20 @@ Implémentation `OrtEmbeddingEngine` :
   `attention_mask`, et `token_type_ids` à zéro si elle l'exige).
 - **Sortie** : moyenne masquée de `last_hidden_state`, puis normalisation L2.
 - **Cycle de vie** : le fournisseur compte les utilisateurs ; la session est fermée 60 s après le
-  dernier usage et sur `onTrimMemory(TRIM_MEMORY_RUNNING_LOW)`. L'interface de recherche la retient tant
+  dernier usage et sous pression mémoire. L'interface de recherche la retient tant
   qu'elle est au premier plan.
 - Les appels sont sérialisés (un seul calcul à la fois dans le processus).
+
+**Implémentation (M4-04)**, paquet `fr.corsicajack.seekmind.engine.embedding.engine` :
+
+| Élément | Rôle |
+|---|---|
+| `OrtEmbeddingEngine` | Préfixes, tokenisation, tri par longueur, sous-lots, agrégation ; vecteurs rendus dans l'ordre des textes. Calcule sur le dispatcher `default`. |
+| `Encoder`, `OrtEncoder` | Exécution du réseau sur un sous-lot rembourré (`PaddedBatch`) ; `OrtEncoder` lit la dimension dans la forme de sortie de la session. Le reste du moteur est testé sur JVM avec un encodeur factice. |
+| `OrtEmbeddingEngineFactory` | Charge `vocab.bin` et la session (`OrtModelLoader`) d'un `LoadableModel` : `ModelSpec` (qui donne le `modelId`) et `ModelSource` (`Bundled("model/fr")` ou `Pack(ModelFiles)`). |
+| `ActiveModel` | Le modèle à charger à la prochaine session ; `BuiltInModels.bundledFr` jusqu'au catalogue de M4-07. |
+| `SharedEmbeddingEngineProvider` | Implémente `EmbeddingEngineProvider` : chargement au premier `use`, rechargement si le modèle actif ou le nombre de threads (`EmbeddingThreads`, fourni par le gouverneur) a changé, `retain()` (poignées comptées), `release()` (fermeture après le calcul en cours), fermeture après `idleCloseMs`. Un bloc passé à `use` ne doit pas rappeler `use`. |
+| `MemoryPressureRelease` | `ComponentCallbacks2` qui appelle `release()` sur `TRIM_MEMORY_RUNNING_LOW`, `TRIM_MEMORY_RUNNING_CRITICAL`, les niveaux `TRIM_MEMORY_BACKGROUND` et au-delà, et `onLowMemory`. Les niveaux `RUNNING_*` ne sont plus envoyés à partir de l'API 34 : les niveaux d'arrière-plan sont alors le seul signal. |
 
 ## 5. Packs de langue
 
@@ -288,6 +299,10 @@ calibre pour que moins de 0,1 % des composantes soient écrêtées sur les vecte
 
 Similarité de rescore entre une requête en flottants `q` et un document int8 `d` :
 `(Σ q[i] × d[i]) / S`, approximation du cosinus.
+
+`round` arrondit au pair le plus proche (comme NumPy) : le code de `−v` est l'opposé de celui de `v`.
+Dans le code binaire, le bit `i` est le bit `i mod 8` de l'octet `i / 8`, ce qui donne bien les octets de
+6 mots de 64 bits petit-boutistes (`VectorCodec.words`).
 
 ## 7. Identifiant de modèle
 

@@ -235,7 +235,7 @@ réussies ; résultat consigné dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En revue — validation manuelle en attente | M0-08, M0-10 | `engine:embedding` | [embeddings §4, §8](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) |
+| En revue — validation manuelle reportée à M10-01 (décision du porteur, 13 novembre 2026) | M0-08, M0-10 | `engine:embedding` | [embeddings §4, §8](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) |
 
 **À faire**
 

@@ -85,7 +85,7 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M4-03, M0-09 | `engine:embedding` | [embeddings §4 à §6](../specs/embeddings.md) |
+| En revue | M4-03, M0-09 | `engine:embedding` | [embeddings §4 à §6](../specs/embeddings.md) |
 
 **À faire**
 
