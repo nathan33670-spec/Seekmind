@@ -1,15 +1,22 @@
 package fr.corsicajack.seekmind.feature.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.viewModelScope
 import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.database.settings.Settings
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
 import java.io.File
 import java.nio.file.Files
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -27,16 +34,24 @@ class SecuritySettingsViewModelTest {
     private lateinit var settings: SettingsRepository
     private var secure = true
     private var sessionsKeptOpen = 0
+    private val dataStoreScope = CoroutineScope(Dispatchers.IO + Job())
+    private val models = mutableListOf<SecuritySettingsViewModel>()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         dir = Files.createTempDirectory("settings").toFile()
-        settings = SettingsRepository(PreferenceDataStoreFactory.create { File(dir, "test.preferences_pb") })
+        settings = SettingsRepository(
+            PreferenceDataStoreFactory.create(scope = dataStoreScope) { File(dir, "test.preferences_pb") },
+        )
     }
 
     @After
     fun tearDown() {
+        // The state stays subscribed for a few seconds after the last collector: stop it, and the
+        // DataStore, before the file goes, or their failure would surface in the next test.
+        models.forEach { it.viewModelScope.cancel() }
+        runBlocking { dataStoreScope.coroutineContext.job.cancelAndJoin() }
         Dispatchers.resetMain()
         dir.deleteRecursively()
     }
@@ -46,7 +61,10 @@ class SecuritySettingsViewModelTest {
         withContext(Dispatchers.Default) { withTimeout(5_000) { settings.settings.first(condition) } }
     }
 
-    private fun viewModel() = SecuritySettingsViewModel(settings, { secure }, { sessionsKeptOpen++ })
+    private fun viewModel() = SecuritySettingsViewModel(settings, { secure }, { sessionsKeptOpen++ }).also {
+        models +=
+            it
+    }
 
     @Test
     fun `the state shows the settings and the device security`() = runTest(dispatcher) {
