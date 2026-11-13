@@ -44,6 +44,9 @@ class NavigationTest {
     private fun open(destination: TopLevelDestination) = compose.onNodeWithTag(navItemTag(destination)).performClick()
 
     private fun back() {
+        // The back callback of the NavHost is enabled by a recomposition after the last navigation:
+        // dispatching before it settles would reach the default handler, which finishes the activity.
+        compose.waitForIdle()
         compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         compose.waitForIdle()
     }
