@@ -38,7 +38,8 @@ class OrtEmbeddingEngineFactory(
         val session = loader.open(location, intraOpThreads).session
         val encoder = try {
             OrtEncoder(session)
-        } catch (failure: IllegalArgumentException) {
+        } catch (failure: Throwable) {
+            // Whatever fails while reading the session's shape, the native session must not leak.
             session.close()
             throw failure
         }
