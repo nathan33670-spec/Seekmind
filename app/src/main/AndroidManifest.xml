@@ -101,5 +101,13 @@
             android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
             tools:ignore="MissingClass"
             tools:node="remove" />
+
+        <!-- Every activity of the application has a secure window (EF-PRIV-11, ticket M6-07). This
+             translucent activity of Google Play services, brought by ML Kit, only shows the dialogs
+             that resolve a missing Play services; the bundled ML Kit model never opens it. -->
+        <activity
+            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+            tools:ignore="MissingClass"
+            tools:node="remove" />
     </application>
 </manifest>

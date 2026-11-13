@@ -132,7 +132,10 @@ Une rotation de l'écran n'est pas un passage en arrière-plan. Activer le verro
 laisse la session en cours ouverte. Si l'appareil n'a pas de verrouillage sécurisé, le réglage est
 désactivé avec une explication, et il est relu au retour sur l'écran.
 
-Toutes les activités dérivent de `SecureActivity`, qui pose `FLAG_SECURE` (EF-PRIV-11).
+Toutes les activités dérivent de `SecureActivity`, qui pose `FLAG_SECURE` (EF-PRIV-11). Le manifeste
+commun retire `com.google.android.gms.common.api.GoogleApiActivity`, activité translucide des services
+Google Play apportée par ML Kit : elle n'affiche que la résolution d'un Play Services manquant, que le
+modèle embarqué de ML Kit ne demande jamais, et ne pourrait pas poser `FLAG_SECURE`.
 
 ### 3.7 Résultats de `LinkActivity`
 
