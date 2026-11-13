@@ -198,6 +198,12 @@ Exemple : `resto italien pâtes truffe` → `"resto" OR "italien" OR "pates" OR 
 
 Requête SQL, pondération des colonnes et extrait : [stockage §5](stockage.md). Limite : 100 lignes.
 
+Précisions (M5-04) : les jetons sont ceux de `ParsedQuery.tokens`, déjà en forme de comparaison ; un
+terme répété n'est écrit qu'une fois ; une requête sans mot (ponctuation seule) ne lance aucune
+recherche. L'extrait renvoyé par FTS5 est débarrassé de ses marqueurs `char(2)` / `char(3)`, qui
+deviennent les intervalles à surligner de `Snippet` (bornes incluses) ; un marqueur laissé ouvert par
+la coupe de l'extrait se ferme à sa fin.
+
 ## 6. Recherche vectorielle
 
 ### 6.1 Index en mémoire

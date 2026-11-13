@@ -70,7 +70,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-01, M1-04 | `engine:search` | [recherche §5](../specs/recherche.md) · [stockage §5](../specs/stockage.md) · EF-SRCH-02 |
+| Fait | M5-01, M1-04 | `engine:search` | [recherche §5](../specs/recherche.md) · [stockage §5](../specs/stockage.md) · EF-SRCH-02 |
 
 **À faire**
 
@@ -79,9 +79,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Entrées hostiles (guillemets, parenthèses, `NEAR`, `*`, `:`) : aucune erreur de syntaxe FTS5, aucune injection.
-- [ ] Recherche sans accents retrouvant un texte accentué, et l'inverse.
-- [ ] Un code exact (`SUMMER20`) arrive en première position sur le corpus de test.
+- [x] Entrées hostiles (guillemets, parenthèses, `NEAR`, `*`, `:`) : aucune erreur de syntaxe FTS5, aucune injection.
+- [x] Recherche sans accents retrouvant un texte accentué, et l'inverse.
+- [x] Un code exact (`SUMMER20`) arrive en première position sur le corpus de test.
 
 ---
 
