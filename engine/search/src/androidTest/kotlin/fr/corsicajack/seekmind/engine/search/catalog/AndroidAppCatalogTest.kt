@@ -17,7 +17,7 @@ class AndroidAppCatalogTest {
     private val catalog = AndroidAppCatalog(context, AppAliases.load(context.resources), Dispatchers.IO)
 
     @Test
-    fun listsTheLaunchableApplications() = runBlocking {
+    fun listsTheLaunchableApplications() = runBlocking<Unit> {
         val apps = catalog.apps()
         // The system settings are launchable on every emulator image.
         val settings = apps.single { it.packageName == SETTINGS }
@@ -29,7 +29,7 @@ class AndroidAppCatalogTest {
     }
 
     @Test
-    fun anInstallationOrARemovalReadsTheApplicationsAgain() = runBlocking {
+    fun anInstallationOrARemovalReadsTheApplicationsAgain() = runBlocking<Unit> {
         catalog.register()
         try {
             val before = catalog.matcher()
