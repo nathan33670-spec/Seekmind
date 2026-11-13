@@ -35,6 +35,7 @@ class HybridSearcherTest {
     private val semantic = FakeSemantic()
     private val cache = SearchCache(SearchConfig(), FakeClock())
     private var generation = 0L
+    private var generationFailure: Exception? = null
 
     private fun searcher(source: SemanticSource = semantic) = HybridSearcher(
         parser = QueryParser(StopWords(listOf("la", "de"))),
@@ -43,7 +44,7 @@ class HybridSearcherTest {
         semantic = source,
         store = store,
         cache = cache,
-        generation = { generation },
+        generation = { generationFailure?.let { throw it } ?: generation },
     )
 
     private fun request(query: String, filters: SearchFilters = SearchFilters()) =
@@ -138,6 +139,18 @@ class HybridSearcherTest {
         val again = searcher().search(request("tarte")).toList()
         assertThat(again).hasSize(2) // searched again, not from the cache
         assertThat(again.last().hits.map { it.captureId }).containsExactly(2L)
+    }
+
+    @Test
+    fun anUnreadableGenerationSearchesWithoutTheCache() = runTest {
+        store.add(Models.capture("tarte", id = 1, at = now))
+        store.matches = listOf(1L)
+        generationFailure = IllegalStateException("meta unreadable")
+        repeat(2) {
+            val emissions = searcher().search(request("tarte")).toList()
+            assertThat(emissions.map { it.stage }).containsExactly(Stage.LEXICAL, Stage.HYBRID).inOrder()
+        }
+        assertThat(semantic.queries).hasSize(2) // nothing was cached
     }
 
     @Test
