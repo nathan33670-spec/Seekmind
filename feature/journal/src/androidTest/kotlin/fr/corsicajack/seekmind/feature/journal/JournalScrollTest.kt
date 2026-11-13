@@ -86,19 +86,22 @@ class JournalScrollTest {
         compose.waitUntil(TIMEOUT_MS) { loaded(model) > 0 }
         assertThat(loaded(model)).isEqualTo(JournalViewModel.PAGE_SIZE)
 
-        var target = 0
-        repeat(STEPS) {
-            target += 60
-            compose.onNodeWithTag(JOURNAL_LIST_TAG).performScrollToIndex(target)
-            compose.waitUntil(TIMEOUT_MS) { listState.layoutInfo.totalItemsCount > target + 1 }
+        // Scrolls to the last item laid out, which requests the next page, until TARGET items exist.
+        var steps = 0
+        while (listState.layoutInfo.totalItemsCount < TARGET) {
+            val total = listState.layoutInfo.totalItemsCount
+            compose.onNodeWithTag(JOURNAL_LIST_TAG).performScrollToIndex(total - 1)
+            compose.waitUntil(TIMEOUT_MS) { listState.layoutInfo.totalItemsCount > total }
+            check(++steps < MAX_STEPS) { "no new page after $steps scrolls" }
         }
         compose.waitForIdle()
+        val target = listState.firstVisibleItemIndex
 
         val entries = model.state.value.days.flatMap { it.entries }
         Log.i(TAG, "m6_05_loaded_after_scroll=${entries.size}")
-        // Lines (and day headers) up to the target, plus at most a page and the prefetch distance.
+        // Lines up to the position reached, plus at most two pages ahead: never the whole journal.
         assertThat(entries.size % JournalViewModel.PAGE_SIZE).isEqualTo(0)
-        assertThat(entries.size).isAtLeast(target - 100)
+        assertThat(entries.size).isAtLeast(TARGET - 10)
         assertThat(entries.size).isAtMost(target + 2 * JournalViewModel.PAGE_SIZE)
         assertThat(entries.size).isLessThan(COUNT / 100)
         // Most recent first, by (last seen, id), without duplicate across pages.
@@ -115,7 +118,10 @@ class JournalScrollTest {
     private companion object {
         const val TAG = "SeekMindBench"
         const val COUNT = 100_000
-        const val STEPS = 5
+
+        /** Items (lines, day headers, loader) to reach by scrolling. */
+        const val TARGET = 300
+        const val MAX_STEPS = 50
         const val TIMEOUT_MS = 20_000L
     }
 }
