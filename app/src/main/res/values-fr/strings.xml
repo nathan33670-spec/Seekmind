@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="main_placeholder">Votre mémoire d\'écran, cherchable et privée.</string>
+    <string name="app_nav_search">Recherche</string>
+    <string name="app_nav_journal">Journal</string>
+    <string name="app_nav_settings">Réglages</string>
+    <string name="app_placeholder_message">Cet écran arrive bientôt.</string>
 </resources>

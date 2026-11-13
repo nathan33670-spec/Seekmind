@@ -25,6 +25,8 @@ class DatabaseOpenerTest {
         assertThat(db.strings("PRAGMA foreign_keys").single()).isEqualTo("1")
         assertThat(db.strings("PRAGMA secure_delete").single()).isEqualTo("2")
         assertThat(db.strings("PRAGMA temp_store").single()).isEqualTo("2")
+        // NORMAL: a commit does not wait for the disk under WAL (spec §2).
+        assertThat(db.strings("PRAGMA synchronous").single()).isEqualTo("1")
         val header = ByteArray(16).also { RandomAccessFile(test.file(), "r").use { file -> file.readFully(it) } }
         assertThat(String(header, Charsets.US_ASCII)).isNotEqualTo("SQLite format 3\u0000")
     }
