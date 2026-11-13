@@ -63,6 +63,7 @@ class IngestDeviceTest {
 
         val durations = LongArray(COUNT)
         val inMemory = LongArray(COUNT)
+        val gcBefore = gcCount()
         for (i in 0 until COUNT) {
             val raw = raw(corpus, i)
             val before = System.nanoTime()
@@ -72,11 +73,27 @@ class IngestDeviceTest {
             service.ingest(raw)
             durations[i] = System.nanoTime() - start
         }
+        val gcs = gcCount() - gcBefore
+
+        // The bare store insertion, as the core:database benchmark measures it (M1-07): locates the time.
+        val storeOnly = LongArray(COUNT)
+        for (i in 0 until COUNT) {
+            val capture = corpus.capture(COUNT + WARMUP + i)
+            val chunks = Chunker().split(capture.text).mapIndexed { n, span ->
+                fr.corsicajack.seekmind.core.database.store.NewChunk(n, span.start, span.end)
+            }
+            val start = System.nanoTime()
+            handle.captures.insert(capture, chunks)
+            storeOnly[i] = System.nanoTime() - start
+        }
         val p95 = percentile(durations, 95)
         Log.i(TAG, "m4_02_ingest_p50_ms=${percentile(durations, 50)}")
         Log.i(TAG, "m4_02_ingest_p95_ms=$p95")
         Log.i(TAG, "m4_02_ingest_p99_ms=${percentile(durations, 99)}")
         Log.i(TAG, "m4_02_in_memory_p95_ms=${percentile(inMemory, 95)}")
+        Log.i(TAG, "m4_02_store_insert_p50_ms=${percentile(storeOnly, 50)}")
+        Log.i(TAG, "m4_02_store_insert_p95_ms=${percentile(storeOnly, 95)}")
+        Log.i(TAG, "m4_02_gc_during_ingest=$gcs")
         assertThat(p95).isAtMost(15.0)
     }
 
@@ -84,6 +101,8 @@ class IngestDeviceTest {
         clock.advance(30_000)
         Models.rawCapture(it.text, Models.screenMeta(packageName = it.packageName))
     }
+
+    private fun gcCount(): Long = android.os.Debug.getRuntimeStat("art.gc.gc-count")?.toLongOrNull() ?: -1
 
     private fun percentile(values: LongArray, p: Int): Double = values.sortedArray()[values.size * p / 100] / 1e6
 
