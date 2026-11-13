@@ -34,4 +34,8 @@
     <string name="search_open_page">Open the page</string>
     <string name="search_open_app">Open %1$s</string>
     <string name="search_yesterday_at">yesterday %1$s</string>
+    <string name="search_failed_title">The search failed</string>
+    <string name="search_failed_message">Your memory is intact. Try again in a moment.</string>
+    <string name="search_failed_partial">The search could not be completed</string>
+    <string name="search_retry">Try again</string>
 </resources>

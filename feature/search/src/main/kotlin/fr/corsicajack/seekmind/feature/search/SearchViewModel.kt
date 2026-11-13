@@ -86,6 +86,9 @@ class SearchViewModel(
 
     fun onQueryChange(query: String) = _state.update { it.copy(query = query) }
 
+    /** « Réessayer » after a failed search: the same query and filters. */
+    fun retry() = run()
+
     /** Runs [query]; a blank query clears the results. */
     fun submit(query: String = _state.value.query) {
         pinned = SearchFilters()
@@ -146,6 +149,7 @@ class SearchViewModel(
                     results = emptyList(),
                     relaxed = null,
                     notCharged = false,
+                    failedAfterResults = false,
                 )
             }
             val searchEngine = withContext(io) { engine() }
@@ -167,8 +171,15 @@ class SearchViewModel(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
+                // A failing search is not an unavailable database: never lead to the reset from here.
                 SmLog.w(TAG, "search_failed", failure)
-                _state.update { it.copy(phase = SearchPhase.UNAVAILABLE, refining = false) }
+                _state.update {
+                    if (it.results.isNotEmpty()) {
+                        it.copy(phase = SearchPhase.RESULTS, refining = false, failedAfterResults = true)
+                    } else {
+                        it.copy(phase = SearchPhase.FAILED, refining = false)
+                    }
+                }
                 return@launch
             }
             val final = last ?: return@launch

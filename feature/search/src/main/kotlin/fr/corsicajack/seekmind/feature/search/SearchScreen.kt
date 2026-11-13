@@ -75,6 +75,7 @@ fun SearchRoute(
         onPeriod = viewModel::setPeriod,
         onApp = viewModel::setApp,
         onRemoveUnderstood = viewModel::removeUnderstood,
+        onRetry = viewModel::retry,
         onOpenResult = onOpenResult,
         onOpenSource = onOpenSource,
         onReset = onReset,
@@ -96,6 +97,7 @@ fun SearchScreen(
     onPeriod: (Period?) -> Unit,
     onApp: (String?) -> Unit,
     onRemoveUnderstood: (UnderstoodFilter) -> Unit,
+    onRetry: () -> Unit,
     onOpenResult: (SearchHit) -> Unit,
     onOpenSource: (SearchHit) -> Unit,
     onReset: () -> Unit,
@@ -129,7 +131,7 @@ fun SearchScreen(
 
                 SearchPhase.SEARCHING -> Unit
 
-                SearchPhase.RESULTS -> Results(state, zone, now, onOpenResult, onOpenSource)
+                SearchPhase.RESULTS -> Results(state, zone, now, onRetry, onOpenResult, onOpenSource)
 
                 SearchPhase.NO_RESULT -> EmptyState(
                     title = stringResource(R.string.search_no_result_title),
@@ -145,6 +147,14 @@ fun SearchScreen(
                 )
 
                 SearchPhase.UNAVAILABLE -> Unavailable(onReset)
+
+                SearchPhase.FAILED -> EmptyState(
+                    title = stringResource(R.string.search_failed_title),
+                    message = stringResource(R.string.search_failed_message),
+                    icon = SeekMindIcons.Info,
+                    actionLabel = stringResource(R.string.search_retry),
+                    onAction = onRetry,
+                )
             }
         }
     }
@@ -227,6 +237,7 @@ private fun Results(
     state: SearchUiState,
     zone: ZoneId,
     now: () -> Long,
+    onRetry: () -> Unit,
     onOpenResult: (SearchHit) -> Unit,
     onOpenSource: (SearchHit) -> Unit,
 ) {
@@ -235,6 +246,15 @@ private fun Results(
         contentPadding = PaddingValues(vertical = Spacing.s),
         verticalArrangement = Arrangement.spacedBy(Spacing.s),
     ) {
+        if (state.failedAfterResults) {
+            item {
+                StatusBanner(
+                    message = stringResource(R.string.search_failed_partial),
+                    actionLabel = stringResource(R.string.search_retry),
+                    onAction = onRetry,
+                )
+            }
+        }
         if (state.relaxed != null) {
             item {
                 val message = when {

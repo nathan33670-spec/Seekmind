@@ -218,12 +218,35 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun aFailingSearchShowsTheUnavailableState() = runTest(dispatcher) {
-        engine.respond = { flow { throw IllegalStateException("database closed") } }
+    fun aFailingSearchNeverOffersTheReset() = runTest(dispatcher) {
+        engine.respond = { flow { throw IllegalStateException("transient") } }
         val vm = viewModel()
         vm.submit("tarte")
         advanceUntilIdle()
-        assertThat(vm.state.value.phase).isEqualTo(SearchPhase.UNAVAILABLE)
+        assertThat(vm.state.value.phase).isEqualTo(SearchPhase.FAILED)
+
+        engine.respond = { request -> flow { emit(results(Stage.HYBRID, request, hit(1))) } }
+        vm.retry()
+        advanceUntilIdle()
+        assertThat(vm.state.value.phase).isEqualTo(SearchPhase.RESULTS)
+        assertThat(engine.requests.last().rawQuery).isEqualTo("tarte")
+    }
+
+    @Test
+    fun aFailureAfterTheKeywordResultsKeepsThem() = runTest(dispatcher) {
+        engine.respond = { request ->
+            flow {
+                emit(results(Stage.LEXICAL, request, hit(1)))
+                throw IllegalStateException("transient")
+            }
+        }
+        val vm = viewModel()
+        vm.submit("tarte")
+        advanceUntilIdle()
+        assertThat(vm.state.value.phase).isEqualTo(SearchPhase.RESULTS)
+        assertThat(vm.state.value.results.map { it.hit.captureId }).containsExactly(1L)
+        assertThat(vm.state.value.failedAfterResults).isTrue()
+        assertThat(vm.state.value.refining).isFalse()
     }
 
     @Test

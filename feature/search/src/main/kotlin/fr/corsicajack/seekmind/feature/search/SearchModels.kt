@@ -51,8 +51,11 @@ enum class SearchPhase {
     /** No credit left: the credit sheet (docs/specs/monetisation.md §6). */
     NO_CREDIT,
 
-    /** The database cannot be opened (ENF-REL-02). */
+    /** The database cannot be opened (ENF-REL-02): the only state that offers to reset SeekMind. */
     UNAVAILABLE,
+
+    /** The search failed before any result (transient error): « Réessayer », nothing destructive. */
+    FAILED,
 }
 
 /** A filter the parser found in the query text, shown as a removable chip. */
@@ -92,6 +95,8 @@ data class SearchUiState(
     val recent: List<String> = emptyList(),
     /** The last search found nothing and was not charged. */
     val notCharged: Boolean = false,
+    /** The search failed after some results were shown: they stay, with a « Réessayer » notice. */
+    val failedAfterResults: Boolean = false,
 )
 
 /**

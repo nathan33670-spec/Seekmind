@@ -35,4 +35,8 @@
     <string name="search_open_page">Ouvrir la page</string>
     <string name="search_open_app">Ouvrir %1$s</string>
     <string name="search_yesterday_at">hier %1$s</string>
+    <string name="search_failed_title">La recherche a échoué</string>
+    <string name="search_failed_message">Votre mémoire est intacte. Réessayez dans un instant.</string>
+    <string name="search_failed_partial">La recherche n\'a pas pu être terminée</string>
+    <string name="search_retry">Réessayer</string>
 </resources>

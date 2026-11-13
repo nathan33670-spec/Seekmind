@@ -36,6 +36,7 @@ class SearchScreenTest {
 
     private var searched: String? = null
     private var reset = false
+    private var retried = false
 
     private fun show(state: SearchUiState) = compose.setContent {
         SeekMindTheme(dynamicColor = false) {
@@ -48,6 +49,7 @@ class SearchScreenTest {
                 onPeriod = {},
                 onApp = {},
                 onRemoveUnderstood = {},
+                onRetry = { retried = true },
                 onOpenResult = {},
                 onOpenSource = {},
                 onReset = { reset = true },
@@ -98,6 +100,14 @@ class SearchScreenTest {
         compose.onNodeWithText(context.getString(R.string.search_reset_title)).assertIsDisplayed()
         compose.onAllNodesWithTextSafe(context.getString(R.string.search_reset)).last().performClick()
         assertThat(reset).isTrue()
+    }
+
+    @Test
+    fun aFailedSearchOffersToRetryAndNotToReset() {
+        show(SearchUiState(query = "tarte", phase = SearchPhase.FAILED))
+        compose.onNodeWithText(context.getString(R.string.search_reset)).assertDoesNotExist()
+        compose.onNodeWithText(context.getString(R.string.search_retry)).performClick()
+        assertThat(retried).isTrue()
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.onAllNodesWithTextSafe(text: String) =

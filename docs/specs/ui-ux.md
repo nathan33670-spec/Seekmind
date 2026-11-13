@@ -108,6 +108,9 @@ qu'elle l'a quitté. En attendant les tickets suivants :
 - supprimer une pastille d'un filtre compris dans la requête relance la recherche sur le texte sans ses
   expressions, les autres filtres compris étant conservés comme filtres explicites ;
 - « Réinitialiser SeekMind » efface tout (base, clé, réglages) après confirmation, puis ferme l'application.
+- « Base indisponible » (et son bouton « Réinitialiser SeekMind ») est réservé à une base qui ne s'ouvre
+  pas. Une recherche qui échoue pour une autre raison affiche « La recherche a échoué — Réessayer »,
+  ou garde les résultats déjà affichés avec un bandeau « Réessayer » : jamais d'action destructrice.
 
 ### 3.3 Détail d'une capture
 
