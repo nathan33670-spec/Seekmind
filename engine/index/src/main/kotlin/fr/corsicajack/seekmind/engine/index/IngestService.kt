@@ -44,10 +44,12 @@ class IngestService(
 
         val duplicate = candidates.firstOrNull { isDuplicate(it, simhash, now) }
         if (duplicate != null) {
-            captures.touch(duplicate.captureId, now)
             candidates.remove(duplicate)
-            candidates.add(0, duplicate.copy(lastSeenAt = now))
-            return IngestResult.Deduplicated(duplicate.captureId)
+            // A capture deleted since it was cached is not touched: the screen is stored anew.
+            if (captures.touch(duplicate.captureId, now)) {
+                candidates.add(0, duplicate.copy(lastSeenAt = now))
+                return IngestResult.Deduplicated(duplicate.captureId)
+            }
         }
 
         val chunks = chunker.split(text).mapIndexed { ordinal, span -> NewChunk(ordinal, span.start, span.end) }
@@ -72,8 +74,9 @@ class IngestService(
     }
 
     /**
-     * Forgets the cached fingerprints: to call after captures are deleted (journal, erase everything), so
-     * that a new screen is never folded into a capture that no longer exists.
+     * Forgets the cached fingerprints, after captures are deleted (journal, erase everything). Optional for
+     * correctness, since a deleted candidate is detected by [CaptureStore.touch], but it frees the memory.
+     * Capture thread only, as [ingest].
      */
     fun forget() = recent.clear()
 

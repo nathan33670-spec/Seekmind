@@ -180,7 +180,7 @@ END;
 interface CaptureStore {
     suspend fun insert(capture: NewCapture, chunks: List<NewChunk>): Long     // une transaction
     suspend fun insertAll(items: List<Pair<NewCapture, List<NewChunk>>>): List<Long>  // une transaction ; imports, bases synthétiques
-    suspend fun touch(captureId: Long, seenAt: Long)                          // last_seen_at, seen_count + 1
+    suspend fun touch(captureId: Long, seenAt: Long): Boolean                 // last_seen_at, seen_count + 1 ; false si la capture n'existe plus
     suspend fun recentHashes(packageName: String, limit: Int): List<HashRef>  // id, simhash, first/last_seen_at
     suspend fun get(captureId: Long): Capture?
     suspend fun page(before: Long?, packageName: String?, limit: Int): List<CaptureSummary>  // curseur sur last_seen_at

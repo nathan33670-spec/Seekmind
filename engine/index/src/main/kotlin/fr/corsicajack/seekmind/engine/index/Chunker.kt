@@ -66,7 +66,12 @@ class Chunker(private val config: IndexConfig = IndexConfig()) {
         }
         return when {
             sentence > from -> sentence
+
             space > from -> space
+
+            // Never split a surrogate pair.
+            text[limit - 1].isHighSurrogate() -> limit - 1
+
             else -> limit
         }
     }

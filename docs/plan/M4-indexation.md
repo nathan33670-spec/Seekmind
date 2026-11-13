@@ -35,7 +35,7 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| Fait | M4-01, M1-04 | `engine:index` | [indexation §1, §4 à §6](../specs/indexation.md) · EF-CAP-07, EF-IDX-01 |
+| En cours | M4-01, M1-04 | `engine:index` | [indexation §1, §4 à §6](../specs/indexation.md) · EF-CAP-07, EF-IDX-01 |
 
 **À faire**
 
@@ -51,7 +51,7 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
       fragments, positions exactes (la concaténation des tranches redonne le texte couvert).
 - [x] Déduplication : chacune des quatre conditions est nécessaire (quatre tests négatifs, un positif).
 - [x] Doublon → `touch` et `Deduplicated` ; nouveau → une capture et ses fragments en attente.
-- [x] Banc de mesure : `ingest` ≤ 15 ms au 95ᵉ centile (ENF-PERF-05).
+- [ ] Banc de mesure : `ingest` ≤ 15 ms au 95ᵉ centile (ENF-PERF-05).
 
 ---
 

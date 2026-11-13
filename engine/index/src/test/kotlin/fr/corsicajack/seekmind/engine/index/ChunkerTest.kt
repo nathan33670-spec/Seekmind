@@ -45,6 +45,13 @@ class ChunkerTest {
 
         val solid = "x".repeat(2_000) // nowhere to cut
         assertThat(chunker.split(solid)[0]).isEqualTo(ChunkSpan(0, 800))
+
+        // A surrogate pair across the limit stays whole.
+        val emoji = String(Character.toChars(0x1F600))
+        val pairs = "x" + emoji.repeat(600)
+        val first = chunker.split(pairs)[0]
+        assertThat(first).isEqualTo(ChunkSpan(0, 799))
+        assertThat(pairs[first.end - 1].isHighSurrogate()).isFalse()
     }
 
     @Test

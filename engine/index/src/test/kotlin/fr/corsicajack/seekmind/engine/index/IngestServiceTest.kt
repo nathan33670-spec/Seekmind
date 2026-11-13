@@ -95,16 +95,19 @@ class IngestServiceTest {
     fun `only the eight most recent captures of a package are candidates`() = runBlocking<Unit> {
         service.ingest(Models.rawCapture(screen))
         repeat(8) { i ->
-            service.ingest(
-                Models.rawCapture(
-                    (1..12).joinToString("\n") {
-                        "Écran $i, ligne $it : ${"abcdefgh"[i]}".repeat(3)
-                    },
-                ),
-            )
+            val other = (1..12).joinToString("\n") { "Écran $i, ligne $it : ${"abcdefgh"[i]}".repeat(3) }
+            assertThat(service.ingest(Models.rawCapture(other))).isInstanceOf(IngestResult.Stored::class.java)
         }
         // The first capture has left the window of eight: the same screen is stored again.
         assertThat(service.ingest(Models.rawCapture(screen))).isInstanceOf(IngestResult.Stored::class.java)
+    }
+
+    @Test
+    fun `a duplicate of a deleted capture is stored anew`() = runBlocking<Unit> {
+        service.ingest(Models.rawCapture(screen))
+        store.deleted += 1L
+        assertThat(service.ingest(Models.rawCapture(screen))).isEqualTo(IngestResult.Stored(2))
+        assertThat(service.ingest(Models.rawCapture(screen))).isEqualTo(IngestResult.Deduplicated(2))
     }
 
     /** CaptureStore with the four methods ingestion uses; any other call fails. */
@@ -113,14 +116,17 @@ class IngestServiceTest {
         val touched = mutableListOf<Pair<Long, Long>>()
         var preset: List<HashRef> = emptyList()
         var recentReads = 0
+        val deleted = mutableSetOf<Long>()
 
         override suspend fun insert(capture: NewCapture, chunks: List<NewChunk>): Long {
             inserted += capture to chunks
             return inserted.size.toLong()
         }
 
-        override suspend fun touch(captureId: Long, seenAt: Long) {
+        override suspend fun touch(captureId: Long, seenAt: Long): Boolean {
+            if (captureId in deleted) return false
             touched += captureId to seenAt
+            return true
         }
 
         override suspend fun recentHashes(packageName: String, limit: Int): List<HashRef> {
