@@ -161,7 +161,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-01 | `app`, `feature:settings` | [ui-ux §3.6](../specs/ui-ux.md) · EF-PRIV-10, EF-PRIV-11 · EF-ONB-06 |
+| En revue — validation manuelle en attente | M6-01 | `app`, `feature:settings` | [ui-ux §3.6](../specs/ui-ux.md) · EF-PRIV-10, EF-PRIV-11 · EF-ONB-06 |
 
 **À faire**
 
@@ -172,9 +172,9 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 **Critères d'acceptation**
 
-- [ ] Test Compose : verrouillé → aucun nœud de contenu dans l'arbre de l'interface.
-- [ ] Retour au premier plan avant 5 minutes → pas de nouvelle authentification ; après → authentification.
-- [ ] Toutes les activités déclarées portent `FLAG_SECURE` (test parcourant le manifeste).
+- [x] Test Compose : verrouillé → aucun nœud de contenu dans l'arbre de l'interface.
+- [x] Retour au premier plan avant 5 minutes → pas de nouvelle authentification ; après → authentification.
+- [x] Toutes les activités déclarées portent `FLAG_SECURE` (test parcourant le manifeste).
 
 **Validation manuelle** — déverrouillage par empreinte et par code sur un vrai téléphone ; aperçu masqué dans les applications récentes.
 
