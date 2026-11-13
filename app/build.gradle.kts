@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.seekmind.android.compose)
     alias(libs.plugins.seekmind.hilt)
     alias(libs.plugins.seekmind.app.guards)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 // AdMob application id (docs/04-prerequis.md §3). Google's public sample id is used unless the
@@ -83,10 +84,13 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.work.runtime)
 
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.truth)
     androidTestImplementation(libs.kotlinx.coroutines.core)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)
 }

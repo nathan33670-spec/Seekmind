@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="designsystem_search_clear">Clear search</string>
+    <string name="designsystem_result_from_image">Text read from the image</string>
+    <plurals name="designsystem_result_similar">
+        <item quantity="one">+ %d similar</item>
+        <item quantity="other">+ %d similar</item>
+    </plurals>
+    <plurals name="designsystem_credits_short">
+        <item quantity="one">%d search</item>
+        <item quantity="other">%d searches</item>
+    </plurals>
+    <plurals name="designsystem_credits_remaining">
+        <item quantity="one">%d search left</item>
+        <item quantity="other">%d searches left</item>
+    </plurals>
+    <string name="designsystem_activated">Activated</string>
+    <string name="designsystem_filter_remove">Remove the filter %1$s</string>
+
+    <!-- Sample content of the Compose previews only. -->
+    <string name="designsystem_preview_app">Messages</string>
+    <string name="designsystem_preview_time">Tuesday 21:12</string>
+    <string name="designsystem_preview_title">Dinner on Friday</string>
+    <string name="designsystem_preview_snippet">See you at the little restaurant near the station, the one with the truffle pasta.</string>
+    <string name="designsystem_preview_source">Open in Messages</string>
+    <string name="designsystem_preview_query">truffle pasta</string>
+    <string name="designsystem_preview_chip_today">Today</string>
+    <string name="designsystem_preview_chip_week">7 days</string>
+    <string name="designsystem_preview_chip_app">Messages</string>
+    <string name="designsystem_preview_banner">Memorisation paused</string>
+    <string name="designsystem_preview_banner_action">Resume</string>
+    <string name="designsystem_preview_empty_title">Nothing yet</string>
+    <string name="designsystem_preview_empty_message">The screens you see will appear here.</string>
+    <string name="designsystem_preview_dialog_title">Delete this screen?</string>
+    <string name="designsystem_preview_dialog_text">It will be removed from your memory for good.</string>
+    <string name="designsystem_preview_dialog_confirm">Delete</string>
+    <string name="designsystem_preview_dialog_dismiss">Cancel</string>
+    <string name="designsystem_preview_setting_title">Pause memorisation</string>
+    <string name="designsystem_preview_setting_summary">For one hour, until tomorrow or until you resume.</string>
+</resources>
