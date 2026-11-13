@@ -282,9 +282,22 @@ data class RawCapture(
 ## 7. Pause
 
 - État : `pausedUntil: Long?` dans les réglages (`null` = active, `Long.MAX_VALUE` = sans limite).
-- Depuis l'application : 1 h, jusqu'à demain 6 h, sans limite, reprendre.
-- `PauseTileService` : un tap bascule entre active et en pause sans limite ; le sous-titre indique l'état ;
-  un appui long ouvre l'application.
+- Depuis l'application (`PauseController`) : 1 h, jusqu'à demain 6 h, sans limite, reprendre.
+  « Demain 6 h » est 6 h, heure locale, le jour calendaire suivant : à 0 h 30, c'est le lendemain matin,
+  pas le matin même (une pause plus longue que prévu ne lit rien de trop).
+- Expiration : aucune écriture. `EventRouter` compare `pausedUntil` à l'heure à chaque événement ;
+  `CaptureStatusRepository` attend la fin de la pause et publie `Active` à l'heure dite.
+- `PauseTileService` : un tap bascule entre active et en pause sans limite ; le sous-titre indique l'état
+  (« Active », « En pause », « En pause jusqu'à 14:30 », « Non activée ») ; un appui long ouvre
+  l'application (`MainActivity` déclare `QS_TILE_PREFERENCES`). Sans consentement ou service désactivé,
+  un tap ouvre l'application. La tuile suit `CaptureStatusRepository` tant qu'elle est visible ; le
+  système appelle `onStartListening` à chaque ouverture du panneau, une tuile active
+  (`ACTIVE_TILE`) n'est donc pas nécessaire.
+- Début de pause ou retrait du consentement : `EventRouter` remet `CaptureLoop` à zéro, si bien qu'un
+  écran stable déjà programmé ne se déclenche pas pendant la pause (E2E-10 n'attend aucun événement).
+- `CaptureStatusRepository` attend la fin d'une pause par `delay`, qui ne compte pas le sommeil profond :
+  un écran resté affiché pendant ce sommeil (M6) doit réévaluer le statut à sa reprise ou sur
+  `ACTION_TIME_TICK`. Le routeur et la tuile, eux, comparent à l'heure murale.
 - En pause, le service reste lié mais `EventRouter` écarte tout sur le thread principal.
 
 ## 8. État
