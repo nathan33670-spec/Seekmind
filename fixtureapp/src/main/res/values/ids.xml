@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Same resource name as Chrome's address bar (docs/specs/capture.md §5.2). -->
+    <item name="url_bar" type="id" />
+</resources>

@@ -36,9 +36,17 @@ class SeekMindAccessibilityService : AccessibilityService() {
 - Configuration XML : [05 §3](../05-conformite-play-store.md#3-engagements-de-conception). Elle n'est pas modifiée à l'exécution.
 - L'objet `AccessibilityEvent` n'est jamais conservé ni transmis à un autre thread.
 - `EventRouter` écarte sur le thread principal, par simple test d'appartenance à un ensemble en mémoire,
-  les événements des paquets toujours ignorés (§5.3). Les autres réarment l'anti-rebond.
-- Un événement `TYPE_WINDOW_STATE_CHANGED` met à jour la fenêtre courante `(package, className, windowId)`
-  et remet à zéro le ralentissement adaptatif (§3.2).
+  les événements des paquets toujours ignorés (§5.3), et, par lecture de deux champs `@Volatile`, ceux qui
+  arrivent sans consentement enregistré ou pendant une pause (§7). Tant que l'ensemble des paquets
+  ignorés et les réglages n'ont pas été lus une première fois, il écarte tout. Les autres événements
+  passent au thread `sm-capture`, où `CaptureLoop` réarme l'anti-rebond.
+- Un événement `TYPE_WINDOW_STATE_CHANGED` met à jour, sur `sm-capture`, la fenêtre courante
+  `(package, className, windowId)` et l'activité (§5.1), et remet à zéro le ralentissement adaptatif (§3.2).
+- `AndroidCaptureEnvironment` publie l'état de connexion, calcule l'ensemble des paquets ignorés et suit
+  les réglages, le tout sur `sm-capture` : le thread principal ne lit ni le disque ni la base.
+- Un écran stable est confié à `StableScreenHandler.onStable(): PipelineEvent`, implémenté par
+  `CapturePipeline` (§6). Une issue `Deduplicated` alimente le ralentissement adaptatif. Tant qu'aucune
+  implémentation n'est liée, un écran stable ne lit rien.
 
 ## 3. Stabilité de l'écran
 
@@ -95,6 +103,7 @@ interface UiNode {
     val bounds: IntRect            // en coordonnées écran
     val childCount: Int
     fun child(index: Int): UiNode?
+    fun findByViewId(viewId: String): List<UiNode>   // "<paquet>:id/<nom>", dans le sous-arbre (§5.2)
     fun release()                  // recycle() avant l'API 33, sans effet ensuite
 }
 
@@ -111,6 +120,7 @@ data class TreeExtraction(
     val textCoverage: Float,           // aire cumulée des lignes de texte / aire de la fenêtre, bornée à 1
     val windowBounds: IntRect,
     val durationMs: Long,
+    val pageTitle: String? = null,     // titre de la page d'un navigateur (§5.2), 200 caractères au plus
 )
 ```
 
@@ -120,7 +130,7 @@ Parcours en profondeur, préfixe, itératif (pile explicite), sur le thread `sm-
 
 1. Racine : `service.rootInActiveWindow`. À partir de l'API 33, utiliser la surcharge avec
    `AccessibilityNodeInfo.FLAG_PREFETCH_DESCENDANTS_HYBRID`, et la même stratégie pour `getChild`,
-   afin de regrouper les appels inter-processus. Racine nulle → rejet `NO_ROOT`.
+   afin de regrouper les appels inter-processus. Racine nulle, ou sans nom de paquet → rejet `NO_ROOT`.
 2. Fenêtre : si `root.window?.type != AccessibilityWindowInfo.TYPE_APPLICATION` → rejet `NOT_APP_WINDOW`.
 3. Pour chaque nœud :
    - non visible (`!isVisibleToUser`) → ignoré, sous-arbre compris ;
@@ -143,7 +153,10 @@ Parcours en profondeur, préfixe, itératif (pile explicite), sur le thread `sm-
    | `hardBudgetMs` | 400 | Abandon, rejet `TREE_TIMEOUT` |
    | `maxTextChars` | 12 000 | Arrêt, `truncated = true` |
 
-6. Chaque nœud est libéré (`release()`) dès qu'il n'est plus utile, y compris sur abandon (`try/finally`).
+6. Chaque nœud obtenu est libéré (`release()`) dès qu'il n'est plus utile, y compris sur abandon
+   (`try/finally`). La racine reste à l'appelant : il y lit encore la barre d'adresse (§5.2) puis la libère.
+7. Titre de la page : le texte (à défaut, la description) du premier nœud visible dont la classe est
+   celle du titre de page d'un navigateur (`BrowserProfiles`, §5.2) devient `pageTitle`.
 
 L'ordre préfixe correspond à l'ordre de lecture dans la grande majorité des mises en page ; aucun tri
 géométrique n'est appliqué en v1.
@@ -171,8 +184,12 @@ data class ScreenMeta(
 
 ### 5.2 URL des navigateurs
 
-Table de configuration `BrowserProfiles` (ressource JSON du module). Valeurs initiales, **à vérifier sur
-appareil** au ticket M2-04 :
+Table de configuration `BrowserProfiles` (ressource `res/raw/browser_profiles.json` du module, lue par
+`org.json`). Chaque entrée donne les paquets, l'identifiant de la barre d'adresse et, si elle diffère de la
+valeur commune `android.webkit.WebView`, la classe du nœud qui porte le titre de la page. Le nom de
+cette classe est une donnée de la table : le code ne la nomme pas, le garde-fou `network-webview`
+refusant toute mention de `WebView` dans les sources. Valeurs initiales, **à vérifier sur appareil** au
+ticket M2-04 :
 
 | Paquets | Identifiant de la barre d'adresse |
 |---|---|
@@ -185,14 +202,21 @@ appareil** au ticket M2-04 :
 Algorithme (`UrlExtractor`) :
 
 1. Si le paquet n'a pas de profil → pas d'URL.
-2. `root.findAccessibilityNodeInfosByViewId("<paquet>:id/<identifiant>")`. Le nœud est lu directement,
-   bien qu'il soit éditable ; s'il a le focus (l'utilisateur tape), l'URL est ignorée.
-3. Normalisation : espaces retirés ; rejet si la chaîne contient une espace ou aucun point ; préfixe
-   `https://` si aucun schéma ; analyse par `Uri` ; seuls `http` et `https` sont acceptés ; 2 048
-   caractères au plus.
-4. Barre d'adresse masquée par le défilement : `UrlTracker` garde la dernière URL lue par
-   `(paquet, titre de la page)`, le titre de la page étant le texte du premier nœud de classe `WebView`.
-   Si ce titre est inchangé depuis moins de 10 min, l'URL mémorisée est réutilisée ; sinon aucune URL.
+2. `root.findByViewId("<paquet>:id/<identifiant>")` (`findAccessibilityNodeInfosByViewId`), avant la
+   lecture de l'arbre, sur la racine que l'appelant détient encore. Le premier nœud visible est lu
+   directement, bien qu'il soit éditable ; s'il a le focus (l'utilisateur tape), l'URL est ignorée.
+   Aucun nœud visible : barre masquée (étape 4).
+3. Normalisation (`UrlNormalizer`, sans `android.net.Uri` pour être testable sur la JVM) : espaces de
+   début et de fin retirés ; rejet si la chaîne contient un blanc, un caractère de contrôle ou aucun
+   point (les adresses IPv6 littérales, sans point, sont donc rejetées) ; préfixe `https://` si aucun
+   schéma ; seuls `http` et `https` sont acceptés ; hôte non vide, fait de lettres, chiffres, tirets et
+   points, sans point en tête, en fin ni doublé ; port de 1 à 5 chiffres ; schéma et hôte en minuscules ;
+   informations d'utilisateur (`nom:mot-de-passe@`) retirées ; rejet au-delà de 2 048 caractères.
+4. Barre d'adresse masquée par le défilement : `UrlTracker` garde en mémoire, par paquet, la dernière
+   URL lue et le titre de la page (`TreeExtraction.pageTitle`, §4.2) qui l'accompagnait. Si la barre est
+   masquée, que le titre est le même et que l'URL a été lue il y a moins de `urlMemoryMs` (10 min),
+   l'URL mémorisée est réutilisée ; sinon aucune URL. Une URL lue sans titre de page n'est pas mémorisée
+   et efface la précédente. Barre ayant le focus ou texte rejeté : aucune URL, même mémorisée.
 
 L'URL affichée par le navigateur peut être abrégée : le retour à la source est alors approximatif
 (risque R-10).
@@ -258,9 +282,22 @@ data class RawCapture(
 ## 7. Pause
 
 - État : `pausedUntil: Long?` dans les réglages (`null` = active, `Long.MAX_VALUE` = sans limite).
-- Depuis l'application : 1 h, jusqu'à demain 6 h, sans limite, reprendre.
-- `PauseTileService` : un tap bascule entre active et en pause sans limite ; le sous-titre indique l'état ;
-  un appui long ouvre l'application.
+- Depuis l'application (`PauseController`) : 1 h, jusqu'à demain 6 h, sans limite, reprendre.
+  « Demain 6 h » est 6 h, heure locale, le jour calendaire suivant : à 0 h 30, c'est le lendemain matin,
+  pas le matin même (une pause plus longue que prévu ne lit rien de trop).
+- Expiration : aucune écriture. `EventRouter` compare `pausedUntil` à l'heure à chaque événement ;
+  `CaptureStatusRepository` attend la fin de la pause et publie `Active` à l'heure dite.
+- `PauseTileService` : un tap bascule entre active et en pause sans limite ; le sous-titre indique l'état
+  (« Active », « En pause », « En pause jusqu'à 14:30 », « Non activée ») ; un appui long ouvre
+  l'application (`MainActivity` déclare `QS_TILE_PREFERENCES`). Sans consentement ou service désactivé,
+  un tap ouvre l'application. La tuile suit `CaptureStatusRepository` tant qu'elle est visible ; le
+  système appelle `onStartListening` à chaque ouverture du panneau, une tuile active
+  (`ACTIVE_TILE`) n'est donc pas nécessaire.
+- Début de pause ou retrait du consentement : `EventRouter` remet `CaptureLoop` à zéro, si bien qu'un
+  écran stable déjà programmé ne se déclenche pas pendant la pause (E2E-10 n'attend aucun événement).
+- `CaptureStatusRepository` attend la fin d'une pause par `delay`, qui ne compte pas le sommeil profond :
+  un écran resté affiché pendant ce sommeil (M6) doit réévaluer le statut à sa reprise ou sur
+  `ACTION_TIME_TICK`. Le routeur et la tuile, eux, comparent à l'heure murale.
 - En pause, le service reste lié mais `EventRouter` écarte tout sur le thread principal.
 
 ## 8. État
@@ -278,6 +315,11 @@ sealed interface CaptureStatus {
 `AccessibilityManager.getEnabledAccessibilityServiceList(...)`, l'état de connexion publié par le service,
 le consentement et la pause. L'interface l'observe (EF-CAP-05).
 
+Priorité, du premier état qui s'applique au dernier : `ConsentMissing` (sans consentement, l'interface
+rouvre la divulgation avant tout passage par les réglages système), `ServiceDisabled`, `Paused`, `Active`.
+`Paused.until` vaut `null` pour une pause sans limite (`pausedUntil = Long.MAX_VALUE`). `lastCaptureAt`
+est publié par le pipeline (`onCaptureStored`).
+
 ## 9. Configuration
 
 ```kotlin
@@ -293,6 +335,7 @@ data class CaptureConfig(
     val hardBudgetMs: Long = 400,
     val maxTextChars: Int = 12_000,
     val minTextChars: Int = 20,
+    val urlMemoryMs: Long = 600_000,   // §5.2 : réutilisation de la dernière URL lue
 )
 ```
 

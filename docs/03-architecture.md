@@ -345,6 +345,15 @@ l'annonce récompensée.
             <action android:name="android.intent.action.SENDTO" />
             <data android:scheme="smsto" />
         </intent>
+        <!-- Apportés par le manifeste de engine:capture : lanceurs et claviers, dont les événements
+             sont ignorés sans lecture (specs/capture.md §5.3). -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <intent>
+            <action android:name="android.view.InputMethod" />
+        </intent>
     </queries>
 
     <application
@@ -358,6 +367,10 @@ l'annonce récompensée.
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Appui long sur la tuile de réglages rapides (specs/capture.md §7). -->
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
             </intent-filter>
         </activity>
 

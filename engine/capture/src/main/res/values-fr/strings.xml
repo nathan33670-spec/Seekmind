@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11y_service_label">SeekMind — mémorisation de l\'écran</string>
+    <string name="a11y_service_summary">Lit le texte de votre écran pour vous permettre de le retrouver. Rien ne quitte ce téléphone.</string>
+    <string name="a11y_service_description">SeekMind lit le texte affiché dans les applications que vous utilisez, le nom de l\'application, le titre de l\'écran et l\'adresse des pages web. Quand un écran contient surtout des images, il analyse ponctuellement l\'image de l\'écran en mémoire, sans jamais l\'enregistrer.\n\nCela sert uniquement à constituer, sur ce téléphone, votre index de recherche personnel, dans une base chiffrée. Rien n\'est jamais envoyé, partagé ni vendu. Les publicités ne sont jamais choisies en fonction de ce que SeekMind a lu.\n\nSeekMind ne lit pas les champs de mot de passe, la navigation privée, les écrans protégés ni les applications sensibles, et n\'effectue jamais d\'action dans les autres applications. Vous pouvez le mettre en pause, exclure des applications et tout supprimer à tout moment.</string>
+    <string name="tile_label">Mémorisation</string>
+    <string name="tile_subtitle_active">Active</string>
+    <string name="tile_subtitle_paused">En pause</string>
+    <string name="tile_subtitle_paused_until">En pause jusqu\'à %1$s</string>
+    <string name="tile_subtitle_not_set_up">Non activée</string>
+</resources>

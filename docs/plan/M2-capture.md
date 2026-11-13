@@ -12,7 +12,7 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-05 | `engine:capture`, `app` | [capture §2, §5.3, §8](../specs/capture.md) · [conformité §3](../05-conformite-play-store.md#3-engagements-de-conception) |
+| Fait | M1-05 | `engine:capture`, `app` | [capture §2, §5.3, §8](../specs/capture.md) · [conformité §3](../05-conformite-play-store.md#3-engagements-de-conception) |
 
 **À faire**
 
@@ -26,10 +26,10 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 **Critères d'acceptation**
 
-- [ ] Aucun accès à l'arbre, à la base ou au disque sur le thread principal (test avec `StrictMode` en debug).
-- [ ] Les événements des paquets ignorés ne réveillent pas le thread de capture.
-- [ ] `CaptureStatus` reflète : service désactivé, consentement manquant, pause, actif.
-- [ ] `:app:verifyAdsReleaseManifest` et `:app:verifyOfflineReleaseManifest` verts (capacités du service, composants exportés).
+- [x] Aucun accès à l'arbre, à la base ou au disque sur le thread principal (test avec `StrictMode` en debug).
+- [x] Les événements des paquets ignorés ne réveillent pas le thread de capture.
+- [x] `CaptureStatus` reflète : service désactivé, consentement manquant, pause, actif.
+- [x] `:app:verifyAdsReleaseManifest` et `:app:verifyOfflineReleaseManifest` verts (capacités du service, composants exportés).
 
 ---
 
@@ -77,7 +77,7 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M2-03 | `engine:capture` | [capture §5](../specs/capture.md) · EF-CAP-02 |
+| Fait | M2-03 | `engine:capture` | [capture §5](../specs/capture.md) · EF-CAP-02 |
 
 **À faire**
 
@@ -88,12 +88,14 @@ L'OCR et la sonde de fenêtre sécurisée arrivent au jalon M3.
 
 **Critères d'acceptation**
 
-- [ ] Table de cas de normalisation : sans schéma, avec chemin, termes de recherche (rejet), schéma non web (rejet), longueur excessive.
-- [ ] Barre d'adresse ayant le focus → pas d'URL.
-- [ ] E2E-13 : l'URL de `WebActivity` est lue.
+- [x] Table de cas de normalisation : sans schéma, avec chemin, termes de recherche (rejet), schéma non web (rejet), longueur excessive.
+- [x] Barre d'adresse ayant le focus → pas d'URL.
+- [x] E2E-13 : l'URL de `WebActivity` est lue (`ScreenMetaDeviceTest`, au niveau du module ; son
+      enregistrement avec la capture est vérifié de bout en bout par M2-08).
 
 **Validation manuelle** — vérifier l'identifiant de barre d'adresse sur chaque navigateur de la table
-installé sur le téléphone de test ; corriger la table ; consigner le tableau dans la PR.
+installé sur le téléphone de test ; corriger la table ; consigner le tableau dans la PR. *À faire par le
+porteur du projet : la table livrée est celle de la spec, non vérifiée sur appareil.*
 
 ---
 
@@ -155,7 +157,7 @@ les sept pays, tous vérifiés par `tools/privacy/verify_sensitive_apps.py` (spe
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M2-01 | `engine:capture`, `app` | [capture §7](../specs/capture.md) · EF-CAP-04 |
+| Fait | M2-01 | `engine:capture`, `app` | [capture §7](../specs/capture.md) · EF-CAP-04 |
 
 **À faire**
 
@@ -164,9 +166,10 @@ les sept pays, tous vérifiés par `tools/privacy/verify_sensitive_apps.py` (spe
 
 **Critères d'acceptation**
 
-- [ ] En pause, aucun événement n'atteint le thread de capture (E2E-10).
-- [ ] La pause programmée prend fin à l'heure dite (horloge simulée).
-- [ ] La tuile reflète l'état, y compris après un changement fait dans l'application.
+- [x] En pause, aucun événement n'atteint le thread de capture (E2E-10) : `EventRouterTest` ; le scénario
+      E2E-10 avec le service réel est joué par M2-08.
+- [x] La pause programmée prend fin à l'heure dite (horloge simulée).
+- [x] La tuile reflète l'état, y compris après un changement fait dans l'application.
 
 ---
 

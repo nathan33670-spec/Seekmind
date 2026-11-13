@@ -19,6 +19,8 @@ data class CaptureConfig(
     val hardBudgetMs: Long = 400,
     val maxTextChars: Int = 12_000,
     val minTextChars: Int = 20,
+    /** How long the last URL read stays reusable while the address bar is hidden (§5.2). */
+    val urlMemoryMs: Long = 600_000,
 )
 
 /** docs/specs/confidentialite.md §6. */

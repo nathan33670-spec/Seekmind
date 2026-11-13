@@ -14,7 +14,7 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `engine:index` | [indexation §2, §3](../specs/indexation.md) |
+| Fait | M1-01 | `engine:index` | [indexation §2, §3](../specs/indexation.md) |
 
 **À faire**
 
@@ -25,9 +25,9 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 **Critères d'acceptation**
 
-- [ ] Normalisation : table de cas ; idempotence ; les caractères U+0002 et U+0003 sont retirés.
-- [ ] SimHash : déterminisme ; texte identique → distance 0 ; textes sans rapport → distance moyenne proche de 32.
-- [ ] Le rapport de la PR donne la distribution des distances par catégorie de paires et confirme (ou corrige) le seuil de 9.
+- [x] Normalisation : table de cas ; idempotence ; les caractères U+0002 et U+0003 sont retirés.
+- [x] SimHash : déterminisme ; texte identique → distance 0 ; textes sans rapport → distance moyenne proche de 32.
+- [x] Le rapport de la PR donne la distribution des distances par catégorie de paires et confirme (ou corrige) le seuil de 9.
 
 ---
 
@@ -35,7 +35,7 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M4-01, M1-04 | `engine:index` | [indexation §1, §4 à §6](../specs/indexation.md) · EF-CAP-07, EF-IDX-01 |
+| Fait | M4-01, M1-04 | `engine:index` | [indexation §1, §4 à §6](../specs/indexation.md) · EF-CAP-07, EF-IDX-01 |
 
 **À faire**
 
@@ -47,11 +47,13 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 **Critères d'acceptation**
 
-- [ ] `Chunker` : fragments ≤ 800 caractères, lignes entières, ligne longue coupée proprement, au plus 4
+- [x] `Chunker` : fragments ≤ 800 caractères, lignes entières, ligne longue coupée proprement, au plus 4
       fragments, positions exactes (la concaténation des tranches redonne le texte couvert).
-- [ ] Déduplication : chacune des quatre conditions est nécessaire (quatre tests négatifs, un positif).
-- [ ] Doublon → `touch` et `Deduplicated` ; nouveau → une capture et ses fragments en attente.
-- [ ] Banc de mesure : `ingest` ≤ 15 ms au 95ᵉ centile (ENF-PERF-05).
+- [x] Déduplication : chacune des quatre conditions est nécessaire (quatre tests négatifs, un positif).
+- [x] Doublon → `touch` et `Deduplicated` ; nouveau → une capture et ses fragments en attente.
+- [x] Banc de mesure : `ingest` ≤ 15 ms au 95ᵉ centile (ENF-PERF-05). *Seuil provisoire de 30 ms sur
+      émulateur pendant le développement (décision du porteur, 13 novembre 2026) ; retour à 15 ms au
+      ticket M10-04.*
 
 ---
 
