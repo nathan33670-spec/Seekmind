@@ -12,7 +12,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `engine:search` | [recherche §2](../specs/recherche.md) |
+| Fait | M1-01 | `engine:search` | [recherche §2](../specs/recherche.md) |
 
 **À faire**
 
@@ -21,8 +21,8 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Table de cas : mots vides retirés ; requête faite uniquement de mots vides conservée ; codes reconnus ; profils `DEFAULT`, `CODE`, `NATURAL`.
-- [ ] Les filtres explicites de la requête priment sur ceux extraits du texte.
+- [x] Table de cas : mots vides retirés ; requête faite uniquement de mots vides conservée ; codes reconnus ; profils `DEFAULT`, `CODE`, `NATURAL`.
+- [x] Les filtres explicites de la requête priment sur ceux extraits du texte.
 
 ---
 

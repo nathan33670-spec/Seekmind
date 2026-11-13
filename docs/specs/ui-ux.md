@@ -142,9 +142,12 @@ déverrouillage.
 - **Typographie** : échelle Material 3 par défaut ; aucun texte sous 12 sp.
 - **Formes et espacements** : grille de 4 dp ; cartes à coins de 16 dp.
 - **Composants** (`core:designsystem`) : `StatusBanner`, `SearchField`, `FilterChipRow`, `ResultCard`,
-  `HighlightedText`, `AppIcon`, `EmptyState`, `CreditBadge`, `ConfirmDialog`, `SettingRow`.
-- **Icônes** : Material Symbols ; l'icône de l'application reste distincte et identifiable (jamais
-  déguisée en outil système).
+  `HighlightedText`, `AppIcon`, `EmptyState`, `CreditBadge`, `ConfirmDialog`, `SettingRow` (et sa
+  variante à interrupteur `SwitchSettingRow`). Ils reçoivent des textes déjà formatés et ne connaissent
+  aucun type du domaine : `ResultCard` prend un `ResultCardModel` que l'écran de recherche construit.
+- **Icônes** : icônes Material (licence Apache 2.0), en ressources vectorielles de `core:designsystem`
+  (`SeekMindIcons`) plutôt que par la bibliothèque d'icônes étendue ; l'icône de l'application reste
+  distincte et identifiable (jamais déguisée en outil système).
 - **Aperçus** : chaque composant a des aperçus Compose en clair, sombre et police à 200 %.
 
 ## 5. Accessibilité et adaptation
@@ -185,6 +188,7 @@ déverrouillage.
   de refus et réouverture ; carte de résultat (libellés du bouton par niveau de retour) ; verrouillage
   (aucun contenu composé avant authentification) ; réglages (pause, famille désactivée, exclusion
   d'une application, changement de modèle) ; écran des familles (quatre cases cochées, choix enregistré).
-- **Accessibilité** : contrôles automatiques d'accessibilité activés dans les tests Compose ; passage
-  manuel avec TalkBack (M6-08).
+- **Accessibilité** : contrôles automatiques d'accessibilité activés dans les tests Compose (sur les
+  émulateurs API 34 et 36 : Compose ne les propose qu'à partir d'Android 14) ; passage manuel avec
+  TalkBack (M6-08).
 - **Captures d'écran de référence** : facultatif en v1.
