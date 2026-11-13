@@ -149,10 +149,24 @@ class VectorIndexTest {
     }
 
     @Test
+    fun theRescoreUsesTheInt8VectorsInMemory() = runTest {
+        val query = TestVectors.unit(1)
+        repeat(30) { store.add(it.toLong(), TestVectors.unit(100L + it)) }
+        val index = index()
+        val hits = index.search(query, SearchFilters())
+        index.search(TestVectors.unit(2), SearchFilters())
+        assertThat(store.int8Reads).isEqualTo(0)
+        for (hit in hits) {
+            val stored = store.rows.single { it.id == hit.embeddingId }.vector
+            assertThat(hit.similarity).isWithin(1e-6f).of(codec.rescore(query, codec.int8(stored)))
+        }
+    }
+
+    @Test
     fun onEqualDistanceTheNewestVectorIsKept() {
         val codes = BinaryCodes(6)
         val code = LongArray(6) { 0x5555_5555_5555_5555L }
-        repeat(5) { codes.add(it + 1L, it.toLong(), 0, 0, "p", code) }
+        repeat(5) { codes.add(it + 1L, it.toLong(), 0, 0, "p", code, ByteArray(384)) }
         val into = IntArray(2)
         val distances = IntArray(2)
         assertThat(codes.preselect(code, null, null, null, into, distances)).isEqualTo(2)

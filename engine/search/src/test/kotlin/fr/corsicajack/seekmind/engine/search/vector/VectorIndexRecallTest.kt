@@ -80,7 +80,7 @@ class VectorIndexRecallTest {
         val codes = BinaryCodes(WORDS)
         repeat(COUNT) { i ->
             val code = VectorCodec.words(codec.binary(TestVectors.unit(i.toLong())))
-            codes.add(i + 1L, i.toLong(), i.toLong(), i + 10L, "p${i % 20}", code)
+            codes.add(i + 1L, i.toLong(), i.toLong(), i + 10L, "p${i % 20}", code, ByteArray(384))
         }
         val query = VectorCodec.words(codec.binary(TestVectors.unit(-1)))
         val mask = codes.packageMask(SearchFilters(packages = setOf("p1", "p2", "p3")))

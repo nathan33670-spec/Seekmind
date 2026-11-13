@@ -69,7 +69,7 @@ data class NewEmbedding(
     val vecBin: ByteArray,
 )
 
-/** What the in-memory binary index keeps per vector (docs/specs/recherche.md §6.1). */
+/** What the in-memory vector index keeps per vector (docs/specs/recherche.md §6.1). */
 class BinaryRow(
     val embeddingId: Long,
     val captureId: Long,
@@ -78,6 +78,8 @@ class BinaryRow(
     val packageName: String,
     /** 48 bytes. */
     val vecBin: ByteArray,
+    /** 384 bytes: the index rescores in memory, without reading the database (M5-05). */
+    val vecI8: ByteArray,
 )
 
 class Int8Row(val embeddingId: Long, val captureId: Long, val vecI8: ByteArray)

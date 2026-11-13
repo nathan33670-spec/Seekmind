@@ -50,6 +50,7 @@ internal class BinaryResult(
     val last_seen_at: Long,
     val package_name: String,
     val vec_bin: ByteArray,
+    val vec_i8: ByteArray,
 )
 
 internal class Int8Result(val id: Long, val capture_id: Long, val vec_i8: ByteArray)
@@ -189,7 +190,7 @@ internal abstract class VectorDao {
 
     @Query(
         """
-        SELECT e.id, e.capture_id, c.first_seen_at, c.last_seen_at, c.package_name, e.vec_bin
+        SELECT e.id, e.capture_id, c.first_seen_at, c.last_seen_at, c.package_name, e.vec_bin, e.vec_i8
         FROM embedding e JOIN capture c ON c.id = e.capture_id
         WHERE e.id > :after
         ORDER BY e.id

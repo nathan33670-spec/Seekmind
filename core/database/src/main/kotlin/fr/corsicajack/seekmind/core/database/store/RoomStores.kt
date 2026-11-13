@@ -166,7 +166,7 @@ internal class RoomVectorStore(private val dao: VectorDao, private val config: I
 
     override suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow> =
         dao.binaryAfter(embeddingId, limit).map {
-            BinaryRow(it.id, it.capture_id, it.first_seen_at, it.last_seen_at, it.package_name, it.vec_bin)
+            BinaryRow(it.id, it.capture_id, it.first_seen_at, it.last_seen_at, it.package_name, it.vec_bin, it.vec_i8)
         }
 
     override suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row> =

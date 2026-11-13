@@ -13,9 +13,9 @@ import kotlinx.coroutines.withContext
 data class SemanticHit(val captureId: Long, val embeddingId: Long, val similarity: Float)
 
 /**
- * Vector search (docs/specs/recherche.md §6, ADR-0005): binary codes in memory, Hamming preselection of
- * [SearchConfig.binaryTopK] candidates that pass the filters, int8 rescore of the candidates read from
- * the database, floor, then the best fragment of each capture.
+ * Vector search (docs/specs/recherche.md §6, ADR-0005): binary codes and int8 vectors in memory, Hamming
+ * preselection of [SearchConfig.binaryTopK] candidates that pass the filters, int8 rescore of the
+ * candidates (no database read per search), floor, then the best fragment of each capture.
  *
  * - Loaded lazily on the first [search], by pages of [SearchConfig.indexPageSize].
  * - Before every search: the vectors added since are read; a new `meta.index_generation` (a deletion)
@@ -32,6 +32,7 @@ class VectorIndex(
 ) {
     private val mutex = Mutex()
     private val words = codec.binarySize / Long.SIZE_BYTES
+    private val dimensions = codec.dimensions
 
     // Guarded by mutex.
     private var codes: BinaryCodes? = null
@@ -73,32 +74,30 @@ class VectorIndex(
             )
         }
         if (kept == 0) return@withLock emptyList()
-        val lastSeenOf = HashMap<Long, Long>(kept * 2)
-        val ids = List(kept) { n ->
-            val i = candidates[n]
-            lastSeenOf[index.captureId(i)] = index.lastSeen(i)
-            index.embeddingId(i)
-        }
-        val rows = store.int8Vectors(ids)
         withContext(dispatcher) {
-            val best = HashMap<Long, SemanticHit>()
-            for (row in rows) {
-                val similarity = codec.rescore(query, row.vecI8)
-                if (similarity < config.semanticFloor) continue
-                val current = best[row.captureId]
-                if (current == null || similarity > current.similarity) {
-                    best[row.captureId] = SemanticHit(row.captureId, row.embeddingId, similarity)
-                }
+            // Rescore in memory (the int8 vectors are kept with the codes): no database read per search.
+            val similarities = FloatArray(kept)
+            val best = HashMap<Long, Int>(kept * 2)
+            for (n in 0 until kept) {
+                val i = candidates[n]
+                similarities[n] = index.dotInt8(i, query) / codec.scale
+                if (similarities[n] < config.semanticFloor) continue
+                val captureId = index.captureId(i)
+                val current = best[captureId]
+                if (current == null || similarities[n] > similarities[current]) best[captureId] = n
             }
             best.values.sortedWith(
-                compareByDescending<SemanticHit> { it.similarity }.thenByDescending { lastSeenOf[it.captureId] ?: 0L },
-            ).take(config.semanticTopK)
+                compareByDescending<Int> { similarities[it] }.thenByDescending { index.lastSeen(candidates[it]) },
+            ).take(config.semanticTopK).map { n ->
+                val i = candidates[n]
+                SemanticHit(index.captureId(i), index.embeddingId(i), similarities[n])
+            }
         }
     }
 
     private suspend fun refreshLocked(): BinaryCodes {
         val current = store.indexGeneration()
-        val index = codes?.takeIf { current == generation } ?: BinaryCodes(words).also {
+        val index = codes?.takeIf { current == generation } ?: BinaryCodes(words, dimensions).also {
             codes = it
             generation = current
         }
@@ -112,6 +111,7 @@ class VectorIndex(
                     row.lastSeenAt,
                     row.packageName,
                     VectorCodec.words(row.vecBin),
+                    row.vecI8,
                 )
             }
             if (page.size < config.indexPageSize) break

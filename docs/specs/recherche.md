@@ -213,11 +213,16 @@ la coupe de l'extrait se ferme à sa fin.
 | Tableau | Type | Par vecteur |
 |---|---|---|
 | Codes binaires | `LongArray` | 6 × 8 octets |
+| Vecteurs int8 (rescore en mémoire) | `ByteArray` | 384 octets |
 | Identifiant de vecteur, identifiant de capture | `LongArray` ×2 | 16 octets |
 | Première et dernière vue | `LongArray` ×2 | 16 octets |
 | Indice de paquet | `IntArray` | 4 octets |
 
-Soit 84 octets par vecteur : 8 Mo pour 100 000 vecteurs, 25 Mo pour 300 000.
+Soit 468 octets par vecteur : 47 Mo pour 100 000 vecteurs, 140 Mo pour 300 000. Les vecteurs int8 sont
+gardés en mémoire depuis le 13 novembre 2026 (décision du porteur) : lus en base à chaque recherche,
+les 400 candidats coûtaient de 29 à 54 ms à 20 000 vecteurs (§6.3), au-delà du budget d'ENF-PERF-04.
+L'index n'existe que pendant l'usage de l'écran de recherche (libéré 60 s après), pas dans le service
+de capture (ENF-MEM-01).
 
 - **Chargement** paresseux, au premier usage, hors thread principal, par pages de 5 000 lignes
   (`VectorStore.binaryCodesAfter`). Cible : ≤ 500 ms pour 100 000 vecteurs.
@@ -232,7 +237,7 @@ Soit 84 octets par vecteur : 8 Mo pour 100 000 vecteurs, 25 Mo pour 300 000.
 2. **Présélection** : parcours linéaire ; pour chaque vecteur passant les filtres (dates, paquets),
    distance de Hamming sur 6 mots (`Long.bitCount`) ; conservation des `binaryTopK` (400) plus proches
    dans un tas borné.
-3. **Rescore** : lecture des vecteurs int8 des candidats (`VectorStore.int8Vectors`) ; similarité
+3. **Rescore** en mémoire, sur les vecteurs int8 de l'index (aucune lecture en base) ; similarité
    `(Σ q[i] × d[i]) / S`.
 4. Rejet des candidats sous `semanticFloor`.
 5. Regroupement par capture (meilleur fragment) ; conservation des `semanticTopK` (100) meilleures captures.
@@ -287,13 +292,13 @@ filtre, émulateurs x86_64 de la CI, APK de test debuggable, exécution `device-
 | Recherche, 200 candidats | 22 ms | 17 ms | 14 ms |
 | Chargement de l'index (20 000 vecteurs) | 2,0 à 2,7 s | 1,2 à 1,4 s | 1,2 à 1,9 s |
 
-**À suivre (M5-08, mesures à 100 000 captures).** Avec 400 candidats, la branche sémantique atteint
-déjà, à 20 000 vecteurs, le budget de 30 ms d'ENF-PERF-04 (recherche hors embedding de la requête). Le
-temps vient surtout de la lecture des vecteurs int8 en base (le parcours binaire est de l'ordre de la
-milliseconde). Le chargement est lui aussi loin de la cible de l'ADR-0005 (≤ 500 ms pour 100 000
-vecteurs). Pistes : lire les int8 en une requête par lot d'identifiants plus larges, garder les int8 en
-mémoire (384 octets par vecteur), ou paginer le chargement par plus grosses pages. Ces mesures sur
-émulateur debuggable sont à confirmer sur le téléphone. Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour
+Ces mesures portent sur la version qui lisait les int8 en base à chaque recherche : avec 400 candidats,
+la branche sémantique atteignait déjà, à 20 000 vecteurs, le budget de 30 ms d'ENF-PERF-04 (recherche
+hors embedding de la requête), le temps venant surtout de cette lecture. Les int8 sont depuis gardés en
+mémoire (§6.1) ; les nouvelles mesures du même test sont consignées ci-dessous. **À suivre (M5-08)** : le
+chargement reste loin de la cible de l'ADR-0005 (≤ 500 ms pour 100 000 vecteurs) ; la jointure avec
+`capture` (dates, paquet) en est la piste principale. Mesures sur émulateur debuggable, à confirmer sur
+le téléphone. Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour
 10 parcours, mesurés par `ThreadMXBean`).
 
 ## 7. Fusion

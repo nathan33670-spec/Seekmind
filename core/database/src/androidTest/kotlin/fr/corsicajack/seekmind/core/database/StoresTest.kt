@@ -223,6 +223,7 @@ class StoresTest {
         assertThat(all.map { it.embeddingId }).isInStrictOrder()
         assertThat(handle.vectors.binaryCodesAfter(all.last().embeddingId, 2)).isEmpty()
         assertThat(all.first().vecBin).hasLength(48)
+        assertThat(all.first().vecI8).hasLength(384)
         assertThat(all.first().firstSeenAt).isEqualTo(1_000)
 
         val int8 = handle.vectors.int8Vectors(listOf(all[3].embeddingId, all[1].embeddingId))
