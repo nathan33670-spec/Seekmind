@@ -78,7 +78,7 @@ internal abstract class CaptureDao {
         }
 
     @Query("UPDATE capture SET last_seen_at = :seenAt, seen_count = seen_count + 1 WHERE id = :id")
-    abstract suspend fun touch(id: Long, seenAt: Long)
+    abstract suspend fun touch(id: Long, seenAt: Long): Int
 
     @Query(
         "SELECT id, simhash, first_seen_at, last_seen_at FROM capture WHERE package_name = :pkg ORDER BY last_seen_at DESC LIMIT :limit",

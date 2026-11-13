@@ -29,6 +29,7 @@ androidx.graphics:*
 androidx.interpolator:*
 androidx.lifecycle:*
 androidx.loader:*
+androidx.navigation:*
 androidx.navigationevent:*
 androidx.profileinstaller:*
 androidx.resourceinspection:*

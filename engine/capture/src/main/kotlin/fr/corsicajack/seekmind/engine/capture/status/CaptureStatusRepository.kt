@@ -7,7 +7,9 @@ import android.view.accessibility.AccessibilityManager
 import fr.corsicajack.seekmind.core.common.Clock
 import fr.corsicajack.seekmind.core.database.settings.Settings
 import fr.corsicajack.seekmind.core.model.CaptureStatus
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.transformLatest
 
 /** Whether the service is connected, as published by the service itself (docs/specs/capture.md §8). */
 class ServiceConnection {
@@ -69,15 +72,32 @@ class AccessibilityServiceState(private val context: Context, private val connec
 
 /**
  * The capture state shown to the user (docs/specs/capture.md §8, EF-CAP-05), from the service state, the
- * consent and the pause. The end of a scheduled pause is seen at the next change of an input (the
- * timer that ends it arrives with M2-07).
+ * consent and the pause. A scheduled pause ends on time: the flow waits for its end and emits again
+ * (docs/specs/capture.md §7).
  */
 class CaptureStatusRepository(serviceEnabled: Flow<Boolean>, settings: Flow<Settings>, private val clock: Clock) {
     private val lastCaptureAt = MutableStateFlow<Long?>(null)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val status: Flow<CaptureStatus> = combine(serviceEnabled, settings, lastCaptureAt) { enabled, current, last ->
-        resolve(enabled, current.consent != null, current.pausedUntil, clock.nowMillis(), last)
+        Inputs(enabled, current.consent != null, current.pausedUntil, last)
+    }.transformLatest { inputs ->
+        while (true) {
+            val now = clock.nowMillis()
+            val status = resolve(inputs.enabled, inputs.consented, inputs.pausedUntil, now, inputs.lastCaptureAt)
+            emit(status)
+            val end = (status as? CaptureStatus.Paused)?.until ?: break
+            // Woken at the end of the pause, or later should the wall clock lag behind the monotonic one.
+            delay((end - now).coerceAtLeast(1))
+        }
     }.distinctUntilChanged()
+
+    private data class Inputs(
+        val enabled: Boolean,
+        val consented: Boolean,
+        val pausedUntil: Long?,
+        val lastCaptureAt: Long?,
+    )
 
     /** Called by the pipeline when a capture is stored (M2-06). */
     fun onCaptureStored(at: Long) {
