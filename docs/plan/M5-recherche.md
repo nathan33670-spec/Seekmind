@@ -30,7 +30,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-01 | `engine:search`, `testdata` | [recherche §3](../specs/recherche.md) · EF-SRCH-04 |
+| Fait | M5-01 | `engine:search`, `testdata` | [recherche §3](../specs/recherche.md) · EF-SRCH-04 |
 
 **À faire**
 
@@ -40,9 +40,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Tous les cas du fichier passent, avec horloge et fuseau fixés.
-- [ ] Cas particuliers couverts : changement d'heure, passage d'année, « mardi » un mardi, « soir » à cheval sur deux jours.
-- [ ] Une requête sans expression temporelle n'est pas modifiée.
+- [x] Tous les cas du fichier passent, avec horloge et fuseau fixés.
+- [x] Cas particuliers couverts : changement d'heure, passage d'année, « mardi » un mardi, « soir » à cheval sur deux jours.
+- [x] Une requête sans expression temporelle n'est pas modifiée.
 
 ---
 
