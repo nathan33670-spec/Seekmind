@@ -35,13 +35,14 @@ jobs:
       - name: Install Android SDK packages
         run: bash scripts/setup-android-sdk.sh
 
-      # The bundled `fr` model, from the cache or rebuilt and checked against model.lock.json
-      # (docs/specs/embeddings.md §2): the release builds below embed it and :engine:embedding:verifyModel
-      # checks it.
-      - name: Embedding model
+      # The model sets, from the cache or rebuilt and checked against model.lock.json
+      # (docs/specs/embeddings.md §2): the release builds below embed `fr` and
+      # :engine:embedding:verifyModel checks it; the tokenizer parity tests read the vocab.bin of both
+      # (§3.3). Same cache key as device-tests.
+      - name: Embedding models
         uses: ./.github/actions/model-artifacts
         with:
-          models: fr
+          models: fr multi
 
       - name: Formatting, lint, JVM tests and build of both variants
         run: >

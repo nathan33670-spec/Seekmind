@@ -107,18 +107,34 @@ class Encoding(val inputIds: IntArray, val attentionMask: IntArray)
 
 ### 3.1 Algorithme
 
-1. **Normalisation** (approximation du jeu de règles `nmt_nfkc`) : NFKC ; caractères de contrôle
-   supprimés ; tabulations, retours à la ligne, espaces insécables et espaces de largeur nulle remplacés
-   par une espace ; espaces multiples réduites ; espaces de bord retirées.
+Implémentation : `UnigramTokenizer`, `Vocabulary` et `UnigramNormalizer`, paquet
+`fr.corsicajack.seekmind.engine.embedding.tokenizer`. Le tokenizer est sans état et partageable entre threads.
+
+1. **Normalisation** (approximation du jeu de règles `nmt_nfkc`, établie point de code par point de code
+   contre la référence) :
+   - caractères de contrôle supprimés : U+0001 à U+0008, U+000B, U+000E à U+001F, U+007F, U+008F,
+     U+009F (U+0000 et les autres contrôles C1, dont U+0085, sont conservés, comme par la référence) ;
+   - remplacés par une espace : tabulation, saut de ligne, saut de page, retour chariot, U+1680,
+     U+200B à U+200F (espaces et liants de largeur nulle), U+2028, U+2029, U+2581, U+FEFF, U+FFFD ;
+   - NFKC sur le reste (les espaces insécables, fines et idéographiques deviennent ainsi une espace),
+     sauf pour quelques caractères ajoutés à Unicode après la compilation du jeu de règles, que la
+     référence laisse tels quels (par exemple U+FF5E) ;
+   - toute suite d'au moins deux espaces réduite à une seule. Les espaces de bord sont **conservées** :
+     la référence ne les retire pas (une espace finale produit un jeton `▁` isolé).
 2. **Pré-découpage** : chaque espace devient `▁` (U+2581) ; un `▁` est ajouté en tête ; le texte est
-   découpé en mots commençant chacun par `▁`.
+   découpé en mots commençant chacun par `▁`. Un texte vide après normalisation ne donne aucun mot.
 3. **Segmentation** de chaque mot par l'algorithme de Viterbi : parmi tous les découpages en jetons du
-   vocabulaire, retenir celui dont la somme des scores est maximale. Un caractère absent du vocabulaire
-   produit le jeton inconnu (`<unk>`, identifiant 3) avec le score `score minimal du vocabulaire − 10` ;
-   des inconnus consécutifs sont fusionnés en un seul.
+   vocabulaire, retenir celui dont la somme des scores est maximale (parcours et comparaisons stricts
+   identiques à la référence, pour départager les égalités de la même façon). Une position sans jeton
+   d'un seul caractère reçoit le jeton inconnu (`<unk>`, identifiant 3) avec le score
+   `score minimal du vocabulaire − 10` ; des inconnus consécutifs sont fusionnés en un seul, dont le texte
+   est recherché dans le vocabulaire (identifiant trouvé, sinon `<unk>`), comme le fait la référence.
 4. **Identifiants** : la position du jeton dans le vocabulaire. Jetons spéciaux : `<s>` = 0,
-   `<pad>` = 1, `</s>` = 2, `<unk>` = 3.
-5. **Gabarit** : `<s>` + jetons + `</s>`. **Troncature** : au plus `maxTokens`, `</s>` final conservé.
+   `<pad>` = 1, `</s>` = 2, `<unk>` = 3. Ils ne sont jamais reconnus dans le texte : un texte qui
+   contient `</s>` est découpé comme du texte ordinaire (la référence, elle, le transformerait en jeton
+   spécial).
+5. **Gabarit** : `<s>` + jetons + `</s>`. **Troncature** : au plus `maxTokens` (au moins 2), `</s>` final
+   conservé. Les mots étant indépendants, la segmentation s'arrête dès que le budget est atteint.
 6. `attentionMask` : 1 pour chaque jeton.
 
 ### 3.2 Vocabulaire binaire
@@ -130,13 +146,27 @@ pour `fr`, 4,1 Mo pour `multi`.
 Chargement en structures compactes : un tableau d'octets unique, un tableau de positions, un tableau de
 scores, et une table de hachage à adressage ouvert (hachage 64 bits des octets du jeton → identifiant,
 vérification des octets à chaque succès). **Budget mémoire : 16 Mo** pour le plus grand vocabulaire.
-Pas de `HashMap<String, Int>`.
+Pas de `HashMap<String, Int>`. Hachage FNV-1a 64 bits, calculé octet par octet pendant la segmentation ;
+taux de remplissage de la table au plus 1/2 ; les jetons spéciaux (0 à 3) n'y figurent pas. Le lecteur
+refuse un fichier mal formé (magique, longueurs, octets en trop, jetons spéciaux absents de 0 à 3).
+
+Mesures (M4-03, JVM) : structures de 1,0 Mo pour `fr`, 6,4 Mo pour `multi` (8 Mo de croissance du tas
+au chargement).
 
 ### 3.3 Parité
 
 Pour **chaque** modèle, le tokenizer doit produire exactement les mêmes identifiants que la référence
 Python sur au moins **99,5 %** des 1 000 phrases de `testdata/tokenizer_golden_<id>.jsonl`. Les écarts
-restants sont listés dans le rapport de test. Si le seuil n'est pas atteint (risque R-12), repli :
+restants sont listés dans le rapport de test (`build/reports/tokenizer/parity-<id>.txt`). Les tests JVM lisent
+le `vocab.bin` produit par `tools/model` (`tools/model/out/<id>/`, ou l'asset installé pour `fr`) et
+vérifient son empreinte contre `model.lock.json` ; sans vocabulaire, ils sont ignorés en local et
+échouent en CI. Résultat (M4-03) : 1 000/1 000 phrases identiques pour chacun des deux modèles.
+
+Limite connue de l'approximation : le jeu `nmt_nfkc` traite certaines suites de diacritiques combinants
+par graphème, sans le réordonnancement canonique de NFKC (par exemple `é` + U+0330 reste tel quel, et
+`e` + U+0330 + U+0301 devient U+1E1B seul). Sur 20 000 phrases altérées par insertion aléatoire de
+caractères rares, 0,2 % (`fr`) et 0,3 % (`multi`) divergent, toutes pour cette raison (diacritiques
+combinants isolés, jamos hangûl) ; aucun texte réaliste n'est concerné. Si le seuil n'est pas atteint (risque R-12), repli :
 embarquer une bibliothèque native de tokenisation, par un ADR.
 
 ## 4. Moteur
@@ -171,9 +201,20 @@ Implémentation `OrtEmbeddingEngine` :
   `attention_mask`, et `token_type_ids` à zéro si elle l'exige).
 - **Sortie** : moyenne masquée de `last_hidden_state`, puis normalisation L2.
 - **Cycle de vie** : le fournisseur compte les utilisateurs ; la session est fermée 60 s après le
-  dernier usage et sur `onTrimMemory(TRIM_MEMORY_RUNNING_LOW)`. L'interface de recherche la retient tant
+  dernier usage et sous pression mémoire. L'interface de recherche la retient tant
   qu'elle est au premier plan.
 - Les appels sont sérialisés (un seul calcul à la fois dans le processus).
+
+**Implémentation (M4-04)**, paquet `fr.corsicajack.seekmind.engine.embedding.engine` :
+
+| Élément | Rôle |
+|---|---|
+| `OrtEmbeddingEngine` | Préfixes, tokenisation, tri par longueur, sous-lots, agrégation ; vecteurs rendus dans l'ordre des textes. Calcule sur le dispatcher `default`. |
+| `Encoder`, `OrtEncoder` | Exécution du réseau sur un sous-lot rembourré (`PaddedBatch`) ; `OrtEncoder` lit la dimension dans la forme de sortie de la session. Le reste du moteur est testé sur JVM avec un encodeur factice. |
+| `OrtEmbeddingEngineFactory` | Charge `vocab.bin` et la session (`OrtModelLoader`) d'un `LoadableModel` : `ModelSpec` (qui donne le `modelId`) et `ModelSource` (`Bundled("model/fr")` ou `Pack(ModelFiles)`). |
+| `ActiveModel` | Le modèle à charger à la prochaine session ; `BuiltInModels.bundledFr` jusqu'au catalogue de M4-07. |
+| `SharedEmbeddingEngineProvider` | Implémente `EmbeddingEngineProvider` : chargement au premier `use`, rechargement si le modèle actif ou le nombre de threads (`EmbeddingThreads`, fourni par le gouverneur) a changé, `retain()` (poignées comptées), `release()` (fermeture après le calcul en cours), fermeture après `idleCloseMs`. Un bloc passé à `use` ne doit pas rappeler `use`. |
+| `MemoryPressureRelease` | `ComponentCallbacks2` qui appelle `release()` sur `TRIM_MEMORY_RUNNING_LOW`, `TRIM_MEMORY_RUNNING_CRITICAL`, les niveaux `TRIM_MEMORY_BACKGROUND` et au-delà, et `onLowMemory`. Les niveaux `RUNNING_*` ne sont plus envoyés à partir de l'API 34 : les niveaux d'arrière-plan sont alors le seul signal. |
 
 ## 5. Packs de langue
 
@@ -259,6 +300,10 @@ calibre pour que moins de 0,1 % des composantes soient écrêtées sur les vecte
 Similarité de rescore entre une requête en flottants `q` et un document int8 `d` :
 `(Σ q[i] × d[i]) / S`, approximation du cosinus.
 
+`round` arrondit au pair le plus proche (comme NumPy) : le code de `−v` est l'opposé de celui de `v`.
+Dans le code binaire, le bit `i` est le bit `i mod 8` de l'octet `i / 8`, ce qui donne bien les octets de
+6 mots de 64 bits petit-boutistes (`VectorCodec.words`).
+
 ## 7. Identifiant de modèle
 
 Chaque entrée du catalogue porte un `modelId` entier, enregistré avec chaque vecteur. Il est incrémenté
@@ -282,6 +327,24 @@ encodeur) ; ils diffèrent par la mémoire et le temps de chargement.
 
 Si l'appareil bas dépasse ces cibles d'un facteur deux, le ticket M10-02 isole le moteur dans un
 processus dédié.
+
+Mesures du moteur (M4-04, `OrtEmbeddingEngineDeviceTest`, émulateurs x86_64 de la CI, exécution
+`device-tests` 43440665786, API 30 / 34 / 36) — moteur complet, tokenizer Kotlin compris, 2 threads :
+
+| Mesure | `fr` | `multi` |
+|---|---|---|
+| Chargement de la session (première fois ; vocabulaire compris) | 152 / 257 / 212 ms | 216 / 416 / 359 ms |
+| Requête courte, médiane | 5,8 / 10,2 / 16,6 ms | 5,8 / 10,4 / 8,9 ms |
+| Passage tronqué à 256 jetons, médiane | 97 / 161 / 151 ms | 92 / 171 / 140 ms |
+| Lot de 8 passages de 256 jetons, médiane | 779 / 1 347 / 1 149 ms | 722 / 1 436 / 1 064 ms |
+| PSS ajoutée par la session | 36 / 35 / 28 Mo | 131 / 95 / 131 Mo |
+| PSS totale du processus de test | 207 / 178 / 189 Mo | 279 / 258 / 279 Mo |
+| Cosinus le plus bas avec `embedding_golden_fr.json`, texte par texte (en un lot) | 0,9971 (0,9958) | — |
+
+Les cibles de latence et de chargement sont tenues, sauf le passage de 256 jetons sur les émulateurs
+API 34 et 36, au niveau de la cible (151 à 171 ms pour 150 ms), comme au prototype S4. La PSS totale
+compte le processus d'instrumentation : la session `fr` n'ajoute que 28 à 36 Mo. Ces deux points sont
+à confirmer sur le téléphone, application seule (M10-01).
 
 ## 9. Configuration
 

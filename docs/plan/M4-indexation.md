@@ -59,7 +59,7 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-10, M1-01 | `engine:embedding` | [embeddings §3](../specs/embeddings.md) · risque R-12 |
+| Fait | M0-10, M1-01 | `engine:embedding` | [embeddings §3](../specs/embeddings.md) · risque R-12 |
 
 **À faire**
 
@@ -71,10 +71,10 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 **Critères d'acceptation**
 
-- [ ] Parité exacte sur au moins 99,5 % des 1 000 phrases, **pour chacun des deux vocabulaires** ; les
+- [x] Parité exacte sur au moins 99,5 % des 1 000 phrases, **pour chacun des deux vocabulaires** ; les
       divergences sont listées et expliquées dans la PR.
-- [ ] Cas limites : chaîne vide, espaces seules, émojis, caractères inconnus consécutifs (un seul jeton inconnu), texte plus long que la limite.
-- [ ] Tokenisation d'un passage de 800 caractères en moins de 5 ms sur JVM ; mémoire du vocabulaire mesurée.
+- [x] Cas limites : chaîne vide, espaces seules, émojis, caractères inconnus consécutifs (un seul jeton inconnu), texte plus long que la limite.
+- [x] Tokenisation d'un passage de 800 caractères en moins de 5 ms sur JVM ; mémoire du vocabulaire mesurée.
 
 Si le seuil n'est pas atteint après analyse des divergences : s'arrêter, passer le ticket à `Bloqué` et
 proposer un ADR (bibliothèque native de tokenisation).
@@ -85,7 +85,7 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M4-03, M0-09 | `engine:embedding` | [embeddings §4 à §6](../specs/embeddings.md) |
+| Fait | M4-03, M0-09 | `engine:embedding` | [embeddings §4 à §6](../specs/embeddings.md) |
 
 **À faire**
 
@@ -97,11 +97,12 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 **Critères d'acceptation**
 
-- [ ] Cosinus ≥ 0,99 avec chaque vecteur de `testdata/embedding_golden_fr.json` (test instrumenté).
-- [ ] Les préfixes `query: ` et `passage: ` sont appliqués par le moteur (test : deux vecteurs différents pour le même texte).
-- [ ] `VectorCodec` : aller-retour, écrêtage, correspondance bit à bit du code binaire.
-- [ ] La session se ferme après le délai d'inactivité ; un nouvel appel la recharge.
-- [ ] Mesures de la spec §8 relevées sur émulateur et consignées.
+- [x] Cosinus ≥ 0,99 avec chaque vecteur de `testdata/embedding_golden_fr.json` (test instrumenté).
+      (0,9971 à partir du texte, 0,9958 en un lot, sur les trois niveaux d'API.)
+- [x] Les préfixes `query: ` et `passage: ` sont appliqués par le moteur (test : deux vecteurs différents pour le même texte).
+- [x] `VectorCodec` : aller-retour, écrêtage, correspondance bit à bit du code binaire.
+- [x] La session se ferme après le délai d'inactivité ; un nouvel appel la recharge.
+- [x] Mesures de la spec §8 relevées sur émulateur et consignées ([embeddings §8](../specs/embeddings.md)).
 
 ---
 
