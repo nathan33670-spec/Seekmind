@@ -73,7 +73,11 @@ class Fusion(private val config: SearchConfig = SearchConfig()) {
             }
             val other = kept[i]
             val newer = if (hit.capture.lastSeenAt > other.capture.lastSeenAt) hit else other
+            // An extract with highlighted terms is more useful than a semantic one, whichever capture it comes from.
+            val snippet =
+                listOf(newer, other, hit).firstOrNull { it.snippet.highlights.isNotEmpty() }?.snippet ?: newer.snippet
             kept[i] = newer.copy(
+                snippet = snippet,
                 score = maxOf(other.score, hit.score),
                 matchedBy = other.matchedBy + hit.matchedBy,
                 similarCount = other.similarCount + hit.similarCount + 1,

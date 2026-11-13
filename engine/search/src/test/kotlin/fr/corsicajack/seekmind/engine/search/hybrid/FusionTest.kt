@@ -117,6 +117,17 @@ class FusionTest {
     }
 
     @Test
+    fun aFoldedPairKeepsTheHighlightedExtract() {
+        val base = 0x1234_5678_9ABC_DEF0L
+        val older = capture(1, lastSeen = now - DAY, simhash = base) // found by keywords
+        val newer = capture(2, lastSeen = now, simhash = base xor 1) // found by meaning only
+        val hit = fuse(lex(1), sem(2), listOf(older, newer)).single()
+        assertThat(hit.captureId).isEqualTo(2)
+        assertThat(hit.snippet).isEqualTo(Snippet("lex 1", listOf(0..2)))
+        assertThat(hit.matchedBy).containsExactly(MatchKind.LEXICAL, MatchKind.SEMANTIC)
+    }
+
+    @Test
     fun resultsAreTruncatedToTheLimit() {
         val captures = (1L..10L).map { capture(it) }
         assertThat(fuse(lex(*LongArray(10) { it + 1L }), emptyList(), captures, limit = 3)).hasSize(3)
