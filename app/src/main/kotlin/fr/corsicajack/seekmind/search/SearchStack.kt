@@ -59,6 +59,7 @@ class SearchStack(
             semantic = VectorSemanticSource(embeddings, index),
             store = handle.search,
             cache = cache,
+            generation = { handle.vectors.indexGeneration() },
             config = config,
         )
         built = Built(engine, index, embeddings)
