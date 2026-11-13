@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_security_title">Sécurité</string>
+    <string name="settings_lock_title">Verrouiller SeekMind</string>
+    <string name="settings_lock_summary">Demander votre empreinte, votre visage ou le code de verrouillage pour ouvrir SeekMind.</string>
+    <string name="settings_lock_unavailable">Indisponible&#160;: définissez un verrouillage de l\'écran sur ce téléphone (code, schéma ou mot de passe) pour l\'utiliser.</string>
+    <string name="settings_lock_grace_title">Verrouiller de nouveau après</string>
+    <string name="settings_lock_grace_immediately">Dès que vous quittez l\'application</string>
+    <plurals name="settings_lock_grace_minutes">
+        <item quantity="one">%d minute en arrière-plan</item>
+        <item quantity="many">%d minutes en arrière-plan</item>
+        <item quantity="other">%d minutes en arrière-plan</item>
+    </plurals>
+    <string name="settings_cancel">Annuler</string>
+</resources>

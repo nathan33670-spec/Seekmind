@@ -286,7 +286,7 @@ retient la combinaison stable la plus récente qui compile et corrige le tableau
 | Publicité (variante `ads`) | Google Mobile Ads SDK (`com.google.android.gms:play-services-ads`) | 25.5.0 |
 | | User Messaging Platform (`com.google.android.ump:user-messaging-platform`) | 4.0.0 |
 | Web | `androidx.browser` (ouverture de la politique de confidentialité) | 1.10.0 |
-| Sécurité | `androidx.biometric` | 1.1.0 |
+| Sécurité | `androidx.biometric` (non utilisée en v1 : le verrouillage emploie le `BiometricPrompt` de la plateforme, ui-ux §3.6) | 1.1.0 |
 | Tests | JUnit 4.13.2 · Truth 1.4.5 · Turbine 1.2.1 · MockK 1.14.12 · Robolectric 4.17 | |
 | | AndroidX Test runner 1.7.0 · ext-junit 1.3.0 · UI Automator 2.4.1 · Benchmark 1.5.0 | |
 | Qualité | Spotless + ktlint, Android Lint | dernières stables à M0-02 |
@@ -435,7 +435,8 @@ aucune statistique d'usage n'est planifiée ni émise ([ocr §4.1](specs/ocr.md)
 
 | Permission | Origine | `offline` | `ads` |
 |---|---|---|---|
-| `USE_BIOMETRIC`, `USE_FINGERPRINT` | `androidx.biometric` | Admise | Admise |
+| `USE_BIOMETRIC` | `:app` : `BiometricPrompt` de la plateforme (M6-07) | Admise | Admise |
+| `USE_FINGERPRINT` | Réservée à `androidx.biometric`, non utilisée en v1 | Admise | Admise |
 | `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` | WorkManager | Admises | Admises |
 | `FOREGROUND_SERVICE_DATA_SYNC` | Play Asset Delivery (packs de langue) | Admise | Admise |
 | `<applicationId>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | `androidx.core` | Admise | Admise |

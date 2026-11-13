@@ -120,12 +120,19 @@ journée ». Chargement par pages de 50 (curseur sur la date). Jamais soumis aux
 
 ### 3.6 Verrouillage
 
-`BiometricPrompt` avec `BIOMETRIC_WEAK or DEVICE_CREDENTIAL`. Tant que l'authentification n'a pas
-réussi, **aucun contenu n'est composé** : seul un écran neutre avec le logo et « Déverrouiller »
-existe. Délai de grâce de 5 min après le passage en arrière-plan. Si l'appareil n'a pas de
-verrouillage sécurisé, le réglage est désactivé avec une explication.
+`BiometricPrompt` de la plateforme avec `BIOMETRIC_WEAK or DEVICE_CREDENTIAL`, combinaison prise en
+charge dès Android 11, le minimum de l'application : aucune bibliothèque n'est nécessaire. Tant que
+l'authentification n'a pas réussi, **aucun contenu n'est composé** : seul un écran neutre avec le logo
+et « Déverrouiller » existe ; l'invite ne s'ouvre que sur ce bouton.
 
-Toutes les activités posent `FLAG_SECURE` (EF-PRIV-11).
+Le verrou (`AppLock`, dans `:app`) s'applique quand le réglage est actif et que l'appareil a un
+verrouillage sécurisé. Il revient au redémarrage du processus et au retour au premier plan après au
+moins le délai de grâce en arrière-plan : 5 min par défaut, au choix « immédiatement », 1, 5 ou 15 min.
+Une rotation de l'écran n'est pas un passage en arrière-plan. Activer le verrou depuis les réglages
+laisse la session en cours ouverte. Si l'appareil n'a pas de verrouillage sécurisé, le réglage est
+désactivé avec une explication, et il est relu au retour sur l'écran.
+
+Toutes les activités dérivent de `SecureActivity`, qui pose `FLAG_SECURE` (EF-PRIV-11).
 
 ### 3.7 Résultats de `LinkActivity`
 
