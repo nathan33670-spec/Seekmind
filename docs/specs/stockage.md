@@ -23,7 +23,12 @@
 2. La clé est passée à SQLCipher au format clé brute `x'<64 caractères hexadécimaux>'` : pas de
    dérivation, ouverture immédiate. Le tableau d'octets est effacé après usage.
 3. Room est construit avec la fabrique SQLCipher, en mode WAL. `fallbackToDestructiveMigration` est interdit.
-4. Dans le rappel `onOpen` : `PRAGMA foreign_keys = ON; PRAGMA secure_delete = FAST; PRAGMA temp_store = MEMORY;`.
+4. Dans le rappel `onOpen` : `PRAGMA foreign_keys = ON; PRAGMA secure_delete = FAST; PRAGMA temp_store = MEMORY;
+   PRAGMA synchronous = NORMAL;`. Avec le journal WAL, `NORMAL` n'attend plus le disque à chaque
+   transaction : la base ne peut pas être corrompue, seules les dernières transactions peuvent être
+   perdues en cas de coupure de courant, ce qui est acceptable pour des captures. Sous `FULL` (la valeur
+   par défaut), l'ingestion dépassait 15 ms au 95ᵉ centile sur émulateur (29 ms pour l'insertion seule,
+   ticket M4-02).
 5. Dans le rappel `onCreate` : exécution de `FtsSchema.CREATE` (§3.2).
 6. Échec d'ouverture (clé absente, fichier illisible) → `DatabaseState.Unavailable(reason)` ; l'interface
    propose la réinitialisation (ENF-REL-02). Aucune tentative de réparation.
