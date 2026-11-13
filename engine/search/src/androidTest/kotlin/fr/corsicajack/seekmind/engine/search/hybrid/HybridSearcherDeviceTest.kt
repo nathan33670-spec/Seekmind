@@ -81,6 +81,7 @@ class HybridSearcherDeviceTest {
             semantic = VectorSemanticSource(provider, index),
             store = handle.search,
             cache = SearchCache(config, SystemClockJvm),
+            generation = { handle.vectors.indexGeneration() },
             config = config,
         )
     }
@@ -123,8 +124,8 @@ class HybridSearcherDeviceTest {
         val searcher = searcher()
         searcher.search(request("tarte")).toList()
         handle.captures.delete(tart)
-        // Another query: the cache keeps the first one for ten minutes.
-        val after = searcher.search(request("tarte citron")).toList().last()
+        // The same query: the deletion made the cached result stale.
+        val after = searcher.search(request("tarte")).toList().last()
         assertThat(after.hits.map { it.captureId }).containsExactly(kept)
     }
 

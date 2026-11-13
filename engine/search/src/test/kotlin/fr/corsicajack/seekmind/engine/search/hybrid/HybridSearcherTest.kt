@@ -34,6 +34,7 @@ class HybridSearcherTest {
     private val store = FakeSearchStore()
     private val semantic = FakeSemantic()
     private val cache = SearchCache(SearchConfig(), FakeClock())
+    private var generation = 0L
 
     private fun searcher(source: SemanticSource = semantic) = HybridSearcher(
         parser = QueryParser(StopWords(listOf("la", "de"))),
@@ -42,6 +43,7 @@ class HybridSearcherTest {
         semantic = source,
         store = store,
         cache = cache,
+        generation = { generation },
     )
 
     private fun request(query: String, filters: SearchFilters = SearchFilters()) =
@@ -108,6 +110,34 @@ class HybridSearcherTest {
         val emissions = searcher().search(request("tarte")).toList()
         assertThat(emissions[1].semanticAvailable).isFalse()
         assertThat(emissions[1].hits.map { it.captureId }).containsExactly(1L)
+    }
+
+    @Test
+    fun aFailingIndexSearchKeepsTheKeywordResults() = runTest {
+        store.add(Models.capture("tarte", id = 1, at = now))
+        store.matches = listOf(1L)
+        semantic.searchFailure = IllegalStateException("database closed")
+        val emissions = searcher().search(request("tarte")).toList()
+        assertThat(emissions.map { it.stage }).containsExactly(Stage.LEXICAL, Stage.HYBRID).inOrder()
+        assertThat(emissions[1].semanticAvailable).isFalse()
+        assertThat(emissions[1].hits.map { it.captureId }).containsExactly(1L)
+        // A degraded result is not cached: the next search tries the semantic branch again.
+        semantic.searchFailure = null
+        assertThat(searcher().search(request("tarte")).toList()).hasSize(2)
+    }
+
+    @Test
+    fun aDeletionBetweenTwoIdenticalSearchesIsNotServedFromTheCache() = runTest {
+        store.add(Models.capture("tarte aux pommes", id = 1, at = now))
+        store.add(Models.capture("tarte au citron", id = 2, at = now))
+        store.matches = listOf(1L, 2L)
+        searcher().search(request("tarte")).toList()
+        store.captures.remove(1L)
+        store.matches = listOf(2L)
+        generation++ // what every deletion does to meta.index_generation
+        val again = searcher().search(request("tarte")).toList()
+        assertThat(again).hasSize(2) // searched again, not from the cache
+        assertThat(again.last().hits.map { it.captureId }).containsExactly(2L)
     }
 
     @Test
@@ -207,6 +237,7 @@ class HybridSearcherTest {
         var configured = true
         var vectors = true
         var failure: Exception? = null
+        var searchFailure: Exception? = null
         var hits: List<SemanticHit> = emptyList()
         var respectsRange = false
         val queries = mutableListOf<String>()
@@ -221,8 +252,10 @@ class HybridSearcherTest {
             return FloatArray(384)
         }
 
-        override suspend fun search(query: FloatArray, filters: SearchFilters): List<SemanticHit> =
-            if (respectsRange) hits.filter { store.captures[it.captureId]?.passes(filters) == true } else hits
+        override suspend fun search(query: FloatArray, filters: SearchFilters): List<SemanticHit> {
+            searchFailure?.let { throw it }
+            return if (respectsRange) hits.filter { store.captures[it.captureId]?.passes(filters) == true } else hits
+        }
     }
 
     private class BlockingSemantic : SemanticSource {

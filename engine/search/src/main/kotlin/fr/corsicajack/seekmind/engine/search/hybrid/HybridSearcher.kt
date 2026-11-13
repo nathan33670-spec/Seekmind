@@ -40,6 +40,8 @@ class HybridSearcher(
     private val semantic: SemanticSource,
     private val store: SearchStore,
     private val cache: SearchCache,
+    /** `meta.index_generation`: a deletion since a result was cached makes it stale. */
+    private val generation: suspend () -> Long,
     private val config: SearchConfig = SearchConfig(),
 ) : SearchEngine {
     private val fusion = Fusion(config)
@@ -47,7 +49,8 @@ class HybridSearcher(
     override fun search(request: SearchRequest): Flow<SearchResults> = flow {
         val parsed = parser.parse(request, apps())
         val key = SearchCache.keyOf(parsed, request.limit)
-        cache.get(key)?.let {
+        val generationAtStart = generation()
+        cache.get(key, generationAtStart)?.let {
             emit(it)
             return@flow
         }
@@ -84,12 +87,15 @@ class HybridSearcher(
                 emit(SearchResults(Stage.HYBRID, parsed, hits, relaxed, semanticAvailable = false))
                 return@coroutineScope
             }
+            var semanticFailed = false
             val (hits, relaxed) = relax(filters) { f ->
                 val lexicalHits = if (f == filters) firstLexical else lexical(parsed, f)
-                fuse(parsed, request, lexicalHits, semantic.search(vector, f))
+                val semanticHits = if (semanticFailed) null else semanticSearch(vector, f)
+                if (semanticHits == null) semanticFailed = true
+                fuse(parsed, request, lexicalHits, semanticHits.orEmpty())
             }
-            val results = SearchResults(Stage.HYBRID, parsed, hits, relaxed, semanticAvailable = true)
-            cache.put(key, results)
+            val results = SearchResults(Stage.HYBRID, parsed, hits, relaxed, semanticAvailable = !semanticFailed)
+            if (!semanticFailed) cache.put(key, results, generationAtStart)
             emit(results)
         }
     }
@@ -110,6 +116,16 @@ class HybridSearcher(
         }
         val all = run(SearchFilters())
         return all to if (all.isEmpty()) null else Relaxation.ALL
+    }
+
+    /** Null when the index fails (database error, unexpected row): the search goes on with keywords only. */
+    private suspend fun semanticSearch(vector: FloatArray, filters: SearchFilters): List<SemanticHit>? = try {
+        semantic.search(vector, filters)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (failure: Exception) {
+        SmLog.w(TAG, "semantic_search_failed", failure)
+        null
     }
 
     private suspend fun lexical(parsed: ParsedQuery, filters: SearchFilters): List<LexicalHit> =
