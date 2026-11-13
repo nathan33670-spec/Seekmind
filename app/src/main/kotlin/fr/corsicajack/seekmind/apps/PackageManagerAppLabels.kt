@@ -9,7 +9,9 @@ import java.util.concurrent.ConcurrentHashMap
  * main thread: the first lookup of a package is a Binder call. An uninstalled application shows its
  * package name.
  */
-class PackageManagerAppLabels(private val packageManager: PackageManager) : AppLabels {
+class PackageManagerAppLabels(private val packageManager: PackageManager) :
+    AppLabels,
+    fr.corsicajack.seekmind.feature.search.AppLabels {
     private val cache = ConcurrentHashMap<String, String>()
 
     override fun label(packageName: String): String = cache.getOrPut(packageName) {

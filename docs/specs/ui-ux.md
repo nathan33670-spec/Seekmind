@@ -90,6 +90,25 @@ titre ou hôte de l'URL ; extrait de trois lignes au plus, termes surlignés ; m
 l'image » le cas échéant ; « + 3 similaires » si des doublons sont repliés ; bouton de retour à la
 source au libellé exact ([retour-source §1](retour-source.md)). Un tap sur la carte ouvre le détail.
 
+**Implémentation (M6-03).** `SearchViewModel` et `SearchScreen` (`feature:search`) ; `SearchStack`
+(`:app`) assemble la recherche (`HybridSearcher`) au premier usage, hors du thread principal, retient la
+session d'embeddings tant que l'application est au premier plan et libère l'index vectoriel 60 s après
+qu'elle l'a quitté. En attendant les tickets suivants :
+
+- la pastille « Personnalisée » (choix de dates) n'est pas encore là : Aujourd'hui, Hier, 7 jours, 30 jours ;
+- le bandeau d'état de la mémorisation (ligne 1) arrive avec l'accueil et le statut du service (M6-02) ;
+- un tap sur une carte n'ouvre rien encore (détail : M6-04) ; le bouton de retour à la source ouvre la
+  page d'une URL http(s), sinon l'application (« Ouvrir la page », « Ouvrir {application} ») — le retour
+  complet de [retour-source](retour-source.md) arrive en M7 ;
+- « Sans crédit » affiche un état vide : la feuille de crédits arrive en M8 ; d'ici là, `EntitlementGate`
+  est lié à une implémentation « tout autorisé » ;
+- la clé passée à `EntitlementGate` est la requête saisie (minuscules, espaces réduits) et les filtres
+  des pastilles ; M8 l'alignera sur `queryKey` de [recherche §9](recherche.md) si besoin ;
+- « Dernière mémorisation il y a 2 min » n'est pas affichée (statut du service : M6-02) ;
+- supprimer une pastille d'un filtre compris dans la requête relance la recherche sur le texte sans ses
+  expressions, les autres filtres compris étant conservés comme filtres explicites ;
+- « Réinitialiser SeekMind » efface tout (base, clé, réglages) après confirmation, puis ferme l'application.
+
 ### 3.3 Détail d'une capture
 
 Application, dates de première et dernière vue, nombre de vues, titre, URL ; texte complet sélectionnable

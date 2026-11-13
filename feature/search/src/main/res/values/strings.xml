@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">Search what you have seen</string>
+    <string name="search_period_today">Today</string>
+    <string name="search_period_yesterday">Yesterday</string>
+    <string name="search_period_week">7 days</string>
+    <string name="search_period_month">30 days</string>
+    <string name="search_app">App</string>
+    <string name="search_all_apps">All apps</string>
+    <string name="search_recent">Recent searches</string>
+    <string name="search_examples">Try for example</string>
+    <string name="search_example_1">the restaurant recommended yesterday</string>
+    <string name="search_example_2">tracking number on Tuesday</string>
+    <string name="search_example_3">recipe seen on Instagram</string>
+    <string name="search_relaxed_time_label">Nothing found %1$s — here are other dates</string>
+    <string name="search_relaxed_time">Nothing found in this period — here are other dates</string>
+    <string name="search_relaxed_all">Nothing found with these filters — here are results without them</string>
+    <plurals name="search_index_incomplete">
+        <item quantity="one">%1$d recent screen is being analysed: search by meaning improves while charging</item>
+        <item quantity="other">%1$d recent screens are being analysed: search by meaning improves while charging</item>
+    </plurals>
+    <string name="search_keywords_only">Search by keywords only for now</string>
+    <string name="search_no_result_title">Nothing found</string>
+    <string name="search_no_result_message">Remove a filter or try other words.</string>
+    <string name="search_not_charged">This search was not counted.</string>
+    <string name="search_no_credit_title">No search left today</string>
+    <string name="search_no_credit_message">You can get more searches from the credits sheet.</string>
+    <string name="search_unavailable_title">Your memory cannot be opened</string>
+    <string name="search_unavailable_message">SeekMind cannot read its data on this phone. Resetting it erases what was remembered.</string>
+    <string name="search_reset">Reset SeekMind</string>
+    <string name="search_reset_title">Reset SeekMind?</string>
+    <string name="search_reset_text">Everything SeekMind remembered and its settings will be erased for good, then SeekMind will close.</string>
+    <string name="search_cancel">Cancel</string>
+    <string name="search_open_page">Open the page</string>
+    <string name="search_open_app">Open %1$s</string>
+    <string name="search_yesterday_at">yesterday %1$s</string>
+</resources>

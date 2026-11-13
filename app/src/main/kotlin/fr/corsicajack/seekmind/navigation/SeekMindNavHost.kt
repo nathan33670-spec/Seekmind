@@ -24,17 +24,20 @@ import fr.corsicajack.seekmind.core.designsystem.theme.Spacing
 fun screenTag(destination: TopLevelDestination): String = "screen_${destination.name.lowercase()}"
 
 /**
- * Navigation graph of [fr.corsicajack.seekmind.MainActivity]. Search and Settings are empty placeholders
- * until their tickets (M6-03, M6-06) replace them; [journalContent] is the journal (M6-05).
+ * Navigation graph of [fr.corsicajack.seekmind.MainActivity]. Settings is an empty placeholder until its
+ * ticket (M6-06) replaces it; [searchContent] is the search (M6-03), [journalContent] the journal (M6-05).
  */
 @Composable
 fun SeekMindNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    searchContent: @Composable () -> Unit = {},
     journalContent: @Composable () -> Unit = {},
 ) {
     NavHost(navController = navController, startDestination = SearchRoute, modifier = modifier) {
-        composable<SearchRoute> { Placeholder(TopLevelDestination.SEARCH) }
+        composable<SearchRoute> {
+            ContentWidth(modifier = Modifier.testTag(screenTag(TopLevelDestination.SEARCH))) { searchContent() }
+        }
         composable<JournalRoute> {
             ContentWidth(modifier = Modifier.testTag(screenTag(TopLevelDestination.JOURNAL))) { journalContent() }
         }
