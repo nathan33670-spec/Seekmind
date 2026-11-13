@@ -14,7 +14,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-01 | `core:designsystem`, `app` | [ui-ux §1, §2, §4](../specs/ui-ux.md) |
+| Fait | M0-01 | `core:designsystem`, `app` | [ui-ux §1, §2, §4](../specs/ui-ux.md) |
 
 **À faire**
 
@@ -25,9 +25,10 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 **Critères d'acceptation**
 
-- [ ] Tests Compose : navigation entre les trois destinations ; retour arrière.
-- [ ] `HighlightedText` surligne les intervalles fournis ; `ResultCard` affiche tous ses champs.
-- [ ] Contrôles automatiques d'accessibilité activés dans les tests Compose du module.
+- [x] Tests Compose : navigation entre les trois destinations ; retour arrière.
+- [x] `HighlightedText` surligne les intervalles fournis ; `ResultCard` affiche tous ses champs.
+- [x] Contrôles automatiques d'accessibilité activés dans les tests Compose du module (à partir d'Android 14 :
+      Compose ne les propose pas avant).
 
 ---
 
