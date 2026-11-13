@@ -71,7 +71,7 @@ Android applique de lui-même une quatorzième protection : à partir d'Android 
   },
   "soft": {
     "packages": ["com.boursorama.android.clients", "com.paypal.android.p2pmobile"],
-    "patterns": ["(^|\\.)bank", "banque", "banking", "\\.wallet(\\.|$)", "\\.pay(ment)?s?(\\.|$)", "crypto", "credit"]
+    "patterns": ["bank", "banque", "banking", "\\.wallet(\\.|$)", "\\.pay(ment)?s?(\\.|$)", "crypto", "credit"]
   }
 }
 ```
@@ -79,21 +79,40 @@ Android applique de lui-même une quatorzième protection : à partir d'Android 
 Les motifs sont des expressions régulières appliquées au nom de paquet en minuscules. Le chargement
 est fait une fois ; la décision par paquet est mise en cache.
 
+Le motif `bank` s'applique n'importe où dans le nom : la forme `(^|\.)bank` envisagée d'abord manquait
+`hu.otpbank.mobile` et tout nom où « bank » suit un autre mot. Faux positifs acceptés : un nom qui
+contient « bank » ou « crypto » sans être une application financière (jeu de cryptogrammes, banque
+d'images) est exclu ; l'utilisateur peut l'inclure.
+
 ### 3.2 Contenu initial
 
-À compléter et à **vérifier identifiant par identifiant** au ticket M2-05. Marché de lancement
-(décision D-12) : France, Belgique, Suisse, Luxembourg, Espagne, Allemagne, Italie. Objectif : au moins
-250 entrées, dont les principales banques de détail, néobanques et applications de paiement de chacun
-de ces pays.
+Marché de lancement (décision D-12) : France, Belgique, Suisse, Luxembourg, Espagne, Allemagne,
+Italie. La version du ticket M2-05 compte **308 identifiants** : 47 dans la liste stricte (gestionnaires
+de mots de passe, applications d'authentification, applications de validation bancaire de type photoTAN
+ou SecureGo), 261 dans la liste souple (banques de détail, banques en ligne, néobanques, paiement, bourse,
+cryptomonnaies, mutuelles et caisses d'assurance maladie, prise de rendez-vous médicaux, impôts,
+identité numérique et services publics de chacun des sept pays).
+
+Chaque identifiant est **vérifié** par `tools/privacy/verify_sensitive_apps.py`, qui interroge la page
+publique du Play Store dans les sept pays et échoue si une page manque. Trois identifiants ne sont pas
+distribués par le Play Store et le script les connaît comme tels : `com.android.settings` et
+`com.samsung.android.samsungpass` (applications système), `com.kunzisoft.keepass.libre` (vérifié sur
+F-Droid). Les identifiants ont été relevés dans les résultats de recherche du Play Store, puis retenus un
+à un d'après le titre et la catégorie de leur page (Finance, Médecine, Santé, services publics).
+
+Une application de validation bancaire (TAN, signature) est rangée dans la liste **stricte** : elle
+affiche des codes à usage unique, comme une application d'authentification. Une application bancaire
+complète reste dans la liste souple, même quand elle sait aussi valider une opération.
 
 | Liste | Exemples d'identifiants |
 |---|---|
-| Stricte — mots de passe | `com.x8bit.bitwarden`, `com.onepassword.android`, `com.agilebits.onepassword`, `com.lastpass.lpandroid`, `com.dashlane`, `keepass2android.keepass2android`, `com.kunzisoft.keepass.free`, `com.kunzisoft.keepass.libre`, `proton.android.pass`, `com.nordpass.android.app`, `com.samsung.android.samsungpass` |
+| Stricte — mots de passe | `com.x8bit.bitwarden`, `com.onepassword.android`, `com.lastpass.lpandroid`, `com.dashlane`, `keepass2android.keepass2android`, `com.kunzisoft.keepass.free`, `com.kunzisoft.keepass.libre`, `proton.android.pass`, `com.nordpass.android.app.password.manager`, `com.samsung.android.samsungpass` |
 | Stricte — authentification | `com.google.android.apps.authenticator2`, `com.azure.authenticator`, `com.authy.authy`, `com.beemdevelopment.aegis` |
 | Souple — banque (France) | `com.boursorama.android.clients`, `fr.creditagricole.androidapp`, `net.bnpparibas.mescomptes`, `mobi.societegenerale.mobile.lappli`, `fr.lcl.android.customerarea`, `com.caisseepargne.android.mobilebanking`, `fr.banquepopulaire.cyberplus`, `com.fullsix.android.labanquepostale.accountaccess`, `com.cm_prod.bad`, `com.cic_prod.bad`, `com.fortuneo.android` |
 | Souple — paiement et néobanques | `com.revolut.revolut`, `de.number26.android`, `com.paypal.android.p2pmobile`, `com.lydia`, `com.transferwise.android`, `com.google.android.apps.walletnfcrel`, `com.samsung.android.spay` |
-| Souple — banque (six autres pays du lancement) | À établir au ticket, pays par pays |
-| Souple — santé et administration | À établir au ticket, pour chaque pays (assurance maladie, impôts, identité numérique, prise de rendez-vous médicaux) |
+| Stricte — validation bancaire | `de.fiduciagad.securego.vr`, `com.starfinanz.mobile.android.pushtan`, `com.commerzbank.photoTAN`, `de.postbank.bestsign`, `ch.raiffeisen.phototan`, `ch.zkb.digipass` |
+| Souple — banque (six autres pays du lancement) | Belgique : `com.kbc.mobile.android.phone.kbc`, `be.belfius.directmobile.android`, `com.bnpp.easybanking`, `be.argenta.bankieren` ; Suisse : `ch.postfinance.android`, `ch.raiffeisen.android`, `ch.zkb.slv.mobile.client.android`, `ch.twint.payment` ; Luxembourg : `lu.bcee.snetmobile`, `com.bil.android`, `lu.bgl.spm.retail` ; Espagne : `es.lacaixa.mobile.android.newwapicon`, `com.bbva.bbvacontigo`, `es.bancosantander.apps`, `es.bizum.wallet` ; Allemagne : `com.starfinanz.smob.android.sfinanzstatus`, `de.fiduciagad.banking.vr`, `de.commerzbanking.mobil`, `de.ingdiba.bankingapp` ; Italie : `com.latuabancaperandroid`, `com.unicredit`, `com.posteitaliane.spim`, `com.satispay.customer` |
+| Souple — santé et administration | `fr.cnamts.it.activity`, `fr.doctolib.www`, `fr.gouv.finances.smartphone.android`, `fr.gouv.franceidentite`, `be.bmid.itsme`, `ch.helsana.myHelsana`, `com.LuxTrustMobile`, `es.gob.carpeta`, `de.elster.elsterapp.release`, `com.governikus.ausweisapp2`, `de.tk.tkapp`, `it.pagopa.io.app`, `it.inps.mobile.app.servizi.activity` |
 | Souple — système | `com.android.settings` |
 
 ### 3.3 Règles de l'utilisateur
@@ -160,14 +179,20 @@ le calcul du SimHash et avant tout stockage.
    | UnionPay | 62 | 16 à 19 |
 
 3. Somme de contrôle de Luhn valide → masqué.
+4. Le motif de candidats est glouton : il absorbe un nombre qui touche la carte (« 4111 1111 1111 1111
+   12/27 », « Qté 2 4111… »). Quand le candidat entier échoue, chaque suite de groupes de chiffres
+   contigus qu'il contient est essayée, de la plus longue à la plus courte, de gauche à droite ; celles
+   qui passent les étapes 2 et 3 sont masquées.
 
 Le filtrage par préfixe évite de masquer les numéros de suivi et de commande purement numériques.
 
 ### 5.2 IBAN (PG-12)
 
 1. Candidats : `\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,4})?\b` (après mise en majuscules).
-2. Espaces retirés ; longueur entre 15 et 34 ; si le pays est connu, longueur exacte (FR 27, DE 22,
-   ES 24, IT 27, BE 16, NL 18, LU 20, CH 21, GB 22, PT 25).
+2. Espaces retirés ; longueur entre 15 et 34 ; si le pays figure au registre ISO 13616 (table complète
+   dans `Redactor`, dont FR 27, DE 22, ES 24, IT 27, BE 16, NL 18, LU 20, CH 21, GB 22, PT 25, MC 27,
+   AT 20, PL 28), longueur exacte. Le candidat est alors coupé à cette longueur, ce qui écarte un mot
+   qui le suit (« … 189 EUR »).
 3. Contrôle modulo 97 égal à 1 → masqué.
 
 ### 5.3 Numéro de sécurité sociale français (PG-13)

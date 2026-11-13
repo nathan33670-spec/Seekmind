@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Merged into the application's manifest. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Mail and SMS applications, classified as messaging (docs/specs/confidentialite.md §3.4).
+         Browsers are visible through the application's https VIEW query. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
+        </intent>
+    </queries>
+</manifest>
