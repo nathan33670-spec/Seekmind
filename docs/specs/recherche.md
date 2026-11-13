@@ -132,7 +132,34 @@ Moments de la journée, combinables avec un jour (« mardi soir », « hier mati
 lettres de un à douze. Les mots de liaison adjacents (« vu », « le », « du », « on », « at ») partent
 avec l'expression. Une capture correspond à l'intervalle si `[first_seen_at, last_seen_at]` le recoupe.
 
-La table complète des cas, avec date de référence et intervalle attendu, est `testdata/temporal_cases.tsv`.
+La table complète des cas, avec date de référence et intervalle attendu, est `testdata/temporal_cases.tsv`,
+produite par `tools/testdata/gen_temporal_cases.py`, qui calcule les intervalles indépendamment de
+l'analyseur Kotlin (`TemporalParser`).
+
+Précisions (M5-02) :
+
+- Les bornes sont incluses. Un jour va de 00:00 à 23:59:59,999 ; « cette semaine », « ce mois-ci »
+  s'arrêtent au moment présent.
+- « Tout à l'heure » et « récemment » sont des durées absolues avant le moment présent (6 h, 14 × 24 h),
+  insensibles au changement d'heure ; les jours et les moments suivent l'heure locale, changement
+  d'heure compris.
+- « ce week-end » : le dernier samedi-dimanche commencé ; « le week-end dernier » : celui d'avant
+  pendant un week-end, le même que « ce week-end » en semaine (le seul week-end passé récent).
+- « cette nuit » dite avant midi désigne la nuit qui vient de finir (la veille, 22:00 – 06:00) ; après
+  midi, la nuit qui vient. « last night » : la nuit de la veille. Un moment seul, sans jour ni
+  « ce »/« this » (« le soir de la fête »), n'est pas extrait.
+- Un jour et un moment se combinent avec ou sans liaison : « hier soir », « mardi après-midi »,
+  « hier dans la soirée », « lundi dernier au soir », « il y a 3 jours le matin », « tuesday in the
+  afternoon », « yesterday at noon ».
+- « en mars », « in march » demandent la préposition ; « en mars 2025 » vise cette année-là. Seul, un
+  nom de mois est un mot de la requête (« mars attaque », « may I help »).
+- Dates numériques : jour/mois, sauf si l'analyseur est construit avec `monthFirst` (anglais des
+  États-Unis, d'après la langue du téléphone) ; année sur quatre chiffres ; une date impossible
+  (31/02) n'est pas extraite.
+- N vaut de 1 à 999 en chiffres, de un à douze en lettres (« une », « a », « an » comptent pour 1).
+- Mots de liaison retirés avec l'expression quand ils la précèdent, deux au plus : « vu », « vue »,
+  « vus », « vues », « le », « la », « du », « depuis », « on », « at », « from », « seen », « saw ».
+  Le libellé (`rangeLabel`) est l'expression telle que tapée, sans ces mots.
 
 ## 4. Filtre d'application
 
@@ -143,6 +170,19 @@ La table complète des cas, avec date de référence et intervalle attendu, est 
 Motif reconnu : une préposition (`sur`, `dans`, `via`, `depuis`, `de l'appli`, `on`, `in`, `from`)
 suivie d'un libellé ou d'un alias, la plus longue correspondance d'abord. Sans préposition, rien n'est
 extrait (« chrome » peut être un mot de la requête) ; les pastilles de l'interface couvrent ce cas.
+
+Précisions (M5-03) :
+
+- `AndroidAppCatalog` lit les applications lançables (`MAIN` + `LAUNCHER`, déclarées dans
+  `<queries>`) hors du thread principal, les garde en mémoire et les relit après une installation,
+  une mise à jour ou une désinstallation (diffusions `PACKAGE_*`). `AppMatcher`, Kotlin pur, fait
+  l'extraction.
+- Prépositions : `sur`, `dans`, `via`, `depuis`, `de l'appli`, `de l'application`, `on`, `in`, `from`.
+  La comparaison porte sur les mots du libellé (mêmes règles que FTS5 : minuscules, sans diacritiques) :
+  « dans meteo » trouve « Météo », « sur Google Maps » l'emporte sur « sur Google ».
+- Alias : `res/raw/search_app_aliases.json`, alias → paquets. Un alias ne vaut que pour les paquets
+  installés : une application absente du téléphone ne donne aucun filtre. Deux applications de même
+  libellé donnent un filtre sur les deux paquets.
 
 ## 5. Recherche par mots-clés
 
@@ -157,6 +197,12 @@ extrait (« chrome » peut être un mot de la requête) ; les pastilles de l'int
 Exemple : `resto italien pâtes truffe` → `"resto" OR "italien" OR "pates" OR "truffe"*`.
 
 Requête SQL, pondération des colonnes et extrait : [stockage §5](stockage.md). Limite : 100 lignes.
+
+Précisions (M5-04) : les jetons sont ceux de `ParsedQuery.tokens`, déjà en forme de comparaison ; un
+terme répété n'est écrit qu'une fois ; une requête sans mot (ponctuation seule) ne lance aucune
+recherche. L'extrait renvoyé par FTS5 est débarrassé de ses marqueurs `char(2)` / `char(3)`, qui
+deviennent les intervalles à surligner de `Snippet` (bornes incluses) ; un marqueur laissé ouvert par
+la coupe de l'extrait se ferme à sa fin.
 
 ## 6. Recherche vectorielle
 

@@ -29,7 +29,10 @@ fun navItemTag(destination: TopLevelDestination): String = "nav_${destination.na
  * (docs/specs/ui-ux.md §2). Edge to edge: the scaffold applies the system bar insets.
  */
 @Composable
-fun SeekMindRoot(navController: NavHostController = rememberNavController()) {
+fun SeekMindRoot(
+    navController: NavHostController = rememberNavController(),
+    journalContent: @Composable () -> Unit = {},
+) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val current = backStackEntry?.destination
     Scaffold(
@@ -50,6 +53,7 @@ fun SeekMindRoot(navController: NavHostController = rememberNavController()) {
         SeekMindNavHost(
             navController = navController,
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+            journalContent = journalContent,
         )
     }
 }

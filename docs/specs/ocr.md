@@ -57,7 +57,13 @@ try {
 - Le système impose un intervalle minimal entre deux captures
   (`ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT`) : 1 000 ms mesurés sous Android 11, 500 ms à partir
   d'Android 14 ([prototype S3](../prototypes/S3-accessibilite.md)). Un limiteur interne garantit au moins 1 000 ms entre
-  deux demandes ; au-delà, `RateLimited`.
+  deux demandes ; au-delà, `RateLimited`. Une demande refusée par le système compte aussi : le limiteur
+  mesure l'intervalle depuis la dernière demande transmise.
+- Correspondance des codes d'erreur du système : `ERROR_TAKE_SCREENSHOT_SECURE_WINDOW` → `SecureWindow` ;
+  `ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT` → `RateLimited` ; tout autre code → `Failed(code)`. Deux codes
+  internes, négatifs pour ne jamais rencontrer ceux du système, complètent `Failed` : `-1` (image
+  illisible, ou fenêtre hors de l'écran après recadrage) et `-2` (le système n'a pas répondu dans les
+  5 s). Une image qui arrive après l'abandon de l'attente est fermée aussitôt.
 - **Interdits** (INV-03) : `Bitmap.compress`, écriture de fichier, `MediaStore`, cache, passage de
   l'image à un autre module. Le bitmap ne sort jamais de `block`.
 
@@ -236,4 +242,6 @@ data class OcrConfig(
   mémoire native au-delà d'un seuil.
 - **Bout en bout** : E2E-03, 05, 06.
 - **Garde-fou** : `scripts/check-forbidden-apis.sh` interdit `compress(`, `FileOutputStream`, `MediaStore`
-  et `ImageWriter` dans `engine/ocr` et `engine/capture`.
+  et `ImageWriter` dans `engine/ocr` et `engine/capture`, ainsi que les autres voies vers le disque :
+  `openFileOutput`, répertoires de cache, `RandomAccessFile`, `FileWriter`, `Files.write`/`newOutputStream`/`copy`,
+  `writeBytes(`, `outputStream(`, `bufferedWriter(`, `printWriter(`.

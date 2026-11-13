@@ -93,6 +93,9 @@ protocole et l'outillage, puis corrige d'après les résultats.
 3. Mesure du démarrage à froid ; suppression de tout travail inutile avant le premier affichage.
 4. Rendre de nouveau bloquant `IngestDeviceTest` (ENF-PERF-05), mesuré seulement pendant le
    développement : 15 ms au 95ᵉ centile, sur le build `release` et sur le téléphone de test.
+5. Rendre de nouveau bloquant le 99ᵉ centile de `RoutingDeviceTest` (ENF-PERF-01), mesuré seulement
+   pendant le développement : 2 ms par événement sur le thread principal, sur le build `release` et
+   sur le téléphone de test.
 
 **Critères d'acceptation**
 
