@@ -28,12 +28,17 @@ sealed interface IngestResult {
 
 `TextNormalizer.normalize(text): String`, Kotlin pur :
 
-1. Normalisation Unicode NFC.
-2. Suppression des caractères de contrôle (sauf `\n`), des caractères de largeur nulle, et des
-   caractères U+0002 et U+0003 (réservés au surlignage des extraits).
-3. Par ligne : tabulations et espaces multiples réduits à une espace ; espaces de bord retirées.
-4. Lignes vides retirées ; lignes strictement identiques dédoublonnées (première occurrence conservée).
-5. Troncature à `maxTextChars`, sur une fin de ligne.
+1. Fins de ligne : `\r\n`, `\r` seul, U+2028 et U+2029 deviennent `\n`.
+2. Suppression des caractères de contrôle (sauf `\n` ; dont U+0002 et U+0003, réservés au surlignage
+   des extraits) et des caractères de format invisibles (catégorie `Cf` : largeur nulle, marques et
+   isolats de direction, trait d'union conditionnel).
+3. Normalisation Unicode NFC, **après** la suppression : un caractère retiré entre une lettre et son
+   accent laisserait sinon la composition au passage suivant, et la normalisation ne serait pas
+   idempotente.
+4. Par ligne : tabulations et espaces multiples réduits à une espace ; espaces de bord retirées.
+5. Lignes vides retirées ; lignes strictement identiques dédoublonnées (première occurrence conservée).
+6. Troncature à `maxTextChars`, sur une fin de ligne (une première ligne plus longue est coupée, sans
+   jamais séparer une paire de substituts).
 
 Le texte est stocké tel quel (casse et accents conservés) ; FTS5 se charge du pliage à l'indexation.
 
@@ -48,8 +53,19 @@ Le texte est stocké tel quel (casse et accents conservés) ; FTS5 se charge du 
 5. **Empreinte** : bit `i` à 1 si `v[i] > 0`.
 
 Similarité de deux empreintes : `1 − distance de Hamming / 64`. Seuil de doublon : similarité ≥ 0,85,
-soit **distance ≤ 9**. Le ticket M4-01 vérifie ce seuil sur des paires du corpus d'évaluation
-(mêmes écrans avec une ligne modifiée, écrans voisins d'un défilement) et l'ajuste si nécessaire.
+soit **distance ≤ 9**, confirmé au ticket M4-01 (`SimHashThresholdTest`, écrans synthétiques de
+12 lignes, 2 000 paires par catégorie) :
+
+| Paires | Médiane | p90 | ≤ 9 |
+|---|---|---|---|
+| Écrans identiques | 0 | 0 | 100 % |
+| Une ligne modifiée | 7 | 11 | 77 % |
+| Défilement de 1 à 3 lignes | 9 | 15 | 53 % |
+| Écrans sans rapport du corpus (gabarits partagés) | 25 | 30 | 0 % (minimum 13) |
+| Textes indépendants | 32 | 37 | 0 % (moyenne 31,7) |
+
+Aucun faux doublon ; la marge entre le seuil et le minimum des écrans sans rapport est de 4. Un seuil
+plus haut attraperait plus de défilements au prix de cette marge : il reste à 9.
 
 ## 4. Déduplication
 
@@ -78,7 +94,8 @@ pas modifié.
 - Au plus `maxChunksPerCapture` (4) fragments ; le texte restant est ignoré pour la recherche sémantique
   (il reste trouvable par mots-clés).
 - Chaque fragment est décrit par ses positions `[start, end)` dans le texte de la capture : le texte
-  n'est pas dupliqué en base.
+  n'est pas dupliqué en base. Les fragments sont contigus : chacun garde la fin de ligne qui le termine,
+  si bien que leurs tranches mises bout à bout redonnent exactement le texte couvert.
 
 Texte soumis au modèle pour un fragment : `"passage: " + titre + " · " + fragment`, le titre étant
 `window_title` s'il existe (sinon le préfixe seul).
@@ -90,7 +107,12 @@ lignes `chunk` en état « en attente ». À la sortie de la transaction la capt
 mots-clés (EF-IDX-01).
 
 Ensuite, hors transaction : si des fragments sont en attente, s'assurer que le travail unique
-`embedding-charging` est planifié (§7).
+`embedding-charging` est planifié (§7), par l'interface `EmbeddingScheduler.requestCharging()` ; son
+implémentation WorkManager arrive avec `EmbeddingWorker` (M4-05).
+
+Le cache des empreintes par paquet est vidé par `IngestService.forget()` après toute suppression de
+captures (journal, « tout effacer ») : un nouvel écran ne doit jamais être rattaché à une capture
+supprimée.
 
 ## 7. Calcul différé des vecteurs
 

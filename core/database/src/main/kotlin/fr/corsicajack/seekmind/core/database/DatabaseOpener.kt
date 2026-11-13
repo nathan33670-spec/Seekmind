@@ -86,7 +86,13 @@ class DatabaseOpener(
 
     companion object {
         private const val TAG = "Database"
-        private val PRAGMAS = listOf("foreign_keys = ON", "secure_delete = FAST", "temp_store = MEMORY")
+
+        /**
+         * `synchronous = NORMAL`: with WAL, a commit no longer waits for the disk; the database cannot be
+         * corrupted, only the last transactions can be lost on a power cut (spec §2).
+         */
+        private val PRAGMAS =
+            listOf("foreign_keys = ON", "secure_delete = FAST", "temp_store = MEMORY", "synchronous = NORMAL")
 
         @Volatile
         private var loaded = false

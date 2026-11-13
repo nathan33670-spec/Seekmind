@@ -154,7 +154,7 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M2-01 | `engine:capture`, `app` | [capture §7](../specs/capture.md) · EF-CAP-04 |
+| Fait | M2-01 | `engine:capture`, `app` | [capture §7](../specs/capture.md) · EF-CAP-04 |
 
 **À faire**
 
@@ -163,9 +163,10 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 
 **Critères d'acceptation**
 
-- [ ] En pause, aucun événement n'atteint le thread de capture (E2E-10).
-- [ ] La pause programmée prend fin à l'heure dite (horloge simulée).
-- [ ] La tuile reflète l'état, y compris après un changement fait dans l'application.
+- [x] En pause, aucun événement n'atteint le thread de capture (E2E-10) : `EventRouterTest` ; le scénario
+      E2E-10 avec le service réel est joué par M2-08.
+- [x] La pause programmée prend fin à l'heure dite (horloge simulée).
+- [x] La tuile reflète l'état, y compris après un changement fait dans l'application.
 
 ---
 

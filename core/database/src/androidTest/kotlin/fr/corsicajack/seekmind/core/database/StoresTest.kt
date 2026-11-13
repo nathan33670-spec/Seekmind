@@ -96,7 +96,8 @@ class StoresTest {
     fun touchUpdatesLastSeenWithoutTouchingTheIndex() = runBlocking<Unit> {
         val id = handle.captures.insert(capture("écran revu plus tard", at = 1_000), emptyList())
         val segments = sql.long("SELECT count(*) FROM capture_fts_data")
-        handle.captures.touch(id, seenAt = 5_000)
+        assertThat(handle.captures.touch(id, seenAt = 5_000)).isTrue()
+        assertThat(handle.captures.touch(id + 1_000, seenAt = 5_000)).isFalse()
         assertThat(sql.long("SELECT count(*) FROM capture_fts_data")).isEqualTo(segments)
         sql.execSQL(FtsSchema.INTEGRITY_CHECK)
         val touched = handle.captures.get(id)!!
