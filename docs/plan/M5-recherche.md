@@ -99,9 +99,12 @@ cibles ENF-PERF-03 et 04 mesurées.
 **Critères d'acceptation**
 
 - [x] Sur 20 000 vecteurs aléatoires normalisés : le rappel des 10 plus proches voisins exacts parmi les
-      résultats (présélection de 200 puis rescore) est mesuré et consigné ; cible ≥ 0,90.
-      ([recherche §6.3](../specs/recherche.md) : 0,995 sur des vecteurs groupés, 0,878 autour d'une
-      direction commune — 0,924 avec 400 candidats —, 0,677 sur des vecteurs isotropes.)
+      résultats (présélection de `binaryTopK` candidats, 200 à l'origine, puis rescore) est mesuré et
+      consigné ; cible ≥ 0,90.
+      ([recherche §6.3](../specs/recherche.md) : avec 400 candidats, valeur retenue par le porteur le
+      13 novembre 2026, 0,924 autour d'une direction commune comme les vecteurs e5 et 0,997 sur des
+      vecteurs groupés ; 0,878 avec 200 candidats. Le cas isotrope, sans rapport avec des vecteurs de
+      texte, reste sous la cible : 0,806.)
 - [x] Les filtres de dates et de paquets sont appliqués pendant le parcours.
 - [x] Un vecteur ajouté apparaît à la recherche suivante ; une suppression déclenche le rechargement.
 - [x] Aucune allocation par vecteur pendant le parcours (tableaux primitifs uniquement).

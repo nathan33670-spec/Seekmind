@@ -1,5 +1,8 @@
 package fr.corsicajack.seekmind.engine.search.vector
 
+import android.os.Build
+import android.os.SystemClock
+import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -12,7 +15,9 @@ import fr.corsicajack.seekmind.core.model.config.EmbeddingConfig
 import fr.corsicajack.seekmind.core.model.config.SearchConfig
 import fr.corsicajack.seekmind.core.testing.FakeEmbeddingEngine
 import fr.corsicajack.seekmind.core.testing.Models
+import fr.corsicajack.seekmind.core.testing.SyntheticDatabase
 import fr.corsicajack.seekmind.core.testing.TemporaryDatabase
+import fr.corsicajack.seekmind.core.testing.TestVectors
 import fr.corsicajack.seekmind.engine.embedding.codec.VectorCodec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -76,5 +81,47 @@ class VectorIndexDeviceTest {
         handle.captures.delete(added)
         assertThat(index.search(query, SearchFilters()).map { it.captureId }).containsExactly(pool, other)
         assertThat(index.size()).isEqualTo(2)
+    }
+
+    /**
+     * Cost of the rescore with 400 candidates, the default, against 200 (docs/specs/recherche.md §6.3):
+     * 20 000 vectors in the encrypted database, loading of the index, then the median of 15 searches.
+     * Logged under `SeekMindBench`; ENF-PERF-04 allows 30 ms for the whole search, query embedding aside.
+     */
+    @Test
+    fun measuresTheSearchWith200And400Candidates() = runBlocking {
+        SyntheticDatabase(handle).populate(VECTORS, vectors = true)
+        for (topK in listOf(400, 200)) {
+            val index =
+                VectorIndex(
+                    handle.vectors,
+                    SearchConfig(binaryTopK = topK, semanticFloor = -1f),
+                    codec,
+                    Dispatchers.Default,
+                )
+            val loadStart = SystemClock.elapsedRealtimeNanos()
+            index.refresh()
+            val loadMs = (SystemClock.elapsedRealtimeNanos() - loadStart) / 1e6
+            assertThat(index.size()).isEqualTo(VECTORS)
+            val queries = List(WARMUP + RUNS) { TestVectors.unit(seed = 1_000_000L + it) }
+            val times = queries.mapIndexed { i, query ->
+                val start = SystemClock.elapsedRealtimeNanos()
+                val hits = index.search(query, SearchFilters())
+                assertThat(hits).isNotEmpty()
+                if (i < WARMUP) null else (SystemClock.elapsedRealtimeNanos() - start) / 1e6
+            }.filterNotNull().sorted()
+            Log.i(TAG, "api=${Build.VERSION.SDK_INT} m5_05_index_load_${VECTORS}_ms=$loadMs")
+            Log.i(
+                TAG,
+                "api=${Build.VERSION.SDK_INT} m5_05_search_${VECTORS}_top${topK}_ms_median=${times[times.size / 2]}",
+            )
+        }
+    }
+
+    private companion object {
+        const val TAG = "SeekMindBench"
+        const val VECTORS = 20_000
+        const val WARMUP = 5
+        const val RUNS = 15
     }
 }

@@ -230,7 +230,7 @@ Soit 84 octets par vecteur : 8 Mo pour 100 000 vecteurs, 25 Mo pour 300 000.
 
 1. `q = EmbeddingEngine.embedQuery(parsed.text)` ; code binaire de `q`.
 2. **Présélection** : parcours linéaire ; pour chaque vecteur passant les filtres (dates, paquets),
-   distance de Hamming sur 6 mots (`Long.bitCount`) ; conservation des `binaryTopK` (200) plus proches
+   distance de Hamming sur 6 mots (`Long.bitCount`) ; conservation des `binaryTopK` (400) plus proches
    dans un tas borné.
 3. **Rescore** : lecture des vecteurs int8 des candidats (`VectorStore.int8Vectors`) ; similarité
    `(Σ q[i] × d[i]) / S`.
@@ -265,17 +265,20 @@ complet. Un filtre de dates peut donc l'exclure de la branche sémantique ; la b
 trouve.
 
 Mesures (JVM, 20 000 vecteurs normalisés, 100 requêtes, rappel des 10 plus proches voisins exacts parmi
-les résultats, `binaryTopK` = 200 puis rescore int8) :
+les résultats, présélection puis rescore int8) :
 
-| Jeu de vecteurs | Rappel@10 |
-|---|---|
-| 2 000 groupes de 10 vecteurs, requêtes tirées près d'un centre | 0,995 |
-| Mêmes groupes autour d'une direction commune (similarité moyenne 0,64, comme les vecteurs e5) | 0,878 (0,924 avec `binaryTopK` = 400) |
-| Vecteurs isotropes (cas le plus défavorable pour un code de signes) | 0,677 |
+| Jeu de vecteurs | Rappel@10, 400 candidats | 200 candidats |
+|---|---|---|
+| 2 000 groupes de 10 vecteurs, requêtes tirées près d'un centre | 0,997 | 0,995 |
+| Mêmes groupes autour d'une direction commune (similarité moyenne 0,64, comme les vecteurs e5) | **0,924** | 0,878 |
+| Vecteurs isotropes (cas le plus défavorable pour un code de signes) | 0,806 | 0,677 |
 
-Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour 10 parcours, mesurés par
-`ThreadMXBean`). Le code de signes perd de l'information quand tous les vecteurs partagent une direction :
-`binaryTopK` est à calibrer sur les vrais vecteurs au ticket M5-07.
+Le code de signes perd de l'information quand tous les vecteurs partagent une direction : avec 200
+candidats, le cas proche des vecteurs e5 restait sous la cible de 0,90. **`binaryTopK` vaut donc 400**
+(décision du porteur, 13 novembre 2026), au prix de 200 lectures int8 de plus par recherche (coût mesuré
+sur appareil par `VectorIndexDeviceTest`, journalisé sous `m5_05_search_20000_top*`). Le ticket M5-07 le
+recalibre sur les vrais vecteurs. Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour
+10 parcours, mesurés par `ThreadMXBean`).
 
 ## 7. Fusion
 
@@ -333,7 +336,7 @@ fusion(A, B) → assouplissement éventuel               → émettre SearchResu
 ```kotlin
 data class SearchConfig(
     val lexicalLimit: Int = 100,
-    val binaryTopK: Int = 200,
+    val binaryTopK: Int = 400,
     val semanticTopK: Int = 100,
     val semanticFloor: Float = 0.78f,
     val rrfK: Int = 60,

@@ -53,8 +53,8 @@ class VectorIndexRecallTest {
     /**
      * The shape of the e5 vectors: a direction shared by every text (similarities of 0.7 to 0.9 even between
      * unrelated texts, docs/specs/recherche.md §6.2), plus the clusters above. The sign code loses more
-     * here: measured with 200 and 400 candidates; 400 reach the target, 200 must not fall under 0.85
-     * (`binaryTopK` is calibrated on real vectors by ticket M5-07).
+     * here: 200 candidates fell short of the target, hence the default of 400 (project owner, 13 November
+     * 2026); 200 is still measured for the record. Calibrated on real vectors by ticket M5-07.
      */
     @Test
     fun recallOnAnisotropicClusteredVectors() = runTest {
@@ -69,11 +69,10 @@ class VectorIndexRecallTest {
             }.average()}",
         )
         val default = recall(vectors, queries)
-        val doubled = recall(vectors, queries, binaryTopK = 2 * config.binaryTopK)
-        println("m5_05_recall_at_10_anisotropic_top200=$default")
-        println("m5_05_recall_at_10_anisotropic_top400=$doubled")
-        assertThat(default).isAtLeast(0.85)
-        assertThat(doubled).isAtLeast(0.90)
+        val half = recall(vectors, queries, binaryTopK = config.binaryTopK / 2)
+        println("m5_05_recall_at_10_anisotropic_top${config.binaryTopK}=$default")
+        println("m5_05_recall_at_10_anisotropic_top${config.binaryTopK / 2}=$half")
+        assertThat(default).isAtLeast(0.90)
     }
 
     @Test
