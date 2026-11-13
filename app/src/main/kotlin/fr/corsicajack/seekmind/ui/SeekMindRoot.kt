@@ -53,6 +53,7 @@ fun SeekMindRoot(
         SeekMindNavHost(
             navController = navController,
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+            journalContent = journalContent,
         )
     }
 }
