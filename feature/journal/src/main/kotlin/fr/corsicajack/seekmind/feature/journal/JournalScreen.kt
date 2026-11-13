@@ -125,11 +125,13 @@ fun JournalScreen(
     }
     val currentLoadMore by rememberUpdatedState(onLoadMore)
     LaunchedEffect(listState) {
+        // The item count is part of the key: when a page arrives and the end is still in sight
+        // (a tall screen), the next page is requested too.
         snapshotFlow {
             val info = listState.layoutInfo
             val last = info.visibleItemsInfo.lastOrNull()?.index ?: -1
-            last >= info.totalItemsCount - PREFETCH_DISTANCE
-        }.collect { nearEnd -> if (nearEnd) currentLoadMore() }
+            (last >= info.totalItemsCount - PREFETCH_DISTANCE) to info.totalItemsCount
+        }.collect { (nearEnd, _) -> if (nearEnd) currentLoadMore() }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -201,7 +203,9 @@ private fun JournalList(
             }
         }
         if (!state.endReached) {
-            item(key = "loading", contentType = "loading") {
+            // No key: a stable key would keep the loader as the anchor of the scroll position, and the
+            // list would jump to the end when the lines of a page arrive above it.
+            item(contentType = "loading") {
                 Box(modifier = Modifier.fillMaxWidth().padding(Spacing.l), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }

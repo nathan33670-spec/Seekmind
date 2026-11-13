@@ -85,6 +85,9 @@ class JournalScrollTest {
         }
         compose.waitUntil(TIMEOUT_MS) { loaded(model) > 0 }
         assertThat(loaded(model)).isEqualTo(JournalViewModel.PAGE_SIZE)
+        // The first page shows from the top: the loader below it does not hold the scroll position.
+        compose.waitForIdle()
+        assertThat(listState.firstVisibleItemIndex).isEqualTo(0)
 
         // Scrolls to the last item laid out, which requests the next page, until TARGET items exist.
         var steps = 0
