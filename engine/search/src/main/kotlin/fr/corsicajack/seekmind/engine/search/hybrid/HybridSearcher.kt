@@ -49,8 +49,16 @@ class HybridSearcher(
     override fun search(request: SearchRequest): Flow<SearchResults> = flow {
         val parsed = parser.parse(request, apps())
         val key = SearchCache.keyOf(parsed, request.limit)
-        val generationAtStart = generation()
-        cache.get(key, generationAtStart)?.let {
+        // Unknown generation (meta unreadable): search without reading or writing the cache.
+        val generationAtStart = try {
+            generation()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            SmLog.w(TAG, "index_generation_failed", failure)
+            null
+        }
+        generationAtStart?.let { cache.get(key, it) }?.let {
             emit(it)
             return@flow
         }
@@ -95,7 +103,7 @@ class HybridSearcher(
                 fuse(parsed, request, lexicalHits, semanticHits.orEmpty())
             }
             val results = SearchResults(Stage.HYBRID, parsed, hits, relaxed, semanticAvailable = !semanticFailed)
-            if (!semanticFailed) cache.put(key, results, generationAtStart)
+            if (!semanticFailed && generationAtStart != null) cache.put(key, results, generationAtStart)
             emit(results)
         }
     }
