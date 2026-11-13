@@ -115,7 +115,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-02 à M5-05 | `engine:search` | [recherche §1, §7 à §9](../specs/recherche.md) · EF-SRCH-01, 03, 07, 08 |
+| Fait | M5-02 à M5-05 | `engine:search` | [recherche §1, §7 à §9](../specs/recherche.md) · EF-SRCH-01, 03, 07, 08 |
 
 **À faire**
 
@@ -126,11 +126,11 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Fusion : tables de rangs calculées à la main ; un document présent dans une seule liste est classé ; égalités départagées par la date.
-- [ ] Deux émissions dans l'ordre `LEXICAL` puis `HYBRID` ; l'annulation interrompt les deux branches.
-- [ ] Assouplissement : `TIME` puis `ALL`, avec l'indication correspondante.
-- [ ] Moteur indisponible → une seule émission, `semanticAvailable = false`.
-- [ ] Test instrumenté de la chaîne complète sur une base chiffrée avec `FakeEmbeddingEngine`.
+- [x] Fusion : tables de rangs calculées à la main ; un document présent dans une seule liste est classé ; égalités départagées par la date.
+- [x] Deux émissions dans l'ordre `LEXICAL` puis `HYBRID` ; l'annulation interrompt les deux branches.
+- [x] Assouplissement : `TIME` puis `ALL`, avec l'indication correspondante.
+- [x] Moteur indisponible → une seule émission, `semanticAvailable = false`.
+- [x] Test instrumenté de la chaîne complète sur une base chiffrée avec `FakeEmbeddingEngine`.
 
 ---
 

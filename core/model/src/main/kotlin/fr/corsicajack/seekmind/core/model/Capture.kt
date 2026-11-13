@@ -111,6 +111,8 @@ data class Capture(
     /** Bits of [TextSource]. */
     val textSource: Int,
     val charCount: Int,
+    /** SimHash of the normalised text (docs/specs/indexation.md §4): folds near-duplicate results. */
+    val simhash: Long,
 )
 
 /** A line of the journal (docs/specs/stockage.md §4 `page`): enough to list, not the whole text. */
