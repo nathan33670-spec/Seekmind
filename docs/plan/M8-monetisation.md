@@ -19,7 +19,7 @@ charges réalisables ; variante `offline` vérifiée.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-05 | `engine:monetization` | [monetisation §2, §4](../specs/monetisation.md) · EF-MON-01, 04, 07, 08, 11 |
+| Fait | M1-05 | `engine:monetization` | [monetisation §2, §4](../specs/monetisation.md) · EF-MON-01, 04, 07, 08, 11 |
 
 **À faire**
 
@@ -27,15 +27,16 @@ charges réalisables ; variante `offline` vérifiée.
    `COURTESY`, `DAILY`, `SEARCH`), solde, plafonds de solde, de récompenses et de courtoisie par jour civil.
 2. Crédits quotidiens gratuits pilotés par `MonetizationConfig.dailyFreeCredits` (0 par défaut).
 3. `EntitlementGate` : `state`, `authorize`, `commit`, selon le tableau de la spec.
-4. Remplacer l'implémentation « tout autorisé » posée par M6-03.
+4. Remplacer l'implémentation « tout autorisé » posée par M6-03. M6-03 n'étant pas encore réalisé, la
+   liaison Hilt réelle (`MonetizationModule` dans `:app`) est posée directement : M6-03 l'utilise telle quelle.
 
 **Critères d'acceptation**
 
-- [ ] Un test par ligne du tableau « Règles » : activé, requête répétée sous 10 minutes, solde suffisant, solde nul.
-- [ ] `commit` avec zéro résultat ne débite pas.
-- [ ] Plafonds respectés (horloge simulée, changement de jour civil).
-- [ ] `dailyFreeCredits = 5` : le solde est complété à 5 à la première recherche du jour, sans cumul ; à 0, rien.
-- [ ] Le solde survit au redémarrage du processus.
+- [x] Un test par ligne du tableau « Règles » : activé, requête répétée sous 10 minutes, solde suffisant, solde nul.
+- [x] `commit` avec zéro résultat ne débite pas.
+- [x] Plafonds respectés (horloge simulée, changement de jour civil).
+- [x] `dailyFreeCredits = 5` : le solde est complété à 5 à la première recherche du jour, sans cumul ; à 0, rien.
+- [x] Le solde survit au redémarrage du processus.
 
 ---
 
