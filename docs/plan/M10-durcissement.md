@@ -91,8 +91,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
 1. Règles R8 pour ONNX Runtime, SQLCipher, ML Kit, Room, Hilt ; exécution de la suite instrumentée sur le build `release`.
 2. Profil de référence (Macrobenchmark) pour le démarrage et la première recherche.
 3. Mesure du démarrage à froid ; suppression de tout travail inutile avant le premier affichage.
-4. Ramener le seuil de `IngestDeviceTest` (ENF-PERF-05) de 30 ms, seuil provisoire de développement, à
-   15 ms au 95ᵉ centile, mesuré sur le build `release` et sur le téléphone de test.
+4. Rendre de nouveau bloquant `IngestDeviceTest` (ENF-PERF-05), mesuré seulement pendant le
+   développement : 15 ms au 95ᵉ centile, sur le build `release` et sur le téléphone de test.
 
 **Critères d'acceptation**
 
