@@ -17,7 +17,9 @@ class EventRouter(
     private val clock: Clock,
 ) {
     /** Gate on the settings: consent recorded, and the pause end, if any. */
-    private class Gate(val consented: Boolean, val pausedUntil: Long?)
+    private class Gate(val consented: Boolean, val pausedUntil: Long?) {
+        fun allows(now: Long) = consented && (pausedUntil == null || now >= pausedUntil)
+    }
 
     @Volatile
     private var ignored: Set<String>? = null
@@ -32,7 +34,10 @@ class EventRouter(
         }
 
         override fun onSettings(consented: Boolean, pausedUntil: Long?) {
-            gate = Gate(consented, pausedUntil)
+            val next = Gate(consented, pausedUntil)
+            gate = next
+            // A stable screen already scheduled must not fire into a pause or after consent is withdrawn.
+            if (!next.allows(clock.nowMillis())) executor.execute(loop::reset)
         }
     }
 
@@ -57,8 +62,6 @@ class EventRouter(
         val ignored = ignored ?: return false
         if (packageName in ignored) return false
         val gate = gate ?: return false
-        if (!gate.consented) return false
-        val pausedUntil = gate.pausedUntil
-        return pausedUntil == null || clock.nowMillis() >= pausedUntil
+        return gate.allows(clock.nowMillis())
     }
 }

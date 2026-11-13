@@ -91,12 +91,16 @@ protocole et l'outillage, puis corrige d'après les résultats.
 1. Règles R8 pour ONNX Runtime, SQLCipher, ML Kit, Room, Hilt ; exécution de la suite instrumentée sur le build `release`.
 2. Profil de référence (Macrobenchmark) pour le démarrage et la première recherche.
 3. Mesure du démarrage à froid ; suppression de tout travail inutile avant le premier affichage.
+4. Rendre de nouveau bloquant `IngestDeviceTest` (ENF-PERF-05), mesuré seulement pendant le
+   développement : 15 ms au 95ᵉ centile, sur le build `release` et sur le téléphone de test.
 
 **Critères d'acceptation**
 
 - [ ] La suite instrumentée est verte sur le build `release` minifié.
 - [ ] Démarrage à froid jusqu'au champ de recherche ≤ 1,5 s sur l'appareil moyen (mesure consignée).
 - [ ] `scripts/check-elf-alignment.sh` vert sur l'APK `release`.
+- [ ] `IngestDeviceTest` affirme de nouveau 15 ms au 95ᵉ centile (ENF-PERF-05), et la mesure sur le
+      téléphone de test est consignée dans `docs/mesures/`.
 
 ---
 

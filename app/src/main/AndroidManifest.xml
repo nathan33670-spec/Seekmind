@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Common manifest of both variants (docs/03-architecture.md §10.1).
-     PauseTileService and LinkActivity are declared by their own tickets (M2-07, M8-05). -->
+     LinkActivity is declared by its own ticket (M8-05). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -20,6 +20,8 @@
     <application
         android:name=".SeekMindApp"
         android:allowBackup="false"
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="33"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="false"
         android:icon="@mipmap/ic_launcher"
@@ -35,6 +37,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Long press on the quick settings tile (docs/specs/capture.md §7). -->
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+            </intent-filter>
         </activity>
 
         <!-- The accessibility service (docs/specs/capture.md §2), bound by the system only. -->
@@ -49,6 +55,18 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- Quick settings tile: pause and resume (docs/specs/capture.md §7), bound by the system only. -->
+        <service
+            android:name="fr.corsicajack.seekmind.engine.capture.PauseTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
         </service>
 
         <!-- WorkManager is initialised on demand by SeekMindApp, with the worker factory of the Hilt graph. -->
