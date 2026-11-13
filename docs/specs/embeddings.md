@@ -328,6 +328,24 @@ encodeur) ; ils diffèrent par la mémoire et le temps de chargement.
 Si l'appareil bas dépasse ces cibles d'un facteur deux, le ticket M10-02 isole le moteur dans un
 processus dédié.
 
+Mesures du moteur (M4-04, `OrtEmbeddingEngineDeviceTest`, émulateurs x86_64 de la CI, exécution
+`device-tests` 43440665786, API 30 / 34 / 36) — moteur complet, tokenizer Kotlin compris, 2 threads :
+
+| Mesure | `fr` | `multi` |
+|---|---|---|
+| Chargement de la session (première fois ; vocabulaire compris) | 152 / 257 / 212 ms | 216 / 416 / 359 ms |
+| Requête courte, médiane | 5,8 / 10,2 / 16,6 ms | 5,8 / 10,4 / 8,9 ms |
+| Passage tronqué à 256 jetons, médiane | 97 / 161 / 151 ms | 92 / 171 / 140 ms |
+| Lot de 8 passages de 256 jetons, médiane | 779 / 1 347 / 1 149 ms | 722 / 1 436 / 1 064 ms |
+| PSS ajoutée par la session | 36 / 35 / 28 Mo | 131 / 95 / 131 Mo |
+| PSS totale du processus de test | 207 / 178 / 189 Mo | 279 / 258 / 279 Mo |
+| Cosinus le plus bas avec `embedding_golden_fr.json`, texte par texte (en un lot) | 0,9971 (0,9958) | — |
+
+Les cibles de latence et de chargement sont tenues, sauf le passage de 256 jetons sur les émulateurs
+API 34 et 36, au niveau de la cible (151 à 171 ms pour 150 ms), comme au prototype S4. La PSS totale
+compte le processus d'instrumentation : la session `fr` n'ajoute que 28 à 36 Mo. Ces deux points sont
+à confirmer sur le téléphone, application seule (M10-01).
+
 ## 9. Configuration
 
 ```kotlin
