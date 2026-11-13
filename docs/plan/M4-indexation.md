@@ -14,7 +14,7 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `engine:index` | [indexation §2, §3](../specs/indexation.md) |
+| Fait | M1-01 | `engine:index` | [indexation §2, §3](../specs/indexation.md) |
 
 **À faire**
 
@@ -25,9 +25,9 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 **Critères d'acceptation**
 
-- [ ] Normalisation : table de cas ; idempotence ; les caractères U+0002 et U+0003 sont retirés.
-- [ ] SimHash : déterminisme ; texte identique → distance 0 ; textes sans rapport → distance moyenne proche de 32.
-- [ ] Le rapport de la PR donne la distribution des distances par catégorie de paires et confirme (ou corrige) le seuil de 9.
+- [x] Normalisation : table de cas ; idempotence ; les caractères U+0002 et U+0003 sont retirés.
+- [x] SimHash : déterminisme ; texte identique → distance 0 ; textes sans rapport → distance moyenne proche de 32.
+- [x] Le rapport de la PR donne la distribution des distances par catégorie de paires et confirme (ou corrige) le seuil de 9.
 
 ---
 
