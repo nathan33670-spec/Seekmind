@@ -114,9 +114,9 @@ class VectorIndexRecallTest {
             )
         var found = 0
         for (query in queries) {
-            val exact = vectors.indices.sortedByDescending {
-                dot(query, vectors[it])
-            }.take(NEIGHBOURS).map { it.toLong() }.toSet()
+            // One score per vector, computed once: a selector inside the sort would run at every comparison.
+            val scores = DoubleArray(vectors.size) { dot(query, vectors[it]) }
+            val exact = vectors.indices.sortedByDescending { scores[it] }.take(NEIGHBOURS).map { it.toLong() }.toSet()
             val hits = index.search(query, SearchFilters()).map { it.captureId }
             found += hits.count { it in exact }
         }
@@ -151,6 +151,10 @@ class VectorIndexRecallTest {
             return FloatArray(own.size) { mixed[it] / norm }
         }
 
-        fun dot(a: FloatArray, b: FloatArray): Double = a.indices.sumOf { (a[it] * b[it]).toDouble() }
+        fun dot(a: FloatArray, b: FloatArray): Double {
+            var sum = 0.0
+            for (i in a.indices) sum += a[i] * b[i]
+            return sum
+        }
     }
 }
