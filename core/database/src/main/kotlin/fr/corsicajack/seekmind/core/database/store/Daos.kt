@@ -96,12 +96,35 @@ internal abstract class CaptureDao {
         SELECT id, first_seen_at, last_seen_at, seen_count, package_name, window_title, url,
                substr(text, 1, :previewChars) AS preview, text_source
         FROM capture
-        WHERE (:before IS NULL OR last_seen_at < :before) AND (:pkg IS NULL OR package_name = :pkg)
-        ORDER BY last_seen_at DESC
+        WHERE (:pkg IS NULL OR package_name = :pkg)
+        ORDER BY last_seen_at DESC, id DESC
         LIMIT :limit
         """,
     )
-    abstract suspend fun page(before: Long?, pkg: String?, limit: Int, previewChars: Int): List<SummaryRow>
+    abstract suspend fun firstPage(pkg: String?, limit: Int, previewChars: Int): List<SummaryRow>
+
+    // Row values: the order (last_seen_at, id) is total, so a page never skips a capture seen at the
+    // same millisecond as the last one of the previous page.
+    @Query(
+        """
+        SELECT id, first_seen_at, last_seen_at, seen_count, package_name, window_title, url,
+               substr(text, 1, :previewChars) AS preview, text_source
+        FROM capture
+        WHERE (last_seen_at, id) < (:beforeAt, :beforeId) AND (:pkg IS NULL OR package_name = :pkg)
+        ORDER BY last_seen_at DESC, id DESC
+        LIMIT :limit
+        """,
+    )
+    abstract suspend fun nextPage(
+        beforeAt: Long,
+        beforeId: Long,
+        pkg: String?,
+        limit: Int,
+        previewChars: Int,
+    ): List<SummaryRow>
+
+    @Query("SELECT package_name FROM capture GROUP BY package_name ORDER BY MAX(last_seen_at) DESC")
+    abstract suspend fun packages(): List<String>
 
     @Query("DELETE FROM capture WHERE id = :id")
     abstract suspend fun deleteOne(id: Long): Int

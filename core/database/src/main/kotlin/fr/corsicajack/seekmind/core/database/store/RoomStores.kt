@@ -50,8 +50,12 @@ internal class RoomCaptureStore(private val dao: CaptureDao) : CaptureStore {
 
     override suspend fun get(captureId: Long): Capture? = dao.get(captureId)?.toModel()
 
-    override suspend fun page(before: Long?, packageName: String?, limit: Int): List<CaptureSummary> =
-        dao.page(before, packageName, limit, PREVIEW_CHARS).map {
+    override suspend fun page(before: JournalCursor?, packageName: String?, limit: Int): List<CaptureSummary> =
+        if (before == null) {
+            dao.firstPage(packageName, limit, PREVIEW_CHARS)
+        } else {
+            dao.nextPage(before.lastSeenAt, before.captureId, packageName, limit, PREVIEW_CHARS)
+        }.map {
             CaptureSummary(
                 id = it.id,
                 firstSeenAt = it.first_seen_at,
@@ -64,6 +68,8 @@ internal class RoomCaptureStore(private val dao: CaptureDao) : CaptureStore {
                 textSource = it.text_source,
             )
         }
+
+    override suspend fun packages(): List<String> = dao.packages()
 
     override suspend fun delete(captureId: Long) = dao.deleting { dao.deleteOne(captureId) }
 

@@ -113,7 +113,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-01, M1-04 | `feature:journal` | [ui-ux §3.4](../specs/ui-ux.md) · EF-JRN-01, EF-JRN-03 |
+| Fait | M6-01, M1-04 | `feature:journal` | [ui-ux §3.4](../specs/ui-ux.md) · EF-JRN-01, EF-JRN-03 |
 
 **À faire**
 
@@ -122,9 +122,9 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 **Critères d'acceptation**
 
-- [ ] Défilement sur une base synthétique de 100 000 captures sans chargement complet en mémoire.
-- [ ] Annuler une suppression restaure la ligne ; ne pas annuler supprime la capture en base.
-- [ ] Le journal est accessible avec un solde de crédits nul.
+- [x] Défilement sur une base synthétique de 100 000 captures sans chargement complet en mémoire.
+- [x] Annuler une suppression restaure la ligne ; ne pas annuler supprime la capture en base.
+- [x] Le journal est accessible avec un solde de crédits nul.
 
 ---
 
