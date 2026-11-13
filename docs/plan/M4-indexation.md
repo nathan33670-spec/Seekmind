@@ -51,7 +51,7 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
       fragments, positions exactes (la concaténation des tranches redonne le texte couvert).
 - [x] Déduplication : chacune des quatre conditions est nécessaire (quatre tests négatifs, un positif).
 - [x] Doublon → `touch` et `Deduplicated` ; nouveau → une capture et ses fragments en attente.
-- [x] Banc de mesure : `ingest` ≤ 15 ms au 95ᵉ centile (ENF-PERF-05). *Mesuré et journalisé
+- [ ] Banc de mesure : `ingest` ≤ 15 ms au 95ᵉ centile (ENF-PERF-05) — **reporté à M10-04**. *Mesuré et journalisé
       seulement sur les émulateurs de la CI, qui donnent de 1,6 à 46 ms avec le même code (décision
       du porteur, 13 novembre 2026, qui remplace le seuil provisoire de 30 ms) ; le seuil de 15 ms est
       exigé au ticket M10-04, sur téléphone.*
