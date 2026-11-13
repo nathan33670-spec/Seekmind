@@ -50,7 +50,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-01 | `engine:search` | [recherche §4](../specs/recherche.md) · EF-SRCH-05 |
+| Fait | M5-01 | `engine:search` | [recherche §4](../specs/recherche.md) · EF-SRCH-05 |
 
 **À faire**
 
@@ -60,9 +60,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] « sur Instagram », « dans WhatsApp », « on YouTube », alias (« insta ») → bon paquet, expression retirée du texte.
-- [ ] Sans préposition, rien n'est extrait (« chrome » reste un mot de la requête).
-- [ ] Application non installée → pas de filtre.
+- [x] « sur Instagram », « dans WhatsApp », « on YouTube », alias (« insta ») → bon paquet, expression retirée du texte.
+- [x] Sans préposition, rien n'est extrait (« chrome » reste un mot de la requête).
+- [x] Application non installée → pas de filtre.
 
 ---
 
