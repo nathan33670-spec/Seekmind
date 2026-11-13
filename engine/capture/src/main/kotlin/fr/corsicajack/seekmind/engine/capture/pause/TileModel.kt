@@ -18,6 +18,12 @@ data class TileModel(val active: Boolean, val subtitle: Subtitle, val onTap: Act
 
     enum class Action { TOGGLE_PAUSE, OPEN_APP }
 
+    /**
+     * A tap that resumes the capture from the lock screen first asks for the unlock: someone holding the
+     * locked phone cannot restart it behind the user's back. Pausing needs no unlock.
+     */
+    fun needsUnlock(locked: Boolean): Boolean = locked && onTap == Action.TOGGLE_PAUSE && !active
+
     companion object {
         fun of(status: CaptureStatus): TileModel = when (status) {
             is CaptureStatus.Active -> TileModel(true, Subtitle.Active, Action.TOGGLE_PAUSE)
