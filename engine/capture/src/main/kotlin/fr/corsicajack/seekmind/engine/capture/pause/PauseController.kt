@@ -18,22 +18,19 @@ enum class PauseDuration {
 /**
  * Pauses and resumes the capture (docs/specs/capture.md §7, EF-CAP-04) by writing `pausedUntil`. The
  * router stops passing events as soon as the setting is read, and lets them through again once its
- * time has come: an expired pause needs no clean-up. [onChanged] lets the quick settings tile refresh.
+ * time has come: an expired pause needs no clean-up.
  */
 class PauseController(
     private val settings: SettingsRepository,
     private val clock: Clock,
     private val zone: () -> ZoneId,
-    private val onChanged: () -> Unit,
 ) {
     suspend fun pause(duration: PauseDuration) {
         settings.setPausedUntil(until(duration, clock.nowMillis(), zone()))
-        onChanged()
     }
 
     suspend fun resume() {
         settings.setPausedUntil(null)
-        onChanged()
     }
 
     /** The tile's tap: active → paused without limit, paused → active. */

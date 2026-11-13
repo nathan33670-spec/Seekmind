@@ -74,6 +74,32 @@ class EventRouterTest {
     }
 
     @Test
+    fun `a stable screen already scheduled is cancelled when a pause starts or consent is withdrawn`() {
+        for (change in listOf<(CaptureEnvironment.Listener) -> Unit>(
+            { it.onSettings(consented = true, pausedUntil = Long.MAX_VALUE) },
+            { it.onSettings(consented = false, pausedUntil = null) },
+        )) {
+            attachReady()
+            router.onEvent(CONTENT, APP, null, 1)
+            executor.runAll()
+            assertThat(executor.timer.pending).isNotNull()
+            change(environment.listener!!)
+            executor.runAll()
+            assertThat(executor.timer.pending).isNull()
+        }
+    }
+
+    @Test
+    fun `a new open gate keeps what is scheduled`() {
+        attachReady()
+        router.onEvent(CONTENT, APP, null, 1)
+        executor.runAll()
+        environment.listener!!.onSettings(consented = true, pausedUntil = null)
+        executor.runAll()
+        assertThat(executor.timer.pending).isNotNull()
+    }
+
+    @Test
     fun `a pause without limit holds`() {
         attachReady(pausedUntil = Long.MAX_VALUE)
         clock.advance(365L * 24 * 3_600_000)

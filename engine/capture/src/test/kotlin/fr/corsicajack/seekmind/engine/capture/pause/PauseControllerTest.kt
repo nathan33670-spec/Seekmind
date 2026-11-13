@@ -25,8 +25,7 @@ class PauseControllerTest {
         PreferenceDataStoreFactory.create(scope = scope) { File(directory, "settings.preferences_pb") },
     )
     private val clock = FakeClock(now = at("2026-11-12T22:15"))
-    private var refreshes = 0
-    private val controller = PauseController(settings, clock, { paris }, { refreshes++ })
+    private val controller = PauseController(settings, clock, { paris })
 
     @After
     fun tearDown() {
@@ -58,12 +57,11 @@ class PauseControllerTest {
     }
 
     @Test
-    fun `pause and resume write the setting and refresh the tile`() = runBlocking<Unit> {
+    fun `pause and resume write the setting`() = runBlocking<Unit> {
         controller.pause(PauseDuration.ONE_HOUR)
         assertThat(settings.current().pausedUntil).isEqualTo(clock.now + 3_600_000)
         controller.resume()
         assertThat(settings.current().pausedUntil).isNull()
-        assertThat(refreshes).isEqualTo(2)
     }
 
     @Test

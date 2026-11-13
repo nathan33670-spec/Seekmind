@@ -1,8 +1,6 @@
 package fr.corsicajack.seekmind.engine.capture
 
 import android.app.PendingIntent
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.service.quicksettings.Tile
@@ -25,7 +23,8 @@ import kotlinx.coroutines.launch
  * Quick settings tile (docs/specs/capture.md §7): a tap toggles between active and paused without
  * limit, the subtitle tells the state, a long press opens the application (its `QS_TILE_PREFERENCES`
  * activity). While the panel shows it, the tile follows [CaptureStatusRepository], so a change made in
- * the application shows at once; [PauseController] also asks the system to refresh it.
+ * the application shows at once. The system calls [onStartListening] whenever the panel opens: an
+ * active tile, refreshed on request only, is not needed.
  */
 @AndroidEntryPoint
 class PauseTileService : TileService() {
@@ -98,13 +97,6 @@ class PauseTileService : TileService() {
         } else {
             @Suppress("DEPRECATION", "StartActivityAndCollapseDeprecated")
             startActivityAndCollapse(intent)
-        }
-    }
-
-    companion object {
-        /** Asks the system to call [onStartListening] again, so that the tile shows a change made elsewhere. */
-        fun refresh(context: Context) {
-            requestListeningState(context, ComponentName(context, PauseTileService::class.java))
         }
     }
 }
