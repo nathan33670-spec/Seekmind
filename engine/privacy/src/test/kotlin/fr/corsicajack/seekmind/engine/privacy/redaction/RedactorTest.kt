@@ -11,39 +11,33 @@ class RedactorTest {
     private val mark = PrivacyConfig().redactionMark
     private val redactor = Redactor(mark)
 
-    private val cases: List<Triple<String, String, String>> by lazy {
+    private class Case(val kind: String, val expected: String, val text: String, val redacted: String)
+
+    private val cases: List<Case> by lazy {
         val dir = checkNotNull(System.getProperty("seekmind.testdata")) { "seekmind.testdata not set" }
         File(dir, "sensitive_cases.tsv").readLines()
             .filter { it.isNotBlank() && !it.startsWith("#") }
-            .map { line -> line.split('\t').let { Triple(it[0], it[1], it[2]) } }
+            .map { line -> line.split('\t').let { Case(it[0], it[1], it[2], it[3]) } }
     }
 
     @Test
     fun `the reference set covers every kind`() {
-        assertThat(cases.map { it.first }.toSet()).containsExactly("card", "iban", "nir", "other")
-        assertThat(cases.count { it.second == "masked" }).isAtLeast(60)
+        assertThat(cases.map { it.kind }.toSet()).containsExactly("card", "iban", "nir", "other")
+        assertThat(cases.count { it.expected == "masked" }).isAtLeast(60)
     }
 
     @Test
     fun `valid numbers are masked, invalid ones and tracking numbers are kept`() {
-        for ((kind, expected, text) in cases) {
-            val result = redactor.redact(text)
-            when (expected) {
-                "masked" -> {
-                    assertWithMessage("%s should be masked: %s", kind, text).that(result.maskedCount).isEqualTo(1)
-                    assertWithMessage("mark in %s", text).that(result.text).contains(mark)
-                    // No long run of digits is left: the number was replaced whole (an expiry date may stay).
-                    assertWithMessage("digits left in %s", result.text)
-                        .that(LONG_DIGIT_RUN.containsMatchIn(result.text)).isFalse()
-                }
-
-                "intact" -> {
-                    assertWithMessage("%s should stay: %s", kind, text).that(result.text).isEqualTo(text)
-                    assertThat(result.maskedCount).isEqualTo(0)
-                }
-
-                else -> error("unknown expectation $expected")
-            }
+        for (case in cases) {
+            val result = redactor.redact(case.text)
+            // Exact text: a partial redaction (some digits of the number left) fails here.
+            assertWithMessage(
+                "%s, %s: %s",
+                case.kind,
+                case.expected,
+                case.text,
+            ).that(result.text).isEqualTo(case.redacted)
+            assertThat(result.maskedCount).isEqualTo(if (case.expected == "masked") 1 else 0)
         }
     }
 
@@ -63,13 +57,14 @@ class RedactorTest {
 
     @Test
     fun `redact is idempotent`() {
-        for ((_, _, text) in cases) {
+        for (case in cases) {
+            val text = case.text
             val once = redactor.redact(text).text
             val twice = redactor.redact(once)
             assertWithMessage("idempotent on %s", text).that(twice.text).isEqualTo(once)
             assertThat(twice.maskedCount).isEqualTo(0)
         }
-        val all = cases.joinToString("\n") { it.third }
+        val all = cases.joinToString("\n") { it.text }
         val once = redactor.redact(all).text
         assertThat(redactor.redact(once).text).isEqualTo(once)
     }
@@ -78,9 +73,5 @@ class RedactorTest {
     fun `text without numbers is returned as is`() {
         val text = "Le restaurant italien de la rue Paradis sert des pâtes à la truffe."
         assertThat(redactor.redact(text)).isEqualTo(fr.corsicajack.seekmind.core.model.Redaction(text, 0))
-    }
-
-    private companion object {
-        val LONG_DIGIT_RUN = Regex("(?:\\d[ \\-]?){7}\\d")
     }
 }
