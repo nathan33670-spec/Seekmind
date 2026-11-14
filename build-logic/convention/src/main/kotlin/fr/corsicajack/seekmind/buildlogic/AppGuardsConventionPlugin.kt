@@ -2,6 +2,7 @@ package fr.corsicajack.seekmind.buildlogic
 
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import fr.corsicajack.seekmind.buildlogic.guards.VerifyBundleTask
 import fr.corsicajack.seekmind.buildlogic.guards.VerifyDependenciesTask
 import fr.corsicajack.seekmind.buildlogic.guards.VerifyManifestTask
 import org.gradle.api.Plugin
@@ -11,8 +12,8 @@ import org.gradle.kotlin.dsl.register
 
 /**
  * Guards of the shipped application (ticket M0-04), registered for each release variant:
- * `verify<Variant>Manifest` and `verify<Variant>Dependencies`, aggregated by `verifyDependencies`.
- * Allowlists live in `gradle/` at the repository root.
+ * `verify<Variant>Manifest` and `verify<Variant>Dependencies`, aggregated by `verifyDependencies`, and
+ * `verify<Variant>Bundle` (ticket M4-06). Allowlists live in `gradle/` at the repository root.
  */
 class AppGuardsConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -52,6 +53,21 @@ class AppGuardsConventionPlugin : Plugin<Project> {
                 report.set(layout.buildDirectory.file("reports/guards/dependencies-${variant.name}.txt"))
             }
             verifyDependencies.configure { dependsOn(dependencies) }
+
+            // Model fr uncompressed in the base, multi in its on-demand pack, base download at most 100 MB (ENF-STO-02).
+            val makeApks = "makeApkFromBundleFor$suffix"
+            tasks.register<VerifyBundleTask>("verify${suffix}Bundle") {
+                group = "verification"
+                description = "Checks the content and the download size of the ${variant.name} bundle."
+                dependsOn(makeApks)
+                apks.set(
+                    layout.buildDirectory.file("intermediates/apks_from_bundle/${variant.name}/$makeApks/bundle.apks"),
+                )
+                limitBytes.set(MAX_BASE_DOWNLOAD_BYTES)
+                report.set(layout.buildDirectory.file("reports/guards/bundle-${variant.name}.txt"))
+            }
         }
     }
 }
+
+private const val MAX_BASE_DOWNLOAD_BYTES = 100_000_000L
