@@ -39,4 +39,21 @@
     <string name="search_failed_message">Votre mémoire est intacte. Réessayez dans un instant.</string>
     <string name="search_failed_partial">La recherche n\'a pas pu être terminée</string>
     <string name="search_retry">Réessayer</string>
+    <string name="detail_seen">Vu du %1$s au %2$s</string>
+    <plurals name="detail_views">
+        <item quantity="one">Vu %1$d fois</item>
+        <item quantity="many">Vu %1$d fois</item>
+        <item quantity="other">Vu %1$d fois</item>
+    </plurals>
+    <string name="detail_from_image">Texte lu dans l\'image</string>
+    <string name="detail_copy">Copier</string>
+    <string name="detail_share">Partager</string>
+    <string name="detail_delete">Supprimer</string>
+    <string name="detail_delete_title">Supprimer cet écran ?</string>
+    <string name="detail_delete_text">Il sera retiré définitivement de votre mémoire, de la recherche et du journal.</string>
+    <string name="detail_links">Liens</string>
+    <string name="detail_clip_label">Texte mémorisé</string>
+    <string name="detail_missing_title">Cet écran n\'est plus dans votre mémoire</string>
+    <string name="detail_missing_message">Il a été supprimé entre-temps.</string>
+    <string name="detail_unavailable_message">SeekMind ne peut pas lire ses données sur ce téléphone.</string>
 </resources>

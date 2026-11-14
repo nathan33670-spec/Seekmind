@@ -9,21 +9,25 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dagger.hilt.android.AndroidEntryPoint
 import fr.corsicajack.seekmind.apps.PackageManagerAppLabels
+import fr.corsicajack.seekmind.capture.CaptureDeletions
 import fr.corsicajack.seekmind.core.common.SmLog
 import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.database.WipeService
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
 import fr.corsicajack.seekmind.core.designsystem.theme.SeekMindTheme
-import fr.corsicajack.seekmind.core.model.SearchHit
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import fr.corsicajack.seekmind.di.ApplicationScope
 import fr.corsicajack.seekmind.feature.journal.JournalRoute
 import fr.corsicajack.seekmind.feature.journal.JournalViewModel
 import fr.corsicajack.seekmind.feature.search.SearchRoute
 import fr.corsicajack.seekmind.feature.search.SearchViewModel
+import fr.corsicajack.seekmind.feature.search.detail.CaptureDetailRoute
+import fr.corsicajack.seekmind.feature.search.detail.CaptureDetailViewModel
 import fr.corsicajack.seekmind.search.SearchStack
 import fr.corsicajack.seekmind.ui.SeekMindRoot
 import java.time.LocalDate
@@ -57,19 +61,28 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var wipe: WipeService
 
+    @Inject lateinit var deletions: CaptureDeletions
+
+    /** Search terms of the result opened last, highlighted in its detail; in memory only (INV-06). */
+    private var openedTerms: List<String> = emptyList()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             SeekMindTheme {
-                SeekMindRoot(searchContent = { SearchContent() }, journalContent = { JournalContent() })
+                SeekMindRoot(
+                    searchContent = { open -> SearchContent(open) },
+                    journalContent = { open -> JournalContent(open) },
+                    captureContent = { id, close -> CaptureContent(id, close) },
+                )
             }
         }
     }
 
     @Composable
-    private fun SearchContent() {
+    private fun SearchContent(openCapture: (Long) -> Unit) {
         val labels = PackageManagerAppLabels(packageManager)
         val searchViewModel = viewModel {
             SearchViewModel(
@@ -83,25 +96,55 @@ class MainActivity : ComponentActivity() {
                 now = System::currentTimeMillis,
                 zone = ZoneId::systemDefault,
                 io = Dispatchers.IO,
+                deletions = deletions.events,
             )
         }
+        val state by searchViewModel.state.collectAsStateWithLifecycle()
         SearchRoute(
             viewModel = searchViewModel,
             zone = ZoneId.systemDefault(),
             now = System::currentTimeMillis,
-            onOpenResult = {}, // The detail arrives with ticket M6-04.
-            onOpenSource = ::openSource,
+            onOpenResult = { hit ->
+                openedTerms = state.terms
+                openCapture(hit.captureId)
+            },
+            onOpenSource = { hit -> openSource(hit.url, hit.packageName) },
             onReset = ::resetEverything,
         )
     }
 
-    /** Until the return to the source (M7): the page of an http(s) URL, otherwise the application. */
-    private fun openSource(hit: SearchHit) {
-        val url = hit.url?.let(Uri::parse)?.takeIf { it.scheme == "https" || it.scheme == "http" }
-        val intent = if (url != null) {
-            Intent(Intent.ACTION_VIEW, url).addCategory(Intent.CATEGORY_BROWSABLE)
+    @Composable
+    private fun CaptureContent(captureId: Long, close: () -> Unit) {
+        val terms = openedTerms
+        val detail = viewModel(key = "capture-$captureId") {
+            CaptureDetailViewModel(
+                captureId = captureId,
+                terms = terms,
+                store = { (database.get() as? DatabaseState.Ready)?.database?.captures },
+                labels = PackageManagerAppLabels(packageManager),
+                io = Dispatchers.IO,
+                onDeleted = deletions::publish,
+            )
+        }
+        CaptureDetailRoute(
+            viewModel = detail,
+            zone = ZoneId.systemDefault(),
+            onOpenSource = { capture -> openSource(capture.url, capture.packageName) },
+            onOpenLink = { link -> openSource(link, packageName = null) },
+            onClose = close,
+        )
+    }
+
+    /**
+     * Until the return to the source (M7): the page of an http(s) URL, otherwise the application. Only
+     * http(s) URLs leave SeekMind, to another application (INV-12).
+     */
+    private fun openSource(url: String?, packageName: String?) {
+        val page = url?.let(Uri::parse)?.takeIf { it.scheme == "https" || it.scheme == "http" }
+        val intent = if (page != null) {
+            Intent(Intent.ACTION_VIEW, page).addCategory(Intent.CATEGORY_BROWSABLE)
         } else {
-            packageManager.getLaunchIntentForPackage(hit.packageName)
+            packageName?.let(packageManager::getLaunchIntentForPackage)
         } ?: return
         runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             .onFailure { SmLog.w(TAG, "open_source_failed", it) }
@@ -128,7 +171,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun JournalContent() {
+    private fun JournalContent(openCapture: (Long) -> Unit) {
         val journal = viewModel {
             JournalViewModel(
                 store = { (database.get() as? DatabaseState.Ready)?.database?.captures },
@@ -136,9 +179,19 @@ class MainActivity : ComponentActivity() {
                 zone = ZoneId::systemDefault,
                 io = Dispatchers.IO,
                 commitScope = applicationScope,
+                deletions = deletions.events,
+                onDeleted = deletions::publish,
             )
         }
-        JournalRoute(viewModel = journal, zone = ZoneId.systemDefault(), today = { LocalDate.now() })
+        JournalRoute(
+            viewModel = journal,
+            zone = ZoneId.systemDefault(),
+            today = { LocalDate.now() },
+            onOpen = { id ->
+                openedTerms = emptyList()
+                openCapture(id)
+            },
+        )
     }
 
     private companion object {
