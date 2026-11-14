@@ -4,6 +4,8 @@ plugins {
 
 dependencies {
     implementation(project(":core:model"))
+    // source_rules.json (docs/specs/retour-source.md §4).
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.truth)

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "rules": [
+    { "package": "com.google.android.youtube", "level": "APP_SEARCH",
+      "uri": "https://www.youtube.com/results?search_query={title}", "requires": ["title"] },
+    { "package": "com.reddit.frontpage", "level": "APP_SEARCH",
+      "uri": "https://www.reddit.com/search/?q={title}", "requires": ["title"] },
+    { "package": "com.instagram.android", "level": "APP_LINK",
+      "uri": "https://www.instagram.com/{handle}/", "requires": ["handle"] },
+    { "package": "com.zhiliaoapp.musically", "level": "APP_LINK",
+      "uri": "https://www.tiktok.com/@{handle}", "requires": ["handle"] },
+    { "package": "com.twitter.android", "level": "APP_LINK",
+      "uri": "https://x.com/{handle}", "requires": ["handle"] },
+    { "package": "com.google.android.apps.maps", "level": "APP_SEARCH",
+      "uri": "geo:0,0?q={title}", "requires": ["title"] },
+    { "package": "com.spotify.music", "level": "APP_SEARCH",
+      "uri": "spotify:search:{title}", "requires": ["title"] }
+  ]
+}

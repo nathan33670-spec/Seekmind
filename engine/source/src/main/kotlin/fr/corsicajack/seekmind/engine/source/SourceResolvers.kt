@@ -72,13 +72,14 @@ class ChainSourceResolver(private val apps: InstalledApps, private val steps: Li
 
     companion object {
         /** The chain of docs/specs/retour-source.md §3, with the application [rules] (M7-02). */
-        fun create(apps: InstalledApps, rules: List<AppRule> = emptyList()): ChainSourceResolver {
-            val schemes = schemesFor(rules)
-            return ChainSourceResolver(
-                apps,
-                listOf(BrowserUrlResolver(apps), AppRuleResolver(apps, rules, schemes), LaunchAppResolver(apps)),
-            )
-        }
+        fun create(
+            apps: InstalledApps,
+            rules: List<AppRule> = emptyList(),
+            schemes: SourceSchemes = schemesFor(rules),
+        ): ChainSourceResolver = ChainSourceResolver(
+            apps,
+            listOf(BrowserUrlResolver(apps), AppRuleResolver(apps, rules, schemes), LaunchAppResolver(apps)),
+        )
 
         /** The schemes admitted for [rules]: the built-in ones and those of the rules (§5). */
         fun schemesFor(rules: List<AppRule>): SourceSchemes = SourceSchemes(rules.map { it.scheme })

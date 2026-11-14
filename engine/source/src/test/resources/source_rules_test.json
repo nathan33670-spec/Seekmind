@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "rules": [
+    { "package": "fr.corsicajack.seekmind.fixture", "level": "APP_LINK",
+      "uri": "seekmind-fixture://item/{handle}", "requires": ["handle"] },
+    { "package": "com.example.videos", "level": "APP_SEARCH",
+      "uri": "https://videos.example/results?q={firstLine}" },
+    { "package": "com.example.bad", "level": "APP_LINK", "uri": "javascript:alert({title})" },
+    { "package": "com.example.bad", "level": "APP_LINK", "uri": "file:///sdcard/{title}" },
+    { "package": "com.example.bad", "level": "APP_LINK", "uri": "https://{title}/x" },
+    { "package": "com.example.bad", "level": "APP_LINK", "uri": "https://bad.example/{unknown}" },
+    { "package": "com.example.bad", "level": "APP_ONLY", "uri": "https://bad.example/" },
+    { "package": "com.example.bad", "level": "NOT_A_LEVEL", "uri": "https://bad.example/" },
+    { "package": "com.example.bad", "uri": "https://bad.example/" },
+    "not an object"
+  ]
+}
