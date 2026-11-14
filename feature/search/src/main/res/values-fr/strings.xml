@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">Rechercher ce que vous avez vu</string>
+    <string name="search_period_today">Aujourd\'hui</string>
+    <string name="search_period_yesterday">Hier</string>
+    <string name="search_period_week">7 jours</string>
+    <string name="search_period_month">30 jours</string>
+    <string name="search_app">Application</string>
+    <string name="search_all_apps">Toutes les applications</string>
+    <string name="search_recent">Recherches récentes</string>
+    <string name="search_examples">Essayez par exemple</string>
+    <string name="search_example_1">le restaurant conseillé hier</string>
+    <string name="search_example_2">numéro de suivi mardi</string>
+    <string name="search_example_3">recette vue sur Instagram</string>
+    <string name="search_relaxed_time_label">Rien trouvé %1$s — voici d\'autres dates</string>
+    <string name="search_relaxed_time">Rien trouvé sur cette période — voici d\'autres dates</string>
+    <string name="search_relaxed_all">Rien trouvé avec ces filtres — voici des résultats sans eux</string>
+    <plurals name="search_index_incomplete">
+        <item quantity="one">%1$d écran récent en cours d\'analyse : la recherche par le sens s\'améliore pendant la charge</item>
+        <item quantity="many">%1$d écrans récents en cours d\'analyse : la recherche par le sens s\'améliore pendant la charge</item>
+        <item quantity="other">%1$d écrans récents en cours d\'analyse : la recherche par le sens s\'améliore pendant la charge</item>
+    </plurals>
+    <string name="search_keywords_only">Recherche par mots-clés seulement pour l\'instant</string>
+    <string name="search_no_result_title">Rien trouvé</string>
+    <string name="search_no_result_message">Retirez un filtre ou essayez d\'autres mots.</string>
+    <string name="search_not_charged">Cette recherche ne vous a pas été décomptée.</string>
+    <string name="search_no_credit_title">Plus de recherche aujourd\'hui</string>
+    <string name="search_no_credit_message">Vous pouvez obtenir d\'autres recherches depuis la feuille de crédits.</string>
+    <string name="search_unavailable_title">Votre mémoire ne peut pas être ouverte</string>
+    <string name="search_unavailable_message">SeekMind ne peut pas lire ses données sur ce téléphone. Le réinitialiser efface ce qui a été mémorisé.</string>
+    <string name="search_reset">Réinitialiser SeekMind</string>
+    <string name="search_reset_title">Réinitialiser SeekMind ?</string>
+    <string name="search_reset_text">Tout ce que SeekMind a mémorisé et ses réglages seront effacés définitivement, puis SeekMind se fermera.</string>
+    <string name="search_cancel">Annuler</string>
+    <string name="search_open_page">Ouvrir la page</string>
+    <string name="search_open_app">Ouvrir %1$s</string>
+    <string name="search_yesterday_at">hier %1$s</string>
+    <string name="search_failed_title">La recherche a échoué</string>
+    <string name="search_failed_message">Votre mémoire est intacte. Réessayez dans un instant.</string>
+    <string name="search_failed_partial">La recherche n\'a pas pu être terminée</string>
+    <string name="search_retry">Réessayer</string>
+</resources>

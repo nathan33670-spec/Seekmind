@@ -70,7 +70,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-01, M5-06 | `feature:search` | [ui-ux §3.2](../specs/ui-ux.md) · EF-SRCH-05 à 09 |
+| Fait | M6-01, M5-06 | `feature:search` | [ui-ux §3.2](../specs/ui-ux.md) · EF-SRCH-05 à 09 |
 
 **À faire**
 
@@ -83,10 +83,10 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 **Critères d'acceptation**
 
-- [ ] Un test de ViewModel par état du tableau.
-- [ ] Les résultats par mots-clés s'affichent avant les résultats hybrides ; une nouvelle requête annule l'ancienne.
-- [ ] Supprimer une pastille de filtre relance la recherche sans ce filtre.
-- [ ] L'historique respecte le réglage « désactivé ».
+- [x] Un test de ViewModel par état du tableau.
+- [x] Les résultats par mots-clés s'affichent avant les résultats hybrides ; une nouvelle requête annule l'ancienne.
+- [x] Supprimer une pastille de filtre relance la recherche sans ce filtre.
+- [x] L'historique respecte le réglage « désactivé ».
 
 ---
 

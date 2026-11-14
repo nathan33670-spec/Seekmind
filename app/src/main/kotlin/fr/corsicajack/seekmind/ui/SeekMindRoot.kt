@@ -31,6 +31,7 @@ fun navItemTag(destination: TopLevelDestination): String = "nav_${destination.na
 @Composable
 fun SeekMindRoot(
     navController: NavHostController = rememberNavController(),
+    searchContent: @Composable () -> Unit = {},
     journalContent: @Composable () -> Unit = {},
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -53,6 +54,7 @@ fun SeekMindRoot(
         SeekMindNavHost(
             navController = navController,
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+            searchContent = searchContent,
             journalContent = journalContent,
         )
     }
