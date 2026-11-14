@@ -96,18 +96,35 @@ session d'embeddings tant que l'application est au premier plan et libère l'ind
 qu'elle l'a quitté. En attendant les tickets suivants :
 
 - la pastille « Personnalisée » (choix de dates) n'est pas encore là : Aujourd'hui, Hier, 7 jours, 30 jours ;
-- le bandeau d'état de la mémorisation (ligne 1) arrive avec l'accueil et le statut du service (M6-02) ;
 - « Sans crédit » affiche un état vide : la feuille de crédits arrive en M8 ; d'ici là, `EntitlementGate`
   est lié à une implémentation « tout autorisé » ;
 - la clé passée à `EntitlementGate` est la requête saisie (minuscules, espaces réduits) et les filtres
   des pastilles ; M8 l'alignera sur `queryKey` de [recherche §9](recherche.md) si besoin ;
-- « Dernière mémorisation il y a 2 min » n'est pas affichée (statut du service : M6-02) ;
 - supprimer une pastille d'un filtre compris dans la requête relance la recherche sur le texte sans ses
   expressions, les autres filtres compris étant conservés comme filtres explicites ;
 - « Réinitialiser SeekMind » efface tout (base, clé, réglages) après confirmation, puis ferme l'application.
 - « Base indisponible » (et son bouton « Réinitialiser SeekMind ») est réservé à une base qui ne s'ouvre
   pas. Une recherche qui échoue pour une autre raison affiche « La recherche a échoué — Réessayer »,
   ou garde les résultats déjà affichés avec un bandeau « Réessayer » : jamais d'action destructrice.
+
+**Bandeau d'état (M6-09).** `CaptureStatusBanner` suit `CaptureStatusRepository` (capture §8). Un état
+inconnu ou `Active` n'affiche rien.
+
+| État | Bandeau | Action |
+|---|---|---|
+| `Paused(until)` | « Mémorisation en pause », ou « … jusqu'à 14:30 » (date et heure si ce n'est pas le jour même) | « Reprendre » : fin de la pause |
+| `ServiceDisabled` | « Service désactivé » | « Réactiver » : réglages d'accessibilité du système ; lien « Le service s'arrête tout seul ? » vers la page d'aide |
+| `ConsentMissing` | « La mémorisation n'est pas activée » | « Activer la mémorisation » : divulgation (M6-02). Tant qu'elle n'existe pas, le bandeau n'a pas de bouton |
+
+- **Ordre des contrôles.** Le consentement est vérifié en premier (capture §8). « Réactiver » n'ouvre
+  donc les réglages du système qu'après la divulgation (conformité §4.1).
+- **« Dernière mémorisation il y a … ».** La ligne apparaît dans l'état vide quand la mémorisation est
+  active et qu'un écran a été mémorisé depuis le démarrage du processus : « à l'instant », puis en
+  minutes, heures et jours. Sinon, rien n'est affiché, plutôt qu'une durée fausse.
+- **Page d'aide « Le service s'arrête tout seul »** (`feature:settings`, `ServiceHelpScreen`). Elle
+  explique l'arrêt du service et donne les étapes pour Samsung, Xiaomi, Oppo, Huawei, OnePlus et les
+  autres téléphones. C'est du texte seulement : aucune permission n'est demandée, et la page n'ouvre
+  aucun écran du système.
 
 ### 3.3 Détail d'une capture
 

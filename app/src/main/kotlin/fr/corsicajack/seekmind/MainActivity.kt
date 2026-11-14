@@ -1,7 +1,9 @@
 package fr.corsicajack.seekmind
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Process
+import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +23,8 @@ import fr.corsicajack.seekmind.core.designsystem.theme.SeekMindTheme
 import fr.corsicajack.seekmind.core.model.SourceRef
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import fr.corsicajack.seekmind.di.ApplicationScope
+import fr.corsicajack.seekmind.engine.capture.pause.PauseController
+import fr.corsicajack.seekmind.engine.capture.status.CaptureStatusRepository
 import fr.corsicajack.seekmind.engine.source.LaunchResult
 import fr.corsicajack.seekmind.engine.source.SourceLinks
 import fr.corsicajack.seekmind.engine.source.SourceReturn
@@ -28,8 +32,10 @@ import fr.corsicajack.seekmind.feature.journal.JournalRoute
 import fr.corsicajack.seekmind.feature.journal.JournalViewModel
 import fr.corsicajack.seekmind.feature.search.SearchRoute
 import fr.corsicajack.seekmind.feature.search.SearchViewModel
+import fr.corsicajack.seekmind.feature.search.StatusAction
 import fr.corsicajack.seekmind.feature.search.detail.CaptureDetailRoute
 import fr.corsicajack.seekmind.feature.search.detail.CaptureDetailViewModel
+import fr.corsicajack.seekmind.feature.settings.help.ServiceHelpScreen
 import fr.corsicajack.seekmind.search.SearchStack
 import fr.corsicajack.seekmind.ui.SeekMindRoot
 import java.time.LocalDate
@@ -65,6 +71,10 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var deletions: CaptureDeletions
 
+    @Inject lateinit var captureStatus: CaptureStatusRepository
+
+    @Inject lateinit var pause: PauseController
+
     /** Resolved off the main thread on first use: reading the rules is not done at start-up. */
     @Inject lateinit var sourceReturn: dagger.Lazy<SourceReturn>
 
@@ -78,16 +88,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             SeekMindTheme {
                 SeekMindRoot(
-                    searchContent = { open -> SearchContent(open) },
+                    searchContent = { open, help -> SearchContent(open, help) },
                     journalContent = { open -> JournalContent(open) },
                     captureContent = { id, close -> CaptureContent(id, close) },
+                    helpContent = { ServiceHelpScreen() },
                 )
             }
         }
     }
 
     @Composable
-    private fun SearchContent(openCapture: (Long) -> Unit) {
+    private fun SearchContent(openCapture: (Long) -> Unit, openHelp: () -> Unit) {
         val labels = PackageManagerAppLabels(packageManager)
         val searchViewModel = viewModel {
             SearchViewModel(
@@ -102,6 +113,7 @@ class MainActivity : ComponentActivity() {
                 zone = ZoneId::systemDefault,
                 io = Dispatchers.IO,
                 deletions = deletions.events,
+                captureStatus = captureStatus.status,
                 resolveSource = { hit ->
                     val captures = (database.get() as? DatabaseState.Ready)?.database?.captures
                     captures?.get(hit.captureId)?.let(sourceReturn.get().resolver::resolve)
@@ -119,6 +131,18 @@ class MainActivity : ComponentActivity() {
             },
             onOpenSource = ::openSource,
             onReset = ::resetEverything,
+            onStatusAction = { action ->
+                when (action) {
+                    StatusAction.RESUME -> applicationScope.launch { pause.resume() }
+
+                    StatusAction.REACTIVATE -> openAccessibilitySettings()
+
+                    StatusAction.HELP -> openHelp()
+
+                    // The disclosure arrives with M6-02; until then the banner offers no button.
+                    StatusAction.ENABLE -> Unit
+                }
+            },
         )
     }
 
@@ -152,6 +176,15 @@ class MainActivity : ComponentActivity() {
     private fun openSource(ref: SourceRef) {
         val result = sourceReturn.get().launcher.launch(this, ref)
         if (result == LaunchResult.Failed) SmLog.w(TAG, "open_source_failed", null, "level" to ref.level.ordinal)
+    }
+
+    /**
+     * « Réactiver » (docs/specs/ui-ux.md §3.2): the system accessibility settings, where the user turns the
+     * service back on. Only offered once consent is given (the banner shows « Service désactivé » after it).
+     */
+    private fun openAccessibilitySettings() {
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { startActivity(intent) }.onFailure { SmLog.w(TAG, "accessibility_settings_failed", it) }
     }
 
     /** « Réinitialiser SeekMind » (ENF-REL-02): erase, then close; the next start creates a new database. */

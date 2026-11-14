@@ -65,6 +65,8 @@ fun SearchRoute(
     onOpenSource: (SourceRef) -> Unit,
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
+    onStatusAction: (StatusAction) -> Unit = {},
+    canEnableCapture: Boolean = false,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SearchScreen(
@@ -81,6 +83,8 @@ fun SearchRoute(
         onOpenSource = onOpenSource,
         onReset = onReset,
         modifier = modifier,
+        onStatusAction = onStatusAction,
+        canEnableCapture = canEnableCapture,
     )
 }
 
@@ -103,11 +107,22 @@ fun SearchScreen(
     onOpenSource: (SourceRef) -> Unit,
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
+    onStatusAction: (StatusAction) -> Unit = {},
+    /** Whether « Activer la mémorisation » has somewhere to go (the disclosure, M6-02). */
+    canEnableCapture: Boolean = false,
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = Spacing.l),
         verticalArrangement = Arrangement.spacedBy(Spacing.s),
     ) {
+        CaptureStatusBanner(
+            status = state.capture,
+            now = now(),
+            zone = zone,
+            canEnable = canEnableCapture,
+            onAction = onStatusAction,
+            modifier = Modifier.padding(top = Spacing.m),
+        )
         SearchField(
             query = state.query,
             onQueryChange = onQueryChange,
@@ -128,7 +143,7 @@ fun SearchScreen(
         }
         Box(modifier = Modifier.weight(1f)) {
             when (state.phase) {
-                SearchPhase.IDLE -> Idle(state, onSearch)
+                SearchPhase.IDLE -> Idle(state, now(), onSearch)
 
                 SearchPhase.SEARCHING -> Unit
 
@@ -198,7 +213,7 @@ private fun Filters(state: SearchUiState, onPeriod: (Period?) -> Unit, onApp: (S
 }
 
 @Composable
-private fun Idle(state: SearchUiState, onSearch: (String) -> Unit) {
+private fun Idle(state: SearchUiState, now: Long, onSearch: (String) -> Unit) {
     val examples = listOf(
         stringResource(R.string.search_example_1),
         stringResource(R.string.search_example_2),
@@ -214,6 +229,7 @@ private fun Idle(state: SearchUiState, onSearch: (String) -> Unit) {
         }
         item { SectionTitle(stringResource(R.string.search_examples)) }
         items(examples) { example -> SuggestionRow(example) { onSearch(example) } }
+        item { LastCaptureLine(state.capture, now, modifier = Modifier.padding(top = Spacing.m)) }
     }
 }
 

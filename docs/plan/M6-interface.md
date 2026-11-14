@@ -207,7 +207,7 @@ liste des défauts corrigés dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-03, M2-01 | `feature:search`, `feature:settings` | [ui-ux §3.2](../specs/ui-ux.md) · EF-CAP-05 · risque R-04 |
+| Fait | M6-03, M2-01 | `feature:search`, `feature:settings` | [ui-ux §3.2](../specs/ui-ux.md) · EF-CAP-05 · risque R-04 |
 
 **À faire**
 
@@ -219,5 +219,5 @@ liste des défauts corrigés dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] Chaque état de `CaptureStatus` produit le bon bandeau et la bonne action.
-- [ ] Service désactivé dans les réglages système → bandeau « Réactiver » au retour dans l'application.
+- [x] Chaque état de `CaptureStatus` produit le bon bandeau et la bonne action.
+- [x] Service désactivé dans les réglages système → bandeau « Réactiver » au retour dans l'application.

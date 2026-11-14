@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_help_title">The service stops on its own</string>
+    <string name="settings_help_intro">To save battery, some phones stop the apps they consider idle, accessibility services included. SeekMind then stops remembering, until you turn it back on.</string>
+    <string name="settings_help_reactivate">If the search screen says « Service turned off », tap « Turn back on » and enable SeekMind again in the accessibility settings. To keep it from stopping again, exclude SeekMind from battery optimisation as shown below for your phone.</string>
+    <string name="settings_help_samsung">Samsung</string>
+    <string name="settings_help_samsung_steps">1. Settings › Apps › SeekMind › Battery: choose « Unrestricted ».\n2. Settings › Battery › Background usage limits: make sure SeekMind is in neither « Sleeping apps » nor « Deep sleeping apps ».</string>
+    <string name="settings_help_xiaomi">Xiaomi, Redmi, POCO</string>
+    <string name="settings_help_xiaomi_steps">1. Settings › Apps › Manage apps › SeekMind › Battery saver: choose « No restrictions ».\n2. On the same page, turn on « Autostart ».</string>
+    <string name="settings_help_oppo">Oppo, Realme</string>
+    <string name="settings_help_oppo_steps">1. Settings › Apps › App management › SeekMind › Battery usage: allow background activity.\n2. On the same page, allow auto launch.</string>
+    <string name="settings_help_huawei">Huawei, Honor</string>
+    <string name="settings_help_huawei_steps">1. Settings › Battery › App launch › SeekMind: turn off « Manage automatically ».\n2. In the window that opens, keep « Auto-launch », « Secondary launch » and « Run in background » on.</string>
+    <string name="settings_help_oneplus">OnePlus</string>
+    <string name="settings_help_oneplus_steps">1. Settings › Apps › SeekMind › Battery: allow background activity.\n2. Settings › Battery › Battery optimisation › SeekMind: choose « Don\'t optimise ».</string>
+    <string name="settings_help_other">Other phones</string>
+    <string name="settings_help_other_steps">Settings › Apps › SeekMind › Battery: choose « Unrestricted » (or « Not optimised »).</string>
+    <string name="settings_help_versions">Menu names vary with the version of Android and of the manufacturer\'s interface: look for the closest wording.</string>
+</resources>
