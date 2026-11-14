@@ -404,7 +404,8 @@ def filler(rng: random.Random, index: int) -> dict:
     }
 
 
-def main() -> None:
+def build() -> tuple[list[dict], dict, list[dict]]:
+    """The corpus, the meta line and the queries, as written to testdata/eval."""
     rng = random.Random(SEED)
     corpus = []
     for key, lang, app, days_ago, hour, title, text, url in ANCHORS:
@@ -424,21 +425,30 @@ def main() -> None:
     assert len(keys) == len(corpus), "duplicate keys"
     for query in QUERIES:
         assert all(key in keys for key in query[4]), query
+    meta = {"now": int(NOW.timestamp() * 1000), "zone": str(ZONE), "apps": sorted(
+        ({"package": p, "label": l} for p, l in APPS.values()), key=lambda a: a["package"])}
+    queries = [
+        {"id": qid, "text": text, "type": kind, "lang": lang, "expected": expected}
+        for qid, text, kind, lang, expected in QUERIES
+    ]
+    return corpus, meta, queries
 
+
+def render(corpus: list[dict], meta: dict, queries: list[dict]) -> tuple[str, str]:
+    """The text of corpus.jsonl and queries.jsonl."""
+    def lines(items: list[dict]) -> str:
+        return "".join(json.dumps(item, ensure_ascii=False) + "\n" for item in items)
+
+    return lines(corpus), lines([{"meta": meta}, *queries])
+
+
+def main() -> None:
+    corpus, meta, queries = build()
+    corpus_text, queries_text = render(corpus, meta, queries)
     OUT.mkdir(parents=True, exist_ok=True)
-    with (OUT / "corpus.jsonl").open("w", encoding="utf-8") as out:
-        for item in corpus:
-            out.write(json.dumps(item, ensure_ascii=False) + "\n")
-    with (OUT / "queries.jsonl").open("w", encoding="utf-8") as out:
-        header = {"now": int(NOW.timestamp() * 1000), "zone": str(ZONE), "apps": sorted(
-            ({"package": p, "label": l} for p, l in APPS.values()), key=lambda a: a["package"])}
-        out.write(json.dumps({"meta": header}, ensure_ascii=False) + "\n")
-        for qid, text, kind, lang, expected in QUERIES:
-            out.write(json.dumps(
-                {"id": qid, "text": text, "type": kind, "lang": lang, "expected": expected},
-                ensure_ascii=False,
-            ) + "\n")
-    print(f"{len(corpus)} captures ({len(ANCHORS)} anchors), {len(QUERIES)} queries")
+    (OUT / "corpus.jsonl").write_text(corpus_text, encoding="utf-8")
+    (OUT / "queries.jsonl").write_text(queries_text, encoding="utf-8")
+    print(f"{len(corpus)} captures ({len(ANCHORS)} anchors), {len(queries)} queries")
 
 
 if __name__ == "__main__":

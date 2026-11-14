@@ -5,6 +5,7 @@
 - vocab.bin decodes, and matches the tokenizer of the pinned revision;
 - MODEL_MANIFEST.json describes the files of the set;
 - mean cosine between the original and the quantized model >= 0.98 on 200 sentences;
+- Recall@5 by meaning on testdata/eval: the quantized model loses at most 0.03 (eval_set.py);
 - with --lock: model.onnx and vocab.bin match engine/embedding/model.lock.json.
 """
 
@@ -15,6 +16,7 @@ import json
 import sys
 
 import common
+import eval_set
 import numpy as np
 import runtime
 
@@ -50,6 +52,7 @@ def verify(source: common.ModelSource) -> float:
     print(f"{source.id}: mean cosine original/quantized {mean:.4f} (min {min(cosines):.4f}) on {len(cosines)} sentences")
     if mean < MIN_MEAN_COSINE:
         raise SystemExit(f"{source.id}: mean cosine {mean:.4f} < {MIN_MEAN_COSINE}")
+    eval_set.check(source)
     return mean
 
 
