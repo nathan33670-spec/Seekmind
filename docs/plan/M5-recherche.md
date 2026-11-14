@@ -138,7 +138,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-06 | `engine:search`, `tools/eval`, `testdata/eval` | [recherche §11](../specs/recherche.md) · [tests §5](../06-qualite-tests-ci.md#5-jeux-de-référence) · EF-SRCH-01 à 03 |
+| Fait | M5-06 | `engine:search`, `tools/eval`, `testdata/eval` | [recherche §11](../specs/recherche.md) · [tests §5](../06-qualite-tests-ci.md#5-jeux-de-référence) · EF-SRCH-01 à 03 |
 
 **À faire**
 
@@ -153,12 +153,12 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Hybride : Rappel@5 ≥ 0,85 et MRR ≥ 0,70 ; codes : Rappel@1 ≥ 0,90 ; paraphrases : Rappel@5 ≥ 0,75 —
+- [x] Hybride : Rappel@5 ≥ 0,85 et MRR ≥ 0,70 ; codes : Rappel@1 ≥ 0,90 ; paraphrases : Rappel@5 ≥ 0,75 —
       en français pour le modèle `fr`, sur tout le jeu pour le modèle `multi`.
-- [ ] Le rapport chiffre ce que perd le modèle `fr` sur les requêtes en anglais et bilingues par rapport
+- [x] Le rapport chiffre ce que perd le modèle `fr` sur les requêtes en anglais et bilingues par rapport
       à `multi` (risque R-06) ; le porteur du projet en est informé.
-- [ ] L'hybride fait au moins aussi bien que chacune des deux méthodes seules sur le Rappel@5 global.
-- [ ] Si un seuil est hors d'atteinte, le rapport explique pourquoi et propose le seuil révisé — décision du porteur du projet.
+- [x] L'hybride fait au moins aussi bien que chacune des deux méthodes seules sur le Rappel@5 global.
+- [x] (Sans objet : aucun seuil hors d'atteinte.) Si un seuil est hors d'atteinte, le rapport explique pourquoi et propose le seuil révisé — décision du porteur du projet.
 
 ---
 

@@ -442,6 +442,49 @@ Le jeu est produit par `tools/eval/gen_corpus.py`, de façon déterministe :
 Le coût de la quantification seule est mesuré par `tools/model/eval_set.py`, appelé par `verify.py` :
 Rappel@5 par le sens, modèle original contre modèle quantifié, sur le même jeu.
 
+### 11.1 Résultats (M5-07)
+
+Mesures du 14 novembre 2026, exécution `device-tests` 43585148277 (API 34 ; le test passe aussi sur les
+API 30 et 36), modèles quantifiés actuels, `SearchConfig` par défaut.
+
+| Modèle · configuration | Rappel@1 | Rappel@5 | MRR |
+|---|---|---|---|
+| `fr` · hybride, requêtes en français (49) | 0,878 | **0,959** | **0,916** |
+| `fr` · hybride, tout le jeu (80) | 0,813 | 0,913 | 0,859 |
+| `fr` · mots-clés seuls, tout le jeu | 0,750 | 0,838 | 0,785 |
+| `fr` · sens seul, tout le jeu | 0,500 | 0,825 | 0,650 |
+| `multi` · hybride, tout le jeu (80) | 0,825 | **0,925** | **0,875** |
+| `multi` · mots-clés seuls, tout le jeu | 0,750 | 0,838 | 0,785 |
+| `multi` · sens seul, tout le jeu | 0,475 | 0,825 | 0,645 |
+
+- **Seuils d'EF-SRCH-01 à 03 tenus.**
+  - Pour les deux modèles, les codes atteignent Rappel@1 = 1,0.
+  - Paraphrases, Rappel@5 : 0,813 pour `fr` et 0,844 pour `multi`, sur tout le jeu.
+  - L'hybride fait mieux que chaque méthode seule : 0,913 et 0,925 en Rappel@5, contre 0,838 pour les mots-clés seuls et 0,825 pour le sens seul.
+- **Risque R-06 : ce que `fr` perd face à `multi`.**
+  - Requêtes en anglais, hybride : Rappel@5 0,905 contre 0,952, soit une requête sur 21.
+  - Requêtes bilingues : 0,7 pour les deux.
+  - Sens seul, requêtes en anglais : 0,857 pour les deux.
+  - La perte est faible sur ce jeu, où les contenus anglais restent proches du vocabulaire courant.
+- **Requêtes manquées par l'hybride** (absentes des cinq premiers), toutes de type paraphrase, bilingue ou temporel :
+
+  | Requête | Type | Manquée par |
+  |---|---|---|
+  | q32 « billet d'avion pour le Portugal » | paraphrase | `fr` et `multi` |
+  | q48 « someone to watch the kids… » | paraphrase en anglais | `fr` seulement |
+  | q49 « help carrying furniture… » | paraphrase en anglais | `fr` et `multi` |
+  | q58 « recette la semaine dernière » | temporelle, sans mot commun | `fr` et `multi` |
+  | q72, q77, q78 | bilingues | `fr` et `multi` |
+
+  q78 (« cours de yoga le lundi ») est pénalisée par l'analyseur temporel : « le lundi » devient un filtre de date, alors que la requête parle d'un rendez-vous récurrent.
+- **Calibration** (balayage sur l'hybride) :
+  - `semanticFloor` de 0,70 à 0,82 ne change rien pour `fr` (0,959 / 0,916). Pour `multi`, 0,80 gagne une requête (0,938), et 0,82 la reperd : c'est dans le bruit d'un jeu de 80 requêtes.
+  - `binaryTopK` = 200 donne le même Rappel@5.
+  - Les poids du profil naturel (1,0/1,0 ou 0,6/1,4) ne changent rien. Un poids sémantique de 1,3 pour le profil par défaut fait perdre une requête à `fr`.
+
+  **Les réglages par défaut sont conservés.** Aucun essai ne gagne plus d'une requête. Une recalibration demande un jeu plus grand ou des captures réelles (M10-03).
+- **Quantification.** Sur la JVM, sans les filtres, le Rappel@5 par le sens passe de 0,863 à 0,762 pour `fr` (0,775 sur la CI) et à 0,800 pour `multi`. La quantification par canal en récupère l'essentiel (0,825 à 0,838 pour `fr`, 0,863 pour `multi`). Le choix est laissé au porteur du projet : l'hybride tient déjà ses seuils avec les modèles actuels.
+
 ## 12. Tests attendus
 
 - **JVM** : `QueryParser` (mots vides, codes, profils) ; expressions temporelles sur
