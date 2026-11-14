@@ -115,6 +115,19 @@ class SearchEvalDeviceTest {
             val all = Metrics.of(scope, hybrid)
             val codes = Metrics.of(scope.filter { it.type == "code" }, hybrid)
             val paraphrases = Metrics.of(scope.filter { it.type == "paraphrase" }, hybrid)
+            // The values the thresholds are checked on, with the size of each group.
+            for ((group, metrics, size) in listOf(
+                Triple("all", all, scope.size),
+                Triple("codes", codes, scope.count { it.type == "code" }),
+                Triple("paraphrases", paraphrases, scope.count { it.type == "paraphrase" }),
+            )) {
+                Log.i(
+                    TAG,
+                    "api=${Build.VERSION.SDK_INT} m5_07_${name}_hybrid_scope_$group " +
+                        "r1=${metrics.recall1} r5=${metrics.recall5} mrr=${metrics.mrr} n=$size",
+                )
+                result.put("scope_$group", metrics.json().put("n", size))
+            }
             if (all.recall5 < 0.85) failures += "$name hybrid Recall@5 ${all.recall5} < 0.85"
             if (all.mrr < 0.70) failures += "$name hybrid MRR ${all.mrr} < 0.70"
             if (codes.recall1 < 0.90) failures += "$name codes Recall@1 ${codes.recall1} < 0.90"

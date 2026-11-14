@@ -120,7 +120,7 @@ class Fusion(private val config: SearchConfig = SearchConfig()) {
         private const val DAY_MS = 86_400_000.0
 
         /** docs/specs/recherche.md §7, from [SearchConfig]. */
-        fun weights(profile: QueryProfile, config: SearchConfig = SearchConfig()): Weights = when (profile) {
+        fun weights(profile: QueryProfile, config: SearchConfig): Weights = when (profile) {
             QueryProfile.DEFAULT -> Weights(config.lexicalWeightDefault, config.semanticWeightDefault)
             QueryProfile.CODE -> Weights(config.lexicalWeightCode, config.semanticWeightCode)
             QueryProfile.NATURAL -> Weights(config.lexicalWeightNatural, config.semanticWeightNatural)

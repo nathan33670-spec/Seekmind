@@ -457,9 +457,20 @@ API 30 et 36), modèles quantifiés actuels, `SearchConfig` par défaut.
 | `multi` · mots-clés seuls, tout le jeu | 0,750 | 0,838 | 0,785 |
 | `multi` · sens seul, tout le jeu | 0,475 | 0,825 | 0,645 |
 
-- **Seuils d'EF-SRCH-01 à 03 tenus.**
-  - Pour les deux modèles, les codes atteignent Rappel@1 = 1,0.
-  - Paraphrases, Rappel@5 : 0,813 pour `fr` et 0,844 pour `multi`, sur tout le jeu.
+- **Seuils d'EF-SRCH-01 à 03 tenus**, sur les groupes que le test contrôle :
+
+  | Modèle · groupe contrôlé | Effectif | Valeur | Seuil |
+  |---|---|---|---|
+  | `fr` · requêtes en français, hybride | 49 | Rappel@5 0,959 · MRR 0,916 | 0,85 · 0,70 |
+  | `fr` · codes en français | 9 | Rappel@1 1,0 | 0,90 |
+  | `fr` · paraphrases en français | 15 | Rappel@5 0,933 (q32 manquée) | 0,75 |
+  | `multi` · tout le jeu, hybride | 80 | Rappel@5 0,925 · MRR 0,875 | 0,85 · 0,70 |
+  | `multi` · codes | 12 | Rappel@1 1,0 | 0,90 |
+  | `multi` · paraphrases | 32 | Rappel@5 0,844 | 0,75 |
+
+  Les effectifs sont petits : sur 15 paraphrases, une requête pèse 6,7 points ; sur 9 codes, 11 points.
+  Un seuil se joue donc à une ou deux requêtes près. Les lignes `m5_07_*_hybrid_scope_*` du rapport
+  donnent ces valeurs à chaque exécution.
   - L'hybride fait mieux que chaque méthode seule : 0,913 et 0,925 en Rappel@5, contre 0,838 pour les mots-clés seuls et 0,825 pour le sens seul.
 - **Risque R-06 : ce que `fr` perd face à `multi`.**
   - Requêtes en anglais, hybride : Rappel@5 0,905 contre 0,952, soit une requête sur 21.
