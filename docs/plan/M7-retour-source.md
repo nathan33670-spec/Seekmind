@@ -11,7 +11,7 @@ exactement ce qui va se passer.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `engine:source` | [retour-source §1 à §3, §5](../specs/retour-source.md) · EF-SRC-01 à 05 |
+| Fait | M1-01 | `engine:source` | [retour-source §1 à §3, §5](../specs/retour-source.md) · EF-SRC-01 à 05 |
 
 **À faire**
 
@@ -21,10 +21,10 @@ exactement ce qui va se passer.
 
 **Critères d'acceptation**
 
-- [ ] Capture avec URL → `EXACT_URL`, Intent `ACTION_VIEW` ciblant le navigateur d'origine s'il est installé.
-- [ ] Application désinstallée → `UNAVAILABLE`.
-- [ ] Échec de lancement → repli, jamais de plantage.
-- [ ] Schémas `file`, `content`, `javascript`, `intent` refusés.
+- [x] Capture avec URL → `EXACT_URL`, Intent `ACTION_VIEW` ciblant le navigateur d'origine s'il est installé.
+- [x] Application désinstallée → `UNAVAILABLE`.
+- [x] Échec de lancement → repli, jamais de plantage.
+- [x] Schémas `file`, `content`, `javascript`, `intent` refusés.
 
 ---
 

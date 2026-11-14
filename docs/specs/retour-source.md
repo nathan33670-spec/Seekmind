@@ -107,6 +107,35 @@ constructible à partir du contenu affiché ; niveau `APP_ONLY`.
   `source_rules.json`. Jamais `file`, `content`, `javascript` ni `intent`.
 - Les liens extraits du texte (`linksIn`) ne sont ouverts que sur tap, et seulement en `http` ou `https`.
 
+### 5.1 Implémentation (M7-01)
+
+Paquet `fr.corsicajack.seekmind.engine.source` :
+
+| Élément | Rôle |
+|---|---|
+| `ChainSourceResolver` | Implémente `SourceResolver`. `create(apps, rules)` assemble la chaîne du §3. Si aucun maillon ne répond : `UNAVAILABLE`, avec le nom de l'application s'il est connu. |
+| `BrowserUrlResolver`, `AppRuleResolver`, `LaunchAppResolver` | Les trois maillons (`SourceStep`). Une URL dont le schéma n'est pas `http(s)` est ignorée et la chaîne continue. |
+| `AppRule` | Contrat d'une règle : paquet, niveau, schéma, `uriFor(capture)` (null si une variable manque). Le fichier `source_rules.json` et la substitution des variables viennent avec M7-02. |
+| `InstalledApps`, `PackageManagerApps` | Applications installées, nom affiché, activité de lancement. |
+| `SourceSchemes` | Schémas admis : `http`, `https`, `geo` et ceux des règles. `file`, `content`, `javascript`, `intent`, `android-app` et `data` sont toujours refusés, même si une règle les nomme. |
+| `SourceLauncher` | Lancement et repli. `LaunchResult` vaut `Launched`, `Fallback(niveau atteint)` ou `Failed`. |
+| `SourceLinks` | `linksIn` : liens `http(s)` du texte, sans leur ponctuation finale, sans doublon, cinq au plus. |
+
+Précisions :
+
+- **Intent d'une page** : `ACTION_VIEW`, catégorie `BROWSABLE`, `setPackage` sur le navigateur d'origine s'il est installé.
+- **Contrôle au lancement**, sur l'Intent relu depuis `intentUri` :
+  - une vue doit avoir un schéma admis et aucun composant explicite ;
+  - `APP_ONLY` doit être un `ACTION_MAIN` sans donnée ;
+  - le sélecteur, le `ClipData` et les drapeaux d'octroi de permission sont retirés ;
+  - `FLAG_ACTIVITY_NEW_TASK` est ajouté.
+- **Repli** :
+  - `EXACT_URL` qui échoue dans son navigateur → navigateur par défaut, résultat `Fallback(EXACT_URL)` ;
+  - `APP_LINK` ou `APP_SEARCH` qui échoue, ou dont l'Intent est refusé → l'application elle-même, résultat `Fallback(APP_ONLY)`.
+- **Application sans activité de lancement**, et sans URL ni règle : `UNAVAILABLE`. Le libellé de M7-03 devra en tenir compte, l'application n'étant alors pas désinstallée.
+- **Journal** : seuls le niveau et le nom de classe de l'exception sont journalisés, jamais l'URL ni le paquet (INV-07).
+- `SourceLauncher` et `LaunchResult` restent dans `engine:source` : le lanceur a besoin d'un `Context` et n'est pas une interface entre modules (architecture §3.3).
+
 ## 6. Détail d'une capture
 
 Sous le bouton principal : « Copier le texte », « Partager », et la liste des liens détectés dans le
