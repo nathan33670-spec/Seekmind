@@ -83,7 +83,9 @@ class ConfigDefaultsTest {
             SearchConfig(
                 lexicalLimit = 100, binaryTopK = 400, semanticTopK = 100, semanticFloor = 0.78f, rrfK = 60,
                 recencyBoost = 0.15, recencyHalfLifeDays = 30.0, collapseMaxHamming = 6, indexPageSize = 5_000,
-                cacheSize = 5, cacheTtlMs = 600_000,
+                cacheSize = 5, cacheTtlMs = 600_000, lexicalWeightDefault = 1.0, semanticWeightDefault = 1.0,
+                lexicalWeightCode = 2.0, semanticWeightCode = 0.5, lexicalWeightNatural = 0.8,
+                semanticWeightNatural = 1.2,
             ),
         )
     }

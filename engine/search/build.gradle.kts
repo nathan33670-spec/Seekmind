@@ -2,6 +2,17 @@ plugins {
     alias(libs.plugins.seekmind.android.library)
 }
 
+android {
+    androidResources {
+        // The fr model of engine:embedding reaches the test APK of the evaluation: kept uncompressed.
+        noCompress += "onnx"
+    }
+    // The reference set of the search evaluation (docs/specs/recherche.md §11): corpus.jsonl, queries.jsonl.
+    sourceSets {
+        getByName("androidTest").assets.directories.add(rootProject.file("testdata/eval").path)
+    }
+}
+
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:database"))

@@ -32,7 +32,7 @@ class Fusion(private val config: SearchConfig = SearchConfig()) {
         now: Long,
         limit: Int,
     ): List<SearchHit> {
-        val weights = weights(profile)
+        val weights = weights(profile, config)
         val lexicalRank = HashMap<Long, Int>()
         lexical.forEachIndexed { i, hit -> lexicalRank.putIfAbsent(hit.captureId, i + 1) }
         val semanticRank = HashMap<Long, Int>()
@@ -119,11 +119,11 @@ class Fusion(private val config: SearchConfig = SearchConfig()) {
         const val SEMANTIC_EXTRACT_CHARS = 200
         private const val DAY_MS = 86_400_000.0
 
-        /** docs/specs/recherche.md §7. */
-        fun weights(profile: QueryProfile): Weights = when (profile) {
-            QueryProfile.DEFAULT -> Weights(1.0, 1.0)
-            QueryProfile.CODE -> Weights(2.0, 0.5)
-            QueryProfile.NATURAL -> Weights(0.8, 1.2)
+        /** docs/specs/recherche.md §7, from [SearchConfig]. */
+        fun weights(profile: QueryProfile, config: SearchConfig = SearchConfig()): Weights = when (profile) {
+            QueryProfile.DEFAULT -> Weights(config.lexicalWeightDefault, config.semanticWeightDefault)
+            QueryProfile.CODE -> Weights(config.lexicalWeightCode, config.semanticWeightCode)
+            QueryProfile.NATURAL -> Weights(config.lexicalWeightNatural, config.semanticWeightNatural)
         }
 
         /** Score, then the most recently seen, then the newest capture. */
