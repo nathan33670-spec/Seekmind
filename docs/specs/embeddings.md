@@ -70,12 +70,14 @@ Chaque jeu contient `model.onnx`, `vocab.bin` et `MODEL_MANIFEST.json` (identifi
 empreintes des sorties, versions des outils). Les empreintes attendues de `model.onnx` et `vocab.bin`, et
 celles des jeux de référence de `testdata/`, sont versionnées dans `engine/embedding/model.lock.json`.
 
-**Arithmétique int8.** Sur un processeur x86 sans VNNI, les noyaux int8 (u8s8) d'ONNX Runtime saturent :
-les vecteurs s'écartent de ceux d'un téléphone (arithmétique exacte des instructions ARM) d'un cosinus
-d'environ 0,995, mesuré sur un exécuteur GitHub. Les vecteurs de référence de `testdata/` sont donc
-produits sur une machine ARM ou x86 avec VNNI (le générateur refuse les autres), et toute comparaison
-faite sur un exécuteur x86 quelconque (workflow `model`) tolère cet écart. `reduce_range=True` éviterait la saturation au prix d'une précision moindre sur les téléphones :
-écarté.
+**Arithmétique int8.** Avec des poids signés (u8s8, réglage d'avant M5-07), les noyaux d'ONNX Runtime
+saturent sur un processeur x86 sans VNNI : les vecteurs s'y écartaient de ceux d'un téléphone
+(arithmétique exacte des instructions ARM) d'un cosinus d'environ 0,995, mesuré sur un exécuteur GitHub.
+Avec les poids non signés (u8u8), cet écart n'apparaît plus dans les mesures : la construction donne sur un exécuteur GitHub sans VNNI les mêmes valeurs qu'une machine avec VNNI (cosinus
+0,9965 et 0,9901, Rappel@5 0,838 pour `fr`, au dix-millième près). Par prudence, tant que l'écart avec un
+téléphone n'a pas été mesuré pour l'u8u8, le générateur des vecteurs de référence de `testdata/` refuse
+toujours les x86 sans VNNI, et les comparaisons faites sur un exécuteur x86 quelconque (workflow `model`)
+gardent leur tolérance. `reduce_range=True` n'a plus d'objet.
 
 Valeurs relevées à la construction (M0-10) :
 

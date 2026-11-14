@@ -32,6 +32,9 @@ SET_FILES = (MODEL_FILE, VOCAB_FILE, MANIFEST_FILE)
 LOCKED_FILES = (MODEL_FILE, VOCAB_FILE)
 
 DIMENSIONS = 384
+# Settings of quantize_dynamic, recorded as such in MODEL_MANIFEST.json and checked by verify.py
+# (docs/specs/embeddings.md §2): per-channel scales, unsigned weights (u8u8), full range.
+QUANTIZATION = {"method": "dynamic", "weightType": "QUInt8", "perChannel": True, "reduceRange": False}
 MAX_PASSAGE_TOKENS = 256
 MAX_QUERY_TOKENS = 64
 PREFIXES = {"query": "query: ", "passage": "passage: "}
