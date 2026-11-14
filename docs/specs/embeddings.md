@@ -70,12 +70,14 @@ Chaque jeu contient `model.onnx`, `vocab.bin` et `MODEL_MANIFEST.json` (identifi
 empreintes des sorties, versions des outils). Les empreintes attendues de `model.onnx` et `vocab.bin`, et
 celles des jeux de référence de `testdata/`, sont versionnées dans `engine/embedding/model.lock.json`.
 
-**Arithmétique int8.** Sur un processeur x86 sans VNNI, les noyaux int8 (u8s8) d'ONNX Runtime saturent :
-les vecteurs s'écartent de ceux d'un téléphone (arithmétique exacte des instructions ARM) d'un cosinus
-d'environ 0,995, mesuré sur un exécuteur GitHub. Les vecteurs de référence de `testdata/` sont donc
-produits sur une machine ARM ou x86 avec VNNI (le générateur refuse les autres), et toute comparaison
-faite sur un exécuteur x86 quelconque (workflow `model`) tolère cet écart. `reduce_range=True` éviterait la saturation au prix d'une précision moindre sur les téléphones :
-écarté.
+**Arithmétique int8.** Avec des poids signés (u8s8, réglage d'avant M5-07), les noyaux d'ONNX Runtime
+saturent sur un processeur x86 sans VNNI : les vecteurs s'y écartaient de ceux d'un téléphone
+(arithmétique exacte des instructions ARM) d'un cosinus d'environ 0,995, mesuré sur un exécuteur GitHub.
+Avec les poids non signés (u8u8), cet écart n'apparaît plus dans les mesures : la construction donne sur un exécuteur GitHub sans VNNI les mêmes valeurs qu'une machine avec VNNI (cosinus
+0,9965 et 0,9901, Rappel@5 0,838 pour `fr`, au dix-millième près). Par prudence, tant que l'écart avec un
+téléphone n'a pas été mesuré pour l'u8u8, le générateur des vecteurs de référence de `testdata/` refuse
+toujours les x86 sans VNNI, et les comparaisons faites sur un exécuteur x86 quelconque (workflow `model`)
+gardent leur tolérance. `reduce_range=True` n'a plus d'objet.
 
 Valeurs relevées à la construction (M0-10) :
 
@@ -362,6 +364,21 @@ Mesures du moteur (M4-04, `OrtEmbeddingEngineDeviceTest`, émulateurs x86_64 de 
 | PSS ajoutée par la session | 36 / 35 / 28 Mo | 131 / 95 / 131 Mo |
 | PSS totale du processus de test | 207 / 178 / 189 Mo | 279 / 258 / 279 Mo |
 | Cosinus le plus bas avec `embedding_golden_fr.json`, texte par texte (en un lot) | 0,9971 (0,9958) | — |
+
+Après la quantification par canal (exécution `device-tests` 43610735658, API 30 / 34 / 36) :
+
+| Mesure | `fr` | `multi` |
+|---|---|---|
+| Chargement de la session (première fois ; vocabulaire compris) | 196 / 248 / 285 ms | 307 / 421 / 452 ms |
+| Requête courte, médiane | 10,5 / 9,1 / 17,9 ms | 9,8 / 9,1 / 10,9 ms |
+| Passage tronqué à 256 jetons, médiane | 150 / 146 / 183 ms | 152 / 146 / 168 ms |
+| Lot de 8 passages de 256 jetons, médiane | 1 304 / 1 128 / 1 435 ms | 1 203 / 1 049 / 1 281 ms |
+| PSS ajoutée par la session | 36 / 8 / 28 Mo | 114 / 95 / 132 Mo |
+| Cosinus le plus bas avec `embedding_golden_fr.json`, texte par texte (en un lot) | 0,9964 (0,9944) | — |
+
+Les écarts avec la première série restent dans la dispersion des émulateurs, d'une exécution à l'autre
+(API 30 plus lente, API 34 plus rapide) : la quantification par canal n'a pas de coût de latence
+mesurable ici. À confirmer sur le téléphone (M10-01).
 
 Les cibles de latence et de chargement sont tenues, sauf le passage de 256 jetons sur les émulateurs
 API 34 et 36, au niveau de la cible (151 à 171 ms pour 150 ms), comme au prototype S4. La PSS totale

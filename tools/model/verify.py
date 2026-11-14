@@ -41,6 +41,8 @@ def verify(source: common.ModelSource) -> float:
             raise SystemExit(f"{source.id}: MODEL_MANIFEST.json does not describe {name}")
     if manifest["modelId"] != source.model_id or manifest["source"]["revision"] != source.revision:
         raise SystemExit(f"{source.id}: MODEL_MANIFEST.json names another model")
+    if manifest.get("quantization") != common.QUANTIZATION:
+        raise SystemExit(f"{source.id}: MODEL_MANIFEST.json describes another quantization than build_model.py")
 
     tok = runtime.tokenizer(source, common.MAX_PASSAGE_TOKENS)
     original, quantized = runtime.session(out / common.FP32_FILE), runtime.session(out / common.MODEL_FILE)

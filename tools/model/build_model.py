@@ -67,12 +67,14 @@ def quantize(source_model: Path, target: Path) -> None:
     # Per-channel scales (ticket M5-07, decision of the project owner on 14 November 2026): per-tensor
     # scales cost 0.10 of Recall@5 by meaning to fr on testdata/eval. Unsigned weights (u8u8) keep the
     # x86 emulators of the CI, without VNNI, from saturating where u8s8 would.
+    settings = common.QUANTIZATION
+    assert settings["method"] == "dynamic"
     quantize_dynamic(
         model_input=str(source_model),
         model_output=str(target),
-        weight_type=QuantType.QUInt8,
-        per_channel=True,
-        reduce_range=False,
+        weight_type=QuantType[settings["weightType"]],
+        per_channel=settings["perChannel"],
+        reduce_range=settings["reduceRange"],
     )
 
 
@@ -108,7 +110,7 @@ def write_manifest(source: common.ModelSource) -> None:
             },
             "dimensions": common.DIMENSIONS,
             "vocabSize": source.vocab_size,
-            "quantization": {"method": "dynamic", "weightType": "QInt8", "perChannel": False, "reduceRange": False},
+            "quantization": common.QUANTIZATION,
             "files": {name: common.file_entry(out / name) for name in common.LOCKED_FILES},
             "tools": common.tool_versions(),
         },
