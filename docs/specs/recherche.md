@@ -301,6 +301,19 @@ chargement reste loin de la cible de l'ADR-0005 (≤ 500 ms pour 100 000 vecteur
 le téléphone. Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour
 10 parcours, mesurés par `ThreadMXBean`).
 
+Mesures après le passage des int8 en mémoire (même test, même protocole, exécution `device-tests`
+43527237491) :
+
+| | API 30 | API 34 | API 36 |
+|---|---|---|---|
+| Recherche, 400 candidats | 2,7 ms | 7,4 ms | 4,1 ms |
+| Recherche, 200 candidats | 2,1 ms | 4,5 ms | 2,8 ms |
+| Chargement de l'index (20 000 vecteurs) | 1,4 s | 1,6 à 1,7 s | 2,0 s |
+
+Le rescore en mémoire divise le temps de la branche sémantique par 4 à 20 : avec 400 candidats, elle
+tient largement dans les 30 ms d'ENF-PERF-04. Le chargement, qui lit maintenant aussi les int8, reste le
+point à traiter en M5-08.
+
 ## 7. Fusion
 
 *Reciprocal Rank Fusion* sur les deux listes ordonnées :
