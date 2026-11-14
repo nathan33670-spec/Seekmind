@@ -1,5 +1,6 @@
 package fr.corsicajack.seekmind
 
+import android.app.UiAutomation
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
@@ -28,6 +29,11 @@ class CaptureStatusBannerAppTest {
     val compose = createAndroidComposeRule<MainActivity>()
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
+
+    // A UiAutomation obtained without this flag suppresses every accessibility service while it is
+    // connected: SeekMind's service would never bind. It must be obtained before any other one.
+    private val uiAutomation: UiAutomation =
+        instrumentation.getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES)
     private val context = instrumentation.targetContext
     private val service = "${context.packageName}/fr.corsicajack.seekmind.engine.capture.SeekMindAccessibilityService"
     private val reactivate get() = context.getString(SearchR.string.search_status_reactivate)
@@ -94,7 +100,7 @@ class CaptureStatusBannerAppTest {
     }
 
     private fun shell(command: String): String =
-        ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand(command)).use {
+        ParcelFileDescriptor.AutoCloseInputStream(uiAutomation.executeShellCommand(command)).use {
             it.readBytes().decodeToString()
         }
 
