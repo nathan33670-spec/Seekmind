@@ -55,6 +55,8 @@ internal class BinaryResult(
 
 internal class Int8Result(val id: Long, val capture_id: Long, val vec_i8: ByteArray)
 
+internal class FragmentResult(val id: Long, val capture_id: Long, val start_offset: Int, val end_offset: Int)
+
 @Dao
 internal abstract class CaptureDao {
     @Insert
@@ -91,6 +93,15 @@ internal abstract class CaptureDao {
 
     @Query("SELECT * FROM capture WHERE id IN (:ids)")
     abstract suspend fun getAll(ids: List<Long>): List<CaptureEntity>
+
+    @Query(
+        """
+        SELECT e.id, e.capture_id, k.start_offset, k.end_offset
+        FROM embedding e JOIN chunk k ON k.id = e.chunk_id
+        WHERE e.id IN (:embeddingIds)
+        """,
+    )
+    abstract suspend fun fragments(embeddingIds: List<Long>): List<FragmentResult>
 
     @Query(
         """

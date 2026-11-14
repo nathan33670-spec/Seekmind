@@ -84,6 +84,9 @@ class BinaryRow(
 
 class Int8Row(val embeddingId: Long, val captureId: Long, val vecI8: ByteArray)
 
+/** Where the fragment of a vector lies in its capture's text (docs/specs/recherche.md §7, semantic extracts). */
+data class FragmentSpan(val embeddingId: Long, val captureId: Long, val startOffset: Int, val endOffset: Int)
+
 interface CaptureStore {
     /** The capture, its full-text entry (trigger) and its pending chunks, in one transaction. */
     suspend fun insert(capture: NewCapture, chunks: List<NewChunk>): Long
@@ -129,6 +132,9 @@ interface SearchStore {
     suspend fun lexical(match: String, filters: SearchFilters, limit: Int): List<LexicalRow>
 
     suspend fun captures(ids: List<Long>): List<Capture>
+
+    /** The fragments of the vectors [embeddingIds], in no particular order; unknown ids are skipped. */
+    suspend fun fragments(embeddingIds: List<Long>): List<FragmentSpan>
 }
 
 interface VectorStore {

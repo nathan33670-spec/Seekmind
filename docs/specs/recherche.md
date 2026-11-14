@@ -348,6 +348,31 @@ fusion(A, B) → assouplissement éventuel               → émettre SearchResu
 ```
 
 - L'annulation du `Flow` (nouvelle requête, écran quitté) interrompt les deux branches.
+
+**Implémentation (M5-06)**, paquet `fr.corsicajack.seekmind.engine.search.hybrid` : `HybridSearcher`
+(implémente `SearchEngine`), `Fusion` (§7, pure), `SearchCache`, et `SemanticSource`, la branche
+sémantique (`VectorSemanticSource` : moteur d'embeddings et `VectorIndex`) :
+
+- Le chargement de l'index et le calcul du vecteur de la requête se font **dans** la branche
+  sémantique, en parallèle de la recherche par mots-clés : la première émission n'attend jamais le
+  chargement de l'index (ENF-PERF-03).
+- Sans moteur d'embeddings, ou si la requête n'a plus de texte une fois les expressions retirées :
+  **une seule émission**, `stage = LEXICAL`, `semanticAvailable = false` ; l'assouplissement s'y applique.
+- Sans vecteur encore calculé, ou si la branche sémantique échoue — calcul du vecteur de la requête ou
+  recherche dans l'index, assouplissement compris (l'erreur est journalisée sans contenu) : l'émission
+  `HYBRID` reprend les résultats par mots-clés avec `semanticAvailable = false`, et n'est pas mise en cache.
+- La première émission n'est jamais assouplie ; l'assouplissement réutilise le vecteur de la requête
+  (calculé une fois). Si seuls des paquets sont filtrés, l'étape `TIME` est sautée.
+- Une requête trouvée dans `SearchCache` donne directement son résultat `HYBRID`, en une émission.
+  Seuls les résultats complets (`semanticAvailable = true`) sont mis en cache. Chaque entrée retient
+  `meta.index_generation` : après une suppression (journal, « Tout effacer »), l'entrée est ignorée et la
+  recherche refaite, si bien qu'une capture supprimée ne revient jamais du cache. Clé : texte normalisé
+  (mots vides compris, que la branche sémantique lit), mots utiles, jetons de code, intervalle, paquets
+  triés et `limit`.
+- Repli des quasi-doublons : à rang égal de la paire, c'est la place la mieux classée qui est gardée,
+  avec les données de la capture la plus récente ; `matchedBy` réunit les deux, et l'extrait surligné
+  (mots-clés) est préféré à l'extrait sémantique.
+- Extrait sémantique : le fragment du meilleur vecteur (`SearchStore.fragments`), 200 caractères.
 - `SearchCache` conserve les 5 derniers résultats hybrides pendant 10 min, indexés par
   `queryKey` (texte normalisé + filtres). La même clé sert à la gratuité des requêtes répétées
   ([monetisation §2](monetisation.md)).

@@ -44,18 +44,25 @@ object Models {
         url: String? = null,
     ) = NewCapture(at, at, packageName, null, title, url, text, TextSource.TREE, text.hashCode().toLong())
 
-    fun capture(text: String, id: Long = 1, at: Long = AT, packageName: String = PACKAGE, title: String? = null) =
-        Capture(
-            id = id,
-            firstSeenAt = at,
-            lastSeenAt = at,
-            seenCount = 1,
-            packageName = packageName,
-            activityName = null,
-            windowTitle = title,
-            url = null,
-            text = text,
-            textSource = TextSource.TREE,
-            charCount = text.length,
-        )
+    fun capture(
+        text: String,
+        id: Long = 1,
+        at: Long = AT,
+        packageName: String = PACKAGE,
+        title: String? = null,
+        simhash: Long = text.hashCode().toLong(),
+    ) = Capture(
+        id = id,
+        firstSeenAt = at,
+        lastSeenAt = at,
+        seenCount = 1,
+        packageName = packageName,
+        activityName = null,
+        windowTitle = title,
+        url = null,
+        text = text,
+        textSource = TextSource.TREE,
+        charCount = text.length,
+        simhash = simhash,
+    )
 }

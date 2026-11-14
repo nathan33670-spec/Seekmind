@@ -198,7 +198,8 @@ interface CaptureStore {
 
 interface SearchStore {
     suspend fun lexical(match: String, filters: SearchFilters, limit: Int): List<LexicalRow>
-    suspend fun captures(ids: List<Long>): List<Capture>
+    suspend fun captures(ids: List<Long>): List<Capture>                       // Capture porte aussi simhash (repli des quasi-doublons)
+    suspend fun fragments(embeddingIds: List<Long>): List<FragmentSpan>        // position du fragment de chaque vecteur (extraits sémantiques)
 }
 
 interface VectorStore {

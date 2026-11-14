@@ -114,6 +114,10 @@ internal class RoomSearchStore(private val dao: CaptureDao) : SearchStore {
         return ids.mapNotNull { byId[it]?.toModel() }
     }
 
+    override suspend fun fragments(embeddingIds: List<Long>): List<FragmentSpan> =
+        embeddingIds.chunked(MAX_BOUND_IDS).flatMap { dao.fragments(it) }
+            .map { FragmentSpan(it.id, it.capture_id, it.start_offset, it.end_offset) }
+
     internal companion object {
         /** Stays under SQLite's limit of bound parameters. */
         const val MAX_BOUND_IDS = 500
@@ -193,4 +197,5 @@ internal fun CaptureEntity.toModel() = Capture(
     text = text,
     textSource = textSource,
     charCount = charCount,
+    simhash = simhash,
 )
