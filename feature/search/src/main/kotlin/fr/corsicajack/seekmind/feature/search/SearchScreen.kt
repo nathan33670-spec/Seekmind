@@ -143,7 +143,7 @@ fun SearchScreen(
         }
         Box(modifier = Modifier.weight(1f)) {
             when (state.phase) {
-                SearchPhase.IDLE -> Idle(state, now(), onSearch)
+                SearchPhase.IDLE -> Idle(state, now, onSearch)
 
                 SearchPhase.SEARCHING -> Unit
 
@@ -213,7 +213,7 @@ private fun Filters(state: SearchUiState, onPeriod: (Period?) -> Unit, onApp: (S
 }
 
 @Composable
-private fun Idle(state: SearchUiState, now: Long, onSearch: (String) -> Unit) {
+private fun Idle(state: SearchUiState, now: () -> Long, onSearch: (String) -> Unit) {
     val examples = listOf(
         stringResource(R.string.search_example_1),
         stringResource(R.string.search_example_2),

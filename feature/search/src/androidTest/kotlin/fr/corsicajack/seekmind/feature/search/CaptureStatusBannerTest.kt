@@ -32,12 +32,14 @@ class CaptureStatusBannerTest {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) compose.enableAccessibilityChecks()
     }
 
+    private var clock = NOW
+
     private fun show(status: CaptureStatus?, canEnable: Boolean = false) = compose.setContent {
         SeekMindTheme(dynamicColor = false) {
             SearchScreen(
                 state = SearchUiState(capture = status),
                 zone = ZoneId.of("Europe/Paris"),
-                now = { NOW },
+                now = { clock },
                 onQueryChange = {},
                 onSearch = {},
                 onPeriod = {},
@@ -99,6 +101,17 @@ class CaptureStatusBannerTest {
         compose.onNodeWithTag(SEARCH_STATUS_TAG).assertDoesNotExist()
         val line = context.resources.getQuantityString(R.plurals.search_last_capture_minutes, 2, 2)
         compose.onNodeWithText(line).assertIsDisplayed()
+    }
+
+    @Test
+    fun theLastCaptureLineFollowsTheTime() {
+        show(CaptureStatus.Active(lastCaptureAt = NOW - 2 * 60_000))
+        compose.onNodeWithText(context.resources.getQuantityString(R.plurals.search_last_capture_minutes, 2, 2))
+            .assertIsDisplayed()
+        clock = NOW + 60 * 60_000
+        compose.mainClock.advanceTimeBy(LAST_CAPTURE_TICK_MS + 1)
+        compose.onNodeWithText(context.resources.getQuantityString(R.plurals.search_last_capture_hours, 1, 1))
+            .assertIsDisplayed()
     }
 
     @Test

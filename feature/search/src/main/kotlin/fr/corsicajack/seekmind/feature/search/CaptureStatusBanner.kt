@@ -6,12 +6,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import fr.corsicajack.seekmind.core.designsystem.component.StatusBanner
 import fr.corsicajack.seekmind.core.designsystem.theme.Spacing
 import fr.corsicajack.seekmind.core.model.CaptureStatus
@@ -19,9 +25,13 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlinx.coroutines.delay
 
 /** Test tag of the capture status banner. */
 const val SEARCH_STATUS_TAG = "search_status"
+
+/** How often « Dernière mémorisation il y a … » reads the clock again. */
+const val LAST_CAPTURE_TICK_MS = 60_000L
 
 /**
  * The banner at the top of the search when memorisation is not active (docs/specs/ui-ux.md §3.2,
@@ -72,9 +82,20 @@ fun CaptureStatusBanner(
     }
 }
 
-/** « Dernière mémorisation il y a 2 min » when memorisation is active and something was remembered. */
+/**
+ * « Dernière mémorisation il y a 2 min » when memorisation is active and something was remembered. The
+ * duration follows the time: [clock] is read again every minute and whenever the screen comes back.
+ */
 @Composable
-fun LastCaptureLine(status: CaptureStatus?, now: Long, modifier: Modifier = Modifier) {
+fun LastCaptureLine(status: CaptureStatus?, clock: () -> Long, modifier: Modifier = Modifier) {
+    var now by remember { mutableLongStateOf(clock()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(LAST_CAPTURE_TICK_MS)
+            now = clock()
+        }
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { now = clock() }
     val at = (status as? CaptureStatus.Active)?.lastCaptureAt ?: return
     val text = when (val elapsed = Elapsed.between(at, now)) {
         Elapsed.JustNow -> stringResource(R.string.search_last_capture_now)

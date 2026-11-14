@@ -13,6 +13,7 @@ import fr.corsicajack.seekmind.feature.search.R as SearchR
 import fr.corsicajack.seekmind.feature.search.SEARCH_STATUS_TAG
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,9 +32,20 @@ class CaptureStatusBannerAppTest {
     private val service = "${context.packageName}/fr.corsicajack.seekmind.engine.capture.SeekMindAccessibilityService"
     private val reactivate get() = context.getString(SearchR.string.search_status_reactivate)
 
+    /** The accessibility settings of the device before the test, restored after it. */
+    private var services: String? = null
+    private var accessibility: String? = null
+
+    @Before
+    fun saveAccessibilitySettings() {
+        services = setting("enabled_accessibility_services")
+        accessibility = setting("accessibility_enabled")
+    }
+
     @After
     fun tearDown() {
-        setServiceEnabled(false)
+        restore("enabled_accessibility_services", services)
+        restore("accessibility_enabled", accessibility)
         compose.activityRule.scenario.onActivity { activity -> runBlocking { activity.settings.reset() } }
     }
 
@@ -65,21 +77,25 @@ class CaptureStatusBannerAppTest {
         compose.onAllNodes(hasText(reactivate)).fetchSemanticsNodes().isNotEmpty() == present
     }
 
+    /** Adds SeekMind's service to the enabled ones, or takes it out; the other services stay as they are. */
     private fun setServiceEnabled(enabled: Boolean) {
-        if (enabled) {
-            shell("settings put secure enabled_accessibility_services $service")
-            shell("settings put secure accessibility_enabled 1")
-        } else {
-            shell("settings delete secure enabled_accessibility_services")
-            shell("settings put secure accessibility_enabled 0")
-        }
+        val others = services.orEmpty().split(':').filter { it.isNotBlank() && it != service }
+        val list = if (enabled) others + service else others
+        restore("enabled_accessibility_services", list.joinToString(":").ifEmpty { null })
+        restore("accessibility_enabled", if (list.isEmpty()) "0" else "1")
     }
 
-    private fun shell(command: String) {
-        ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand(command)).use {
-            it.readBytes()
-        }
+    private fun setting(name: String): String? =
+        shell("settings get secure $name").trim().takeUnless { it.isEmpty() || it == "null" }
+
+    private fun restore(name: String, value: String?) {
+        if (value == null) shell("settings delete secure $name") else shell("settings put secure $name $value")
     }
+
+    private fun shell(command: String): String =
+        ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand(command)).use {
+            it.readBytes().decodeToString()
+        }
 
     private companion object {
         const val TIMEOUT_MS = 15_000L
