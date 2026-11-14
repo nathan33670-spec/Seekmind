@@ -27,6 +27,8 @@ data class CaptureDetailState(
     val unavailable: Boolean = false,
     /** Deleted from this screen: the screen closes. */
     val deleted: Boolean = false,
+    /** The last deletion failed: the screen stays and says so. */
+    val deleteFailed: Boolean = false,
 )
 
 /**
@@ -90,7 +92,9 @@ class CaptureDetailViewModel(
             }
             if (done) {
                 onDeleted(captureId)
-                _state.update { it.copy(deleted = true) }
+                _state.update { it.copy(deleted = true, deleteFailed = false) }
+            } else {
+                _state.update { it.copy(deleteFailed = true) }
             }
         }
     }

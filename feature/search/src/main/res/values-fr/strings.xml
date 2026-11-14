@@ -52,6 +52,7 @@
     <string name="detail_delete_title">Supprimer cet écran ?</string>
     <string name="detail_delete_text">Il sera retiré définitivement de votre mémoire, de la recherche et du journal.</string>
     <string name="detail_links">Liens</string>
+    <string name="detail_delete_failed">La suppression a échoué. Réessayez.</string>
     <string name="detail_clip_label">Texte mémorisé</string>
     <string name="detail_missing_title">Cet écran n\'est plus dans votre mémoire</string>
     <string name="detail_missing_message">Il a été supprimé entre-temps.</string>

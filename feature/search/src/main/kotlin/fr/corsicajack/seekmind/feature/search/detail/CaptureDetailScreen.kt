@@ -31,7 +31,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.corsicajack.seekmind.core.designsystem.SeekMindIcons
@@ -167,6 +169,14 @@ private fun Detail(
             }
             OutlinedButton(onClick = { share(context, capture.text, shareTitle) }) { Text(shareTitle) }
             OutlinedButton(onClick = { confirmDelete = true }) { Text(stringResource(R.string.detail_delete)) }
+        }
+        if (state.deleteFailed) {
+            Text(
+                text = stringResource(R.string.detail_delete_failed),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
         }
         CompositionLocalProvider(LocalClipboard provides clipboard) {
             SelectionContainer {

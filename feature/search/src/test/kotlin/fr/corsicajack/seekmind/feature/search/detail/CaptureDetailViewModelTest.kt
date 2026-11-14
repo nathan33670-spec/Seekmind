@@ -24,6 +24,7 @@ class CaptureDetailViewModelTest {
     private val deletedFromStore = mutableListOf<Long>()
     private val told = mutableListOf<Long>()
     private var available = true
+    private var failDelete = false
 
     /** Only get and delete are used by the detail. */
     private val store: CaptureStore = Proxy.newProxyInstance(
@@ -34,6 +35,7 @@ class CaptureDetailViewModelTest {
             "get" -> captures[args[0] as Long]
 
             "delete" -> {
+                if (failDelete) throw IllegalStateException("disk full")
                 val id = args[0] as Long
                 captures.remove(id)
                 deletedFromStore += id
@@ -96,5 +98,18 @@ class CaptureDetailViewModelTest {
         assertThat(deletedFromStore).containsExactly(7L)
         assertThat(told).containsExactly(7L)
         assertThat(vm.state.value.deleted).isTrue()
+    }
+
+    @Test
+    fun aFailedDeletionKeepsTheScreenAndSaysSo() = runTest(dispatcher) {
+        captures[7] = Models.capture("texte", id = 7)
+        failDelete = true
+        val vm = viewModel(7)
+        advanceUntilIdle()
+        vm.delete()
+        advanceUntilIdle()
+        assertThat(told).isEmpty()
+        assertThat(vm.state.value.deleted).isFalse()
+        assertThat(vm.state.value.deleteFailed).isTrue()
     }
 }

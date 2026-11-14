@@ -3,16 +3,26 @@ package fr.corsicajack.seekmind.feature.search.detail
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.os.Build
+import androidx.compose.foundation.ComposeFoundationFlags
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.LocalTextToolbar
+import androidx.compose.ui.platform.TextToolbar
+import androidx.compose.ui.platform.TextToolbarStatus
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -116,6 +126,71 @@ class CaptureDetailScreenTest {
     }
 
     @Test
+    fun aFailedDeletionSaysSo() {
+        show(loaded().copy(deleteFailed = true))
+        compose.onNodeWithText(context.getString(R.string.detail_delete_failed)).assertIsDisplayed()
+    }
+
+    /** The old text toolbar path, the one a test can stand in for (the new context menu is a popup). */
+    @OptIn(ExperimentalFoundationApi::class)
+    @Test
+    fun copyingTheSelectionMarksTheClipSensitive() {
+        val newContextMenu = ComposeFoundationFlags.isNewContextMenuEnabled
+        ComposeFoundationFlags.isNewContextMenuEnabled = false
+        try {
+            instrumentation.runOnMainSync { context.getSystemService(ClipboardManager::class.java).clearPrimaryClip() }
+            val toolbar = CopyingToolbar()
+            compose.setContent {
+                SeekMindTheme(dynamicColor = false) {
+                    CompositionLocalProvider(LocalTextToolbar provides toolbar) {
+                        CaptureDetailScreen(
+                            state = loaded(),
+                            zone = ZoneId.of("Europe/Paris"),
+                            onOpenSource = {},
+                            onOpenLink = {},
+                            onDelete = {},
+                        )
+                    }
+                }
+            }
+            compose.onNodeWithTag(DETAIL_TEXT_TAG).performTouchInput { longClick(centerLeft + Offset(8f, 0f)) }
+            compose.waitUntil(TIMEOUT_MS) { toolbar.copy != null }
+            compose.runOnIdle { toolbar.copy!!.invoke() }
+            var clip: ClipData? = null
+            compose.waitUntil(TIMEOUT_MS) {
+                instrumentation.runOnMainSync {
+                    clip = context.getSystemService(ClipboardManager::class.java).primaryClip
+                }
+                clip?.getItemAt(0)?.text?.isNotEmpty() == true
+            }
+            assertThat(CAPTURE.text).contains(clip!!.getItemAt(0).text.toString())
+            assertThat(clip!!.description.extras?.getBoolean(IS_SENSITIVE)).isTrue()
+        } finally {
+            ComposeFoundationFlags.isNewContextMenuEnabled = newContextMenu
+        }
+    }
+
+    /** Stands for the system text toolbar: keeps the copy action that the selection offers. */
+    private class CopyingToolbar : TextToolbar {
+        @Volatile var copy: (() -> Unit)? = null
+
+        override val status: TextToolbarStatus
+            get() = if (copy != null) TextToolbarStatus.Shown else TextToolbarStatus.Hidden
+
+        override fun showMenu(
+            rect: Rect,
+            onCopyRequested: (() -> Unit)?,
+            onPasteRequested: (() -> Unit)?,
+            onCutRequested: (() -> Unit)?,
+            onSelectAllRequested: (() -> Unit)?,
+        ) {
+            if (onCopyRequested != null) copy = onCopyRequested
+        }
+
+        override fun hide() = Unit
+    }
+
+    @Test
     fun aSensitiveClipCarriesTheFlag() {
         val clip = sensitiveClip("label", "texte")
         assertThat(clip.description.extras.getBoolean(IS_SENSITIVE)).isTrue()
@@ -144,6 +219,7 @@ class CaptureDetailScreenTest {
     }
 
     private companion object {
+        const val TIMEOUT_MS = 5_000L
         const val NOW = 1_794_441_600_000L
         const val LINK = "https://exemple.fr/tarte"
 

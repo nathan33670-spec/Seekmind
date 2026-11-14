@@ -50,6 +50,7 @@
     <string name="detail_delete_title">Delete this screen?</string>
     <string name="detail_delete_text">It will be removed from your memory for good, from the search and from the journal.</string>
     <string name="detail_links">Links</string>
+    <string name="detail_delete_failed">Deletion failed. Try again.</string>
     <string name="detail_clip_label">Remembered text</string>
     <string name="detail_missing_title">This screen is no longer in your memory</string>
     <string name="detail_missing_message">It was deleted meanwhile.</string>
