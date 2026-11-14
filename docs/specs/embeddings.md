@@ -352,6 +352,21 @@ Mesures du moteur (M4-04, `OrtEmbeddingEngineDeviceTest`, émulateurs x86_64 de 
 | PSS totale du processus de test | 207 / 178 / 189 Mo | 279 / 258 / 279 Mo |
 | Cosinus le plus bas avec `embedding_golden_fr.json`, texte par texte (en un lot) | 0,9971 (0,9958) | — |
 
+Après la quantification par canal (exécution `device-tests` 43610735658, API 30 / 34 / 36) :
+
+| Mesure | `fr` | `multi` |
+|---|---|---|
+| Chargement de la session (première fois ; vocabulaire compris) | 196 / 248 / 285 ms | 307 / 421 / 452 ms |
+| Requête courte, médiane | 10,5 / 9,1 / 17,9 ms | 9,8 / 9,1 / 10,9 ms |
+| Passage tronqué à 256 jetons, médiane | 150 / 146 / 183 ms | 152 / 146 / 168 ms |
+| Lot de 8 passages de 256 jetons, médiane | 1 304 / 1 128 / 1 435 ms | 1 203 / 1 049 / 1 281 ms |
+| PSS ajoutée par la session | 36 / 8 / 28 Mo | 114 / 95 / 132 Mo |
+| Cosinus le plus bas avec `embedding_golden_fr.json`, texte par texte (en un lot) | 0,9964 (0,9944) | — |
+
+Les écarts avec la première série restent dans la dispersion des émulateurs, d'une exécution à l'autre
+(API 30 plus lente, API 34 plus rapide) : la quantification par canal n'a pas de coût de latence
+mesurable ici. À confirmer sur le téléphone (M10-01).
+
 Les cibles de latence et de chargement sont tenues, sauf le passage de 256 jetons sur les émulateurs
 API 34 et 36, au niveau de la cible (151 à 171 ms pour 150 ms), comme au prototype S4. La PSS totale
 compte le processus d'instrumentation : la session `fr` n'ajoute que 28 à 36 Mo. Ces deux points sont
