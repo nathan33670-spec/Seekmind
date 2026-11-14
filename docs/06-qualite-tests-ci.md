@@ -107,14 +107,15 @@ l'API 34 et sur l'heuristique d'image noire en API 30 (ADR-0008). La variante `o
 | `tokenizer_golden_fr.jsonl`, `tokenizer_golden_multi.jsonl` — 1 000 phrases FR/EN et leurs identifiants de jetons, pour chaque modèle | `tools/model/gen_tokenizer_golden.py` | Tests du tokenizer Kotlin : parité exacte ≥ 99,5 % |
 | `embedding_golden_fr.json`, `embedding_golden_multi.json` — 50 textes et leurs vecteurs de référence (modèle quantifié, exécuté en Python) | `tools/model/gen_embedding_golden.py` | Tests instrumentés du moteur : cosinus ≥ 0,99 |
 | `eval/corpus.jsonl` — environ 300 captures synthétiques réalistes (applications, dates, textes) | `tools/eval/gen_corpus.py` (gabarits déterministes) | Évaluation de la recherche |
-| `eval/queries.jsonl` — environ 80 requêtes annotées (type : exact, code, paraphrase, temporel, application ; langue : français, anglais, bilingue) | Rédigées, versionnées | Rappel@k, MRR, par modèle |
+| `eval/queries.jsonl` — environ 80 requêtes annotées (type : exact, code, paraphrase, temporel, application ; langue : français, anglais, bilingue) | Rédigées dans `tools/eval/gen_corpus.py`, qui les écrit avec le corpus | Rappel@k, MRR, par modèle |
 | `tokens/` — jetons de licence valides, altérés, expirés, mal typés | `tools/license/gen_test_vectors.py` | Tests du vérificateur Kotlin |
 | `temporal_cases.tsv` — expression, date de référence, intervalle attendu | Rédigé, versionné | Tests de l'analyseur temporel |
 | `sensitive_cases.tsv` — texte, résultat de masquage attendu | Rédigé, versionné | Tests du masquage |
 
-L'évaluation de la recherche tourne sur JVM en CI avec les vrais modèles (ONNX Runtime existe pour JVM
-de bureau) : `./gradlew :engine:search:evalSearch` écrit `build/reports/search-eval.json` et échoue
-sous les seuils de EF-SRCH-01 à 03 (en français pour le modèle `fr`, sur tout le jeu pour `multi`).
+L'évaluation de la recherche tourne sur les émulateurs de la CI avec les vrais modèles, sur la vraie base
+chiffrée ([ADR-0011](adr/0011-evaluation-de-la-recherche-sur-emulateur.md)). `SearchEvalDeviceTest`
+écrit `search-eval.json` et les lignes `m5_07_*` de logcat. Il échoue sous les seuils d'EF-SRCH-01 à 03 :
+en français pour le modèle `fr`, sur tout le jeu pour `multi`.
 
 ## 6. Mesures de performance
 

@@ -15,6 +15,7 @@ Un ADR accepté n'est pas réécrit : on le remplace par un nouvel ADR qui le r�
 | [0008](0008-detection-des-fenetres-securisees.md) | Détection des fenêtres sécurisées par sonde | Accepté |
 | [0009](0009-publicite-admob-et-variante-sans-reseau.md) | Publicité par le SDK AdMob, variante sans réseau maintenue en continu | Accepté |
 | [0010](0010-modele-francais-et-packs-de-langue.md) | Modèle français embarqué, packs de langue téléchargeables | Accepté |
+| [0011](0011-evaluation-de-la-recherche-sur-emulateur.md) | Évaluation de la recherche sur émulateur, avec la vraie base et les vrais modèles | Accepté |
 
 ## Modèle
 

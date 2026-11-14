@@ -417,14 +417,30 @@ data class SearchConfig(
 
 ## 11. Évaluation
 
-`./gradlew :engine:search:evalSearch` (JVM, modèle réel) charge `testdata/eval/corpus.jsonl` dans une
-base en mémoire, exécute `testdata/eval/queries.jsonl` et calcule Rappel@1, Rappel@5 et MRR, globalement
-et par type de requête, pour trois configurations : mots-clés seuls, sémantique seule, hybride.
-L'évaluation est faite **pour chaque modèle du catalogue**. La tâche échoue si le modèle `fr` est sous
-les seuils de EF-SRCH-01 à 03 sur les requêtes en français, ou si le modèle `multi` l'est sur l'ensemble
-des requêtes. Les résultats du modèle `fr` sur les requêtes en anglais et bilingues sont publiés à titre
-d'information (risque R-06). Rapport : `build/reports/search-eval.json`.
-Tout changement de `SearchConfig`, du tokenizer ou du modèle joint le rapport à la PR.
+`SearchEvalDeviceTest` (`engine:search`, test instrumenté du workflow `device-tests`,
+[ADR-0011](../adr/0011-evaluation-de-la-recherche-sur-emulateur.md)) insère `testdata/eval/corpus.jsonl`
+dans la vraie base chiffrée et le vectorise avec les vrais modèles. Il exécute ensuite
+`testdata/eval/queries.jsonl` et calcule Rappel@1, Rappel@5 et MRR, globalement, par type de requête et
+par langue, pour trois configurations : mots-clés seuls, sens seul, hybride.
+
+L'évaluation est faite **pour chaque modèle du catalogue**. Le test échoue si le modèle `fr` est sous les
+seuils d'EF-SRCH-01 à 03 sur les requêtes en français, ou si le modèle `multi` l'est sur l'ensemble des
+requêtes. Il échoue aussi si l'hybride fait moins bien, en Rappel@5 global, que l'une des deux méthodes
+seules. Les résultats du modèle `fr` sur les requêtes en anglais et bilingues sont publiés à titre
+d'information (risque R-06).
+
+Rapport : les lignes `m5_07_*` de logcat (`SeekMindBench`, dans l'artefact `device-tests`) et
+`search-eval.json` dans la sortie additionnelle des tests. Un balayage de calibration (`semanticFloor`,
+`binaryTopK`, poids des profils) y est joint. Tout changement de `SearchConfig`, du tokenizer ou du
+modèle joint le rapport à la PR.
+
+Le jeu est produit par `tools/eval/gen_corpus.py`, de façon déterministe :
+- 298 captures, dont 58 ancres écrites à la main et 240 captures de remplissage ;
+- 80 requêtes, qui désignent leurs captures attendues par une clé stable ;
+- des dates relatives à un mardi soir fixe.
+
+Le coût de la quantification seule est mesuré par `tools/model/eval_set.py`, appelé par `verify.py` :
+Rappel@5 par le sens, modèle original contre modèle quantifié, sur le même jeu.
 
 ## 12. Tests attendus
 
