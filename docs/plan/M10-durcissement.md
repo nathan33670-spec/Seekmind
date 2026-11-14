@@ -25,6 +25,11 @@ protocole et l'outillage, puis corrige d'après les résultats.
 3. Variante `ads` : vérifier que le SDK publicitaire ne consomme rien (processeur, réseau, réveils) en
    dehors des demandes de publicité.
 4. D'après les relevés, ajuster les réglages (`CaptureConfig`, `OcrConfig`, `IndexConfig`) et corriger les postes excessifs.
+5. Faire, sur le même téléphone, les validations manuelles reportées ici par le porteur, puis passer
+   chaque ticket à « Fait » :
+   - **M0-09** : mesures du prototype d'embeddings (S4) ;
+   - **M7-02** : les sept règles par application (tableau de la PR #40) ; une règle qui échoue est
+     retirée de `source_rules.json`.
 
 **Critères d'acceptation**
 

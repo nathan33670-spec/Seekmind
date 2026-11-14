@@ -32,7 +32,7 @@ exactement ce qui va se passer.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En revue — validation manuelle en attente | M7-01 | `engine:source` | [retour-source §4](../specs/retour-source.md) · risque R-10 |
+| En revue — validation manuelle reportée à M10-01 (décision du porteur, 14 novembre 2026) | M7-01 | `engine:source` | [retour-source §4](../specs/retour-source.md) · risque R-10 |
 
 **À faire**
 
@@ -48,6 +48,11 @@ exactement ce qui va se passer.
 **Validation manuelle** — pour chaque règle initiale, sur un vrai téléphone : l'Intent ouvre-t-il
 l'application au bon endroit ? Tableau « application, règle, résultat » dans la PR ; les règles qui
 échouent sont retirées du fichier.
+
+Reportée à M10-01 : les sept règles sont livrées sans validation. Le tableau de la PR #40, avec ses
+commandes `adb`, est à remplir sur le téléphone de test. Points à observer en plus de l'écran ouvert :
+la requête d'une règle `APP_SEARCH` a-t-elle un sens ? Le premier `@nom` d'un écran de profil est-il son
+titulaire ?
 
 ---
 
