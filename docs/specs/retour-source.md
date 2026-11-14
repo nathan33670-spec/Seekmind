@@ -18,7 +18,7 @@ propose le meilleur retour disponible et **le dit dans le libellé du bouton** (
 | `APP_LINK` | Un écran précis de l'application, déduit du contenu (profil, fiche) | « Ouvrir dans {application} » |
 | `APP_SEARCH` | Une recherche dans l'application, pré-remplie | « Rechercher dans {application} » |
 | `APP_ONLY` | L'application, sur son écran d'accueil | « Ouvrir {application} » |
-| `UNAVAILABLE` | Application désinstallée | Bouton désactivé : « Application désinstallée » |
+| `UNAVAILABLE` | Application désinstallée, ou invisible pour SeekMind (§5.1) | Bouton désactivé : « Application introuvable » |
 
 ## 2. Résolution tardive
 
@@ -165,6 +165,23 @@ Précisions :
 
 Sous le bouton principal : « Copier le texte », « Partager », et la liste des liens détectés dans le
 texte (cinq au plus).
+
+### 6.1 Intégration (M7-03)
+
+- **Où s'affiche le bouton.** Sur la carte d'un résultat et dans le détail, avec le libellé du niveau
+  (`sourceLabel`). « Application introuvable » plutôt que « Application désinstallée » : une application
+  hors des `<queries>` ou sans activité de lancement donne aussi `UNAVAILABLE` (§5.1), et le libellé ne
+  doit rien affirmer de faux.
+- **Résolution.** `SearchViewModel` résout les résultats affichés hors du fil principal, en relisant la
+  capture (`CaptureStore.get`), une seule fois par capture et par recherche. Le détail résout sa capture
+  au chargement.
+- **Lancement.** `:app` lance avec `SourceReturn`, fourni par Hilt et créé à la première demande ; un
+  échec ne fait que journaliser le niveau. Les liens du texte passent par `SourceLinks.refFor`, qui
+  n'accepte que `http(s)` et vise le navigateur par défaut.
+- **E2E-14.** Le test tourne au niveau de `engine:source` (`SourceReturnDeviceTest`) : une capture de
+  l'application de test, munie d'une règle de test, ouvre `DeepLinkActivity` sur l'identifiant
+  attendu. La règle vit dans le test, pas dans le fichier livré. Le parcours complet (capture, recherche,
+  appui sur le bouton) attend la chaîne de capture (M2-06, M2-08).
 
 ## 7. Tests attendus
 

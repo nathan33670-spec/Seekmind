@@ -114,4 +114,16 @@ class SourceResolverTest {
             ).inOrder()
         assertThat(resolver.linksIn(capture(NOTES, text = "rien, juste https:// et http://"))).isEmpty()
     }
+
+    @Test
+    fun aTappedLinkOpensInTheDefaultBrowserIfItIsWeb() {
+        val ref = checkNotNull(SourceLinks.refFor("https://exemple.fr/a?b=1"))
+        assertThat(ref.level).isEqualTo(SourceLevel.EXACT_URL)
+        val intent = intentOf(ref.intentUri)
+        assertThat(intent.dataString).isEqualTo("https://exemple.fr/a?b=1")
+        assertThat(intent.`package`).isNull()
+        for (link in listOf("javascript:alert(1)", "file:///a", "content://x", "intent://x#Intent;end", "geo:0,0")) {
+            assertThat(SourceLinks.refFor(link)).isNull()
+        }
+    }
 }

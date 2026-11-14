@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import fr.corsicajack.seekmind.core.common.SmLog
 import fr.corsicajack.seekmind.core.database.store.CaptureStore
 import fr.corsicajack.seekmind.core.model.Capture
+import fr.corsicajack.seekmind.core.model.SourceRef
+import fr.corsicajack.seekmind.core.model.port.SourceResolver
 import fr.corsicajack.seekmind.feature.search.AppLabels
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -21,6 +23,8 @@ data class CaptureDetailState(
     val appLabel: String = "",
     val highlights: List<IntRange> = emptyList(),
     val links: List<String> = emptyList(),
+    /** The way back to the source (docs/specs/retour-source.md §3), resolved with the capture. */
+    val source: SourceRef? = null,
     /** The capture no longer exists (deleted meanwhile). */
     val missing: Boolean = false,
     /** The database cannot be opened. */
@@ -33,14 +37,15 @@ data class CaptureDetailState(
 
 /**
  * Detail of a capture (docs/specs/ui-ux.md §3.3, ticket M6-04): metadata, the whole text with the
- * search [terms] highlighted, the links it contains, and its deletion. [onDeleted] tells the other
- * screens (search results, journal) that the capture is gone.
+ * search [terms] highlighted, the links it contains (at most five), its way back to the source, and its
+ * deletion. [onDeleted] tells the other screens (search results, journal) that the capture is gone.
  */
 class CaptureDetailViewModel(
     private val captureId: Long,
     private val terms: List<String>,
     private val store: suspend () -> CaptureStore?,
     private val labels: AppLabels,
+    private val resolver: SourceResolver,
     private val io: CoroutineDispatcher,
     private val onDeleted: suspend (Long) -> Unit,
 ) : ViewModel() {
@@ -53,7 +58,12 @@ class CaptureDetailViewModel(
                 try {
                     val captures = store() ?: return@withContext Loaded.Unavailable
                     val capture = captures.get(captureId) ?: return@withContext Loaded.Missing
-                    Loaded.Found(capture, labels.label(capture.packageName))
+                    Loaded.Found(
+                        capture = capture,
+                        label = labels.label(capture.packageName),
+                        source = resolver.resolve(capture),
+                        links = resolver.linksIn(capture),
+                    )
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (failure: Exception) {
@@ -71,7 +81,8 @@ class CaptureDetailViewModel(
                     capture = loaded.capture,
                     appLabel = loaded.label,
                     highlights = TextMarks.highlights(loaded.capture.text, terms),
-                    links = TextMarks.links(loaded.capture.text),
+                    links = loaded.links,
+                    source = loaded.source,
                 )
             }
         }
@@ -104,7 +115,8 @@ class CaptureDetailViewModel(
 
         data object Missing : Loaded
 
-        data class Found(val capture: Capture, val label: String) : Loaded
+        data class Found(val capture: Capture, val label: String, val source: SourceRef, val links: List<String>) :
+            Loaded
     }
 
     private companion object {

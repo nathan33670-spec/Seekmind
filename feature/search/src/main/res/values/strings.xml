@@ -33,6 +33,9 @@
     <string name="search_cancel">Cancel</string>
     <string name="search_open_page">Open the page</string>
     <string name="search_open_app">Open %1$s</string>
+    <string name="search_open_in">Open in %1$s</string>
+    <string name="search_search_in">Search in %1$s</string>
+    <string name="search_app_not_found">App not found</string>
     <string name="search_yesterday_at">yesterday %1$s</string>
     <string name="search_failed_title">The search failed</string>
     <string name="search_failed_message">Your memory is intact. Try again in a moment.</string>

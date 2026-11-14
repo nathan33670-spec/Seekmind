@@ -41,6 +41,7 @@ import fr.corsicajack.seekmind.core.designsystem.component.StatusBanner
 import fr.corsicajack.seekmind.core.designsystem.theme.Spacing
 import fr.corsicajack.seekmind.core.model.Relaxation
 import fr.corsicajack.seekmind.core.model.SearchHit
+import fr.corsicajack.seekmind.core.model.SourceRef
 import fr.corsicajack.seekmind.core.model.TextSource
 import java.net.URI
 import java.time.Instant
@@ -61,7 +62,7 @@ fun SearchRoute(
     zone: ZoneId,
     now: () -> Long,
     onOpenResult: (SearchHit) -> Unit,
-    onOpenSource: (SearchHit) -> Unit,
+    onOpenSource: (SourceRef) -> Unit,
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -99,7 +100,7 @@ fun SearchScreen(
     onRemoveUnderstood: (UnderstoodFilter) -> Unit,
     onRetry: () -> Unit,
     onOpenResult: (SearchHit) -> Unit,
-    onOpenSource: (SearchHit) -> Unit,
+    onOpenSource: (SourceRef) -> Unit,
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -239,7 +240,7 @@ private fun Results(
     now: () -> Long,
     onRetry: () -> Unit,
     onOpenResult: (SearchHit) -> Unit,
-    onOpenSource: (SearchHit) -> Unit,
+    onOpenSource: (SourceRef) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag(SEARCH_RESULTS_TAG),
@@ -289,7 +290,7 @@ private fun Results(
                 model = item.toCardModel(zone, now()),
                 icon = null,
                 onClick = { onOpenResult(item.hit) },
-                onSourceAction = { onOpenSource(item.hit) },
+                onSourceAction = { item.source?.takeIf(::canOpen)?.let(onOpenSource) },
             )
         }
     }
@@ -349,12 +350,8 @@ private fun SearchResultItem.toCardModel(zone: ZoneId, now: Long): ResultCardMod
         highlights = hit.snippet.highlights,
         fromImage = hit.textSource and TextSource.OCR != 0,
         similarCount = hit.similarCount,
-        // Until the return to the source (M7): the page when the screen had a URL, otherwise the application.
-        sourceActionLabel = if (url != null) {
-            stringResource(R.string.search_open_page)
-        } else {
-            stringResource(R.string.search_open_app, appLabel)
-        },
+        sourceActionLabel = sourceLabel(source, appLabel),
+        sourceActionEnabled = canOpen(source),
     )
 }
 

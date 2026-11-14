@@ -2,11 +2,13 @@ package fr.corsicajack.seekmind.feature.search
 
 import android.os.Build
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -15,6 +17,8 @@ import fr.corsicajack.seekmind.core.model.MatchKind
 import fr.corsicajack.seekmind.core.model.Relaxation
 import fr.corsicajack.seekmind.core.model.SearchHit
 import fr.corsicajack.seekmind.core.model.Snippet
+import fr.corsicajack.seekmind.core.model.SourceLevel
+import fr.corsicajack.seekmind.core.model.SourceRef
 import java.time.ZoneId
 import org.junit.Before
 import org.junit.Rule
@@ -37,6 +41,7 @@ class SearchScreenTest {
     private var searched: String? = null
     private var reset = false
     private var retried = false
+    private var opened: SourceRef? = null
 
     private fun show(state: SearchUiState) = compose.setContent {
         SeekMindTheme(dynamicColor = false) {
@@ -51,7 +56,7 @@ class SearchScreenTest {
                 onRemoveUnderstood = {},
                 onRetry = { retried = true },
                 onOpenResult = {},
-                onOpenSource = {},
+                onOpenSource = { opened = it },
                 onReset = { reset = true },
             )
         }
@@ -87,6 +92,39 @@ class SearchScreenTest {
     }
 
     @Test
+    fun theButtonOfAResultSaysWhatItWillDo() {
+        val results = listOf(
+            item(1, source(SourceLevel.EXACT_URL)),
+            item(2, source(SourceLevel.APP_SEARCH, "YouTube")),
+            item(3, source(SourceLevel.APP_LINK, "Instagram")),
+            item(4, source(SourceLevel.APP_ONLY, "Notes")),
+        )
+        show(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS, results = results))
+        compose.onNodeWithText(context.getString(R.string.search_open_page)).assertIsDisplayed()
+        compose.onNodeWithText(
+            context.getString(R.string.search_search_in, "YouTube"),
+        ).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(
+            context.getString(R.string.search_open_in, "Instagram"),
+        ).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(context.getString(R.string.search_open_app, "Notes")).performScrollTo().performClick()
+        assertThat(opened?.level).isEqualTo(SourceLevel.APP_ONLY)
+    }
+
+    @Test
+    fun aResultWhoseApplicationIsNotFoundHasADisabledButton() {
+        show(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS, results = listOf(item(1, UNAVAILABLE))))
+        compose.onNodeWithText(context.getString(R.string.search_app_not_found)).assertIsNotEnabled().performClick()
+        assertThat(opened).isNull()
+    }
+
+    @Test
+    fun anUnresolvedResultPromisesOnlyTheApplication() {
+        show(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS, results = listOf(item(1, source = null))))
+        compose.onNodeWithText(context.getString(R.string.search_open_app, "Notes")).assertIsNotEnabled()
+    }
+
+    @Test
     fun noResultSaysItWasNotCounted() {
         show(SearchUiState(query = "introuvable", phase = SearchPhase.NO_RESULT, notCharged = true))
         compose.onNodeWithText(context.getString(R.string.search_not_charged), substring = true).assertIsDisplayed()
@@ -118,7 +156,11 @@ class SearchScreenTest {
     private companion object {
         const val NOW = 1_794_441_600_000L
 
-        fun item(id: Long) = SearchResultItem(
+        val UNAVAILABLE = SourceRef(SourceLevel.UNAVAILABLE, null, "Notes")
+
+        fun source(level: SourceLevel, app: String? = null) = SourceRef(level, "intent:#Intent;end", app)
+
+        fun item(id: Long, source: SourceRef? = source(SourceLevel.APP_ONLY, "Notes")) = SearchResultItem(
             SearchHit(
                 captureId = id,
                 score = 1.0,
@@ -133,6 +175,7 @@ class SearchScreenTest {
                 similarCount = 0,
             ),
             appLabel = "Notes",
+            source = source,
         )
     }
 }

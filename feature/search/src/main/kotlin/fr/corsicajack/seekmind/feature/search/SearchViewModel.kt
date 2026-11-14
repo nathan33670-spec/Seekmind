@@ -8,8 +8,10 @@ import fr.corsicajack.seekmind.core.database.store.SearchHistoryStore
 import fr.corsicajack.seekmind.core.model.Authorization
 import fr.corsicajack.seekmind.core.model.ParsedQuery
 import fr.corsicajack.seekmind.core.model.SearchFilters
+import fr.corsicajack.seekmind.core.model.SearchHit
 import fr.corsicajack.seekmind.core.model.SearchRequest
 import fr.corsicajack.seekmind.core.model.SearchResults
+import fr.corsicajack.seekmind.core.model.SourceRef
 import fr.corsicajack.seekmind.core.model.Stage
 import fr.corsicajack.seekmind.core.model.TimeRange
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
@@ -56,11 +58,17 @@ class SearchViewModel(
     private val io: CoroutineDispatcher,
     /** Captures deleted elsewhere (detail, journal): removed from the results shown. */
     deletions: Flow<Long> = emptyFlow(),
+    /** The way back to the source of a result (docs/specs/retour-source.md §3); called off the main thread. */
+    private val resolveSource: suspend (SearchHit) -> SourceRef? = { null },
 ) : ViewModel() {
     private val _state = MutableStateFlow(SearchUiState())
     val state: StateFlow<SearchUiState> = _state.asStateFlow()
 
     private var search: Job? = null
+
+    /** Ways back resolved for the current search, by capture id: each result is resolved once. */
+    private val sources = mutableMapOf<Long, SourceRef>()
+    private var resolving: Job? = null
     private var recordHistory = true
 
     /** Filters understood in the text of a previous query and kept after another one was removed. */
@@ -133,6 +141,9 @@ class SearchViewModel(
 
     private fun run() {
         search?.cancel()
+        resolving?.cancel()
+        // Installed applications may have changed since the previous search.
+        sources.clear()
         val current = _state.value
         val query = current.query.trim()
         if (query.isEmpty()) {
@@ -215,7 +226,9 @@ class SearchViewModel(
 
     private suspend fun show(results: SearchResults, final: Boolean) {
         lastParsed = results.parsed
-        val items = withContext(io) { results.hits.map { SearchResultItem(it, labels.label(it.packageName)) } }
+        val items = withContext(io) {
+            results.hits.map { SearchResultItem(it, labels.label(it.packageName), sources[it.captureId]) }
+        }
         val understood = buildList {
             val parsed = results.parsed
             val range: TimeRange? = parsed.range
@@ -241,6 +254,32 @@ class SearchViewModel(
                 terms = (results.parsed.tokens + results.parsed.codeTokens).distinct(),
                 semanticAvailable = results.semanticAvailable,
             )
+        }
+        val missing = items.filter { it.source == null }.map { it.hit }
+        if (missing.isNotEmpty()) {
+            resolving?.cancel()
+            resolving = viewModelScope.launch { resolveSources(missing) }
+        }
+    }
+
+    /** Resolves the ways back of [hits] and puts them on the results still shown. */
+    private suspend fun resolveSources(hits: List<SearchHit>) {
+        val resolved = withContext(io) {
+            hits.mapNotNull { hit ->
+                try {
+                    resolveSource(hit)?.let { hit.captureId to it }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    SmLog.w(TAG, "source_resolution_failed", failure)
+                    null
+                }
+            }
+        }
+        if (resolved.isEmpty()) return
+        sources.putAll(resolved)
+        _state.update { state ->
+            state.copy(results = state.results.map { it.copy(source = it.source ?: sources[it.hit.captureId]) })
         }
     }
 

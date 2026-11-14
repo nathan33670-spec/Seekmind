@@ -34,6 +34,9 @@
     <string name="search_cancel">Annuler</string>
     <string name="search_open_page">Ouvrir la page</string>
     <string name="search_open_app">Ouvrir %1$s</string>
+    <string name="search_open_in">Ouvrir dans %1$s</string>
+    <string name="search_search_in">Rechercher dans %1$s</string>
+    <string name="search_app_not_found">Application introuvable</string>
     <string name="search_yesterday_at">hier %1$s</string>
     <string name="search_failed_title">La recherche a échoué</string>
     <string name="search_failed_message">Votre mémoire est intacte. Réessayez dans un instant.</string>

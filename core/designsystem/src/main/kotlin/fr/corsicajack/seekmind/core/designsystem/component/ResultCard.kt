@@ -45,6 +45,8 @@ data class ResultCardModel(
     val fromImage: Boolean,
     val similarCount: Int,
     val sourceActionLabel: String,
+    /** False when there is no way back (application not found, or not resolved yet): the button is disabled. */
+    val sourceActionEnabled: Boolean = true,
 )
 
 /** Maximum number of lines of the extract. */
@@ -67,12 +69,14 @@ fun ResultCard(
         modifier = modifier
             .fillMaxWidth()
             .semantics {
-                customActions = listOf(
-                    CustomAccessibilityAction(model.sourceActionLabel) {
-                        onSourceAction()
-                        true
-                    },
-                )
+                if (model.sourceActionEnabled) {
+                    customActions = listOf(
+                        CustomAccessibilityAction(model.sourceActionLabel) {
+                            onSourceAction()
+                            true
+                        },
+                    )
+                }
             },
     ) {
         Column(modifier = Modifier.padding(Spacing.l), verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
@@ -140,7 +144,11 @@ fun ResultCard(
                     }
                 }
             }
-            OutlinedButton(onClick = onSourceAction, modifier = Modifier.align(Alignment.End)) {
+            OutlinedButton(
+                onClick = onSourceAction,
+                enabled = model.sourceActionEnabled,
+                modifier = Modifier.align(Alignment.End),
+            ) {
                 Text(text = model.sourceActionLabel)
             }
         }

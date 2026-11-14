@@ -10,4 +10,6 @@
     <string name="fixture_web_address" translatable="false">fixture.seekmind.test/article/42</string>
     <string name="fixture_web_base_url" translatable="false">https://fixture.seekmind.test/article/42</string>
     <string name="fixture_web_html" translatable="false"><![CDATA[<html><head><title>SeekMind fixture article</title></head><body><h1>SEEKMIND_FIXTURE_WEB</h1><p>Un article sur les phares de la côte corse.</p></body></html>]]></string>
+    <!-- E2E-14 (DeepLinkActivity): the identifier received by the return to the source. -->
+    <string name="fixture_deep_link_item" translatable="false">Fixture item %1$s</string>
 </resources>
