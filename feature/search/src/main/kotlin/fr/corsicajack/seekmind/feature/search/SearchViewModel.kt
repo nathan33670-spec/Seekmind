@@ -17,6 +17,7 @@ import fr.corsicajack.seekmind.core.model.TimeRange
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import fr.corsicajack.seekmind.core.model.port.SearchEngine
 import java.time.ZoneId
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -66,8 +67,11 @@ class SearchViewModel(
 
     private var search: Job? = null
 
-    /** Ways back resolved for the current search, by capture id: each result is resolved once. */
-    private val sources = mutableMapOf<Long, SourceRef>()
+    /**
+     * Ways back resolved for the current search, by capture id: each result is resolved once. Written on
+     * [io] as each one is resolved, so that a resolution cancelled by the next results keeps what it did.
+     */
+    private val sources = ConcurrentHashMap<Long, SourceRef>()
     private var resolving: Job? = null
     private var recordHistory = true
 
@@ -264,20 +268,22 @@ class SearchViewModel(
 
     /** Resolves the ways back of [hits] and puts them on the results still shown. */
     private suspend fun resolveSources(hits: List<SearchHit>) {
-        val resolved = withContext(io) {
-            hits.mapNotNull { hit ->
+        var found = 0
+        withContext(io) {
+            for (hit in hits) {
                 try {
-                    resolveSource(hit)?.let { hit.captureId to it }
+                    resolveSource(hit)?.let { ref ->
+                        sources[hit.captureId] = ref
+                        found++
+                    }
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (failure: Exception) {
                     SmLog.w(TAG, "source_resolution_failed", failure)
-                    null
                 }
             }
         }
-        if (resolved.isEmpty()) return
-        sources.putAll(resolved)
+        if (found == 0) return
         _state.update { state ->
             state.copy(results = state.results.map { it.copy(source = it.source ?: sources[it.hit.captureId]) })
         }

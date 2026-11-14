@@ -107,8 +107,19 @@ class SearchScreenTest {
         compose.onNodeWithText(
             context.getString(R.string.search_open_in, "Instagram"),
         ).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText(context.getString(R.string.search_open_app, "Notes")).performScrollTo().performClick()
-        assertThat(opened?.level).isEqualTo(SourceLevel.APP_ONLY)
+        compose.onNodeWithText(
+            context.getString(R.string.search_open_app, "Notes"),
+        ).performScrollTo().assertIsDisplayed()
+    }
+
+    /** Clicked without scrolling first: a tap right after the list scrolls can be taken by the list. */
+    @Test
+    fun theButtonOfAResultOpensItsWayBack() {
+        val results = listOf(item(1, source(SourceLevel.APP_SEARCH, "YouTube")), item(2, source(SourceLevel.EXACT_URL)))
+        show(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS, results = results))
+        compose.onNodeWithText(context.getString(R.string.search_search_in, "YouTube")).performClick()
+        assertThat(opened?.level).isEqualTo(SourceLevel.APP_SEARCH)
+        assertThat(opened?.appLabel).isEqualTo("YouTube")
     }
 
     @Test
