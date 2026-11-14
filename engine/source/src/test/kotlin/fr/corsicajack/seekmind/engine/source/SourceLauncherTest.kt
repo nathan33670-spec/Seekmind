@@ -76,6 +76,21 @@ class SourceLauncherTest {
     }
 
     @Test
+    fun anyRuntimeExceptionFallsBack() {
+        val ref = view("https://videos.example/results?q=tarte", VIDEOS, SourceLevel.APP_SEARCH)
+        val result = launcher.launch(
+            ref,
+            starter(error = { IllegalArgumentException() }) {
+                it.action ==
+                    Intent.ACTION_VIEW
+            },
+        )
+        assertThat(result).isEqualTo(LaunchResult.Fallback(SourceLevel.APP_ONLY))
+        assertThat(launcher.launch(ref, starter(error = { IllegalStateException() }) { true }))
+            .isEqualTo(LaunchResult.Failed)
+    }
+
+    @Test
     fun forbiddenSchemesAreRefused() {
         for (uri in listOf("file:///sdcard/a.html", "content://x/y", "javascript:alert(1)", "intent://x#Intent;end")) {
             assertThat(launcher.launch(view(uri), all)).isEqualTo(LaunchResult.Failed)

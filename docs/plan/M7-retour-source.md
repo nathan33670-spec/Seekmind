@@ -32,7 +32,7 @@ exactement ce qui va se passer.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M7-01 | `engine:source` | [retour-source §4](../specs/retour-source.md) · risque R-10 |
+| En revue — validation manuelle en attente | M7-01 | `engine:source` | [retour-source §4](../specs/retour-source.md) · risque R-10 |
 
 **À faire**
 
@@ -41,9 +41,9 @@ exactement ce qui va se passer.
 
 **Critères d'acceptation**
 
-- [ ] Variable manquante → la règle est ignorée et la chaîne continue.
-- [ ] Les valeurs substituées sont encodées et bornées à 100 caractères.
-- [ ] Ajouter une règle ne demande aucune modification de code (test avec un fichier de règles de test).
+- [x] Variable manquante → la règle est ignorée et la chaîne continue.
+- [x] Les valeurs substituées sont encodées et bornées à 100 caractères.
+- [x] Ajouter une règle ne demande aucune modification de code (test avec un fichier de règles de test).
 
 **Validation manuelle** — pour chaque règle initiale, sur un vrai téléphone : l'Intent ouvre-t-il
 l'application au bon endroit ? Tableau « application, règle, résultat » dans la PR ; les règles qui

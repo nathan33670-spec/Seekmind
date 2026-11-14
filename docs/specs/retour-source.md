@@ -98,6 +98,29 @@ Règles initiales, **chacune à valider sur appareil** au ticket M7-02 (une règ
 Messageries et courriel (WhatsApp, Messages, Gmail) : aucun lien vers une conversation n'est
 constructible à partir du contenu affiché ; niveau `APP_ONLY`.
 
+Mise en œuvre (M7-02) :
+
+- **Chargement.** `SourceRules.load` lit `assets/source_rules.json` du module, et `SourceRules.parse` en
+  fait des `TemplateRule`.
+  - Un fichier d'une autre `version`, ou mal formé, ne donne aucune règle.
+  - Une règle invalide est ignorée seule, et le nombre de règles ignorées est journalisé.
+- **Règles invalides.** Une règle est ignorée dans ces cas :
+  - niveau autre que `APP_LINK` ou `APP_SEARCH` ;
+  - schéma refusé (§5) ;
+  - variable inconnue ;
+  - **cible choisie par le contenu.** Le schéma, et l'hôte d'une URI hiérarchique, doivent précéder la
+    première variable. Ainsi `https://{title}/x` est refusé.
+- **Variables utilisées.** Une règle s'applique seulement si toutes les variables de son URI et de
+  `requires` ont une valeur non vide. Sinon, la chaîne continue.
+- **Encodage.** Chaque valeur est bornée à 100 caractères, sans couper une paire de substitution, puis
+  encodée par `Uri.encode`. `/`, `?`, `#` et `&` sont donc échappés : une valeur ne peut pas ajouter de
+  segment ni de paramètre.
+- **`{handle}`.** Le `@nom` ne doit être précédé ni suivi d'une lettre, d'un chiffre, de `.`, de `_` ou
+  de `@`. Une adresse électronique (`marie@example.fr`) n'est donc pas un identifiant. Le point final
+  d'une phrase est retiré.
+- **`SourceReturn`.** Le résolveur et le lanceur sont construits avec les mêmes règles, donc avec les
+  mêmes schémas admis.
+
 ## 5. Lancement
 
 - Drapeau `FLAG_ACTIVITY_NEW_TASK`.
@@ -133,6 +156,8 @@ Précisions :
   - `EXACT_URL` qui échoue dans son navigateur → navigateur par défaut, résultat `Fallback(EXACT_URL)` ;
   - `APP_LINK` ou `APP_SEARCH` qui échoue, ou dont l'Intent est refusé → l'application elle-même, résultat `Fallback(APP_ONLY)`.
 - **Application sans activité de lancement**, et sans URL ni règle : `UNAVAILABLE`. Le libellé de M7-03 devra en tenir compte, l'application n'étant alors pas désinstallée.
+- **Visibilité des paquets.** `PackageManagerApps` ne voit que les applications couvertes par les `<queries>` du manifeste : activité de lancement, ou vue `https` navigable. Une application installée hors de ces requêtes passe pour non installée, et donne `UNAVAILABLE`. Le libellé de M7-03 devra le dire sans affirmer une désinstallation.
+- **Aucune exception ne sort du lanceur** : toute `RuntimeException` au lancement (`SecurityException`, `IllegalArgumentException`…) ou à la lecture de l'Intent fait passer au niveau suivant.
 - **Journal** : seuls le niveau et le nom de classe de l'exception sont journalisés, jamais l'URL ni le paquet (INV-07).
 - `SourceLauncher` et `LaunchResult` restent dans `engine:source` : le lanceur a besoin d'un `Context` et n'est pas une interface entre modules (architecture §3.3).
 

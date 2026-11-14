@@ -62,6 +62,9 @@ class SourceLauncher(private val apps: InstalledApps, private val schemes: Sourc
         Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
     } catch (_: URISyntaxException) {
         null
+    } catch (error: RuntimeException) {
+        SmLog.w(TAG, "source_intent_unreadable", error)
+        null
     }
 
     /**
@@ -91,7 +94,8 @@ class SourceLauncher(private val apps: InstalledApps, private val schemes: Sourc
     } catch (error: ActivityNotFoundException) {
         SmLog.w(TAG, "source_start_failed", error)
         false
-    } catch (error: SecurityException) {
+    } catch (error: RuntimeException) {
+        // SecurityException, IllegalArgumentException, BadParcelableException…: never a crash (§5).
         SmLog.w(TAG, "source_start_failed", error)
         false
     }
