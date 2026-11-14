@@ -31,16 +31,6 @@ class TextMarksTest {
     }
 
     @Test
-    fun linksWithoutTheirTrailingPunctuation() {
-        val text =
-            "Voir https://exemple.fr/page?a=1. Et (http://autre.example/x), " +
-                "puis https://exemple.fr/page?a=1 encore; ftp://non"
-        assertThat(
-            TextMarks.links(text),
-        ).containsExactly("https://exemple.fr/page?a=1", "http://autre.example/x").inOrder()
-    }
-
-    @Test
     fun foldingKeepsTheIndices() {
         val text = "Ça, c'est ÉTÉ"
         assertThat(TextMarks.fold(text)).hasLength(text.length)

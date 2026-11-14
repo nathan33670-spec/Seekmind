@@ -181,6 +181,9 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 1. Compléter l'application de test : `PasswordActivity`, `EditableActivity`, `ScrollActivity`,
    `SensitiveDataActivity`, `MessagingLikeActivity`.
 2. Écrire les scénarios E2E-01, 02, 04, 07 à 13, 18 et 19, synchronisés sur `CapturePipeline.events`.
+3. E2E-14, parcours complet : capturer un écran de l'application de test, le retrouver par la recherche,
+   puis toucher le bouton de retour à la source, qui ouvre `DeepLinkActivity` sur le bon identifiant.
+   Le maillon résolution et lancement est déjà couvert par M7-03 (`SourceReturnDeviceTest`).
 
 **Critères d'acceptation**
 

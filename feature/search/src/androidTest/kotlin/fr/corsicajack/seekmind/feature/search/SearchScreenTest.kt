@@ -1,7 +1,11 @@
 package fr.corsicajack.seekmind.feature.search
 
 import android.os.Build
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -15,6 +19,8 @@ import fr.corsicajack.seekmind.core.model.MatchKind
 import fr.corsicajack.seekmind.core.model.Relaxation
 import fr.corsicajack.seekmind.core.model.SearchHit
 import fr.corsicajack.seekmind.core.model.Snippet
+import fr.corsicajack.seekmind.core.model.SourceLevel
+import fr.corsicajack.seekmind.core.model.SourceRef
 import java.time.ZoneId
 import org.junit.Before
 import org.junit.Rule
@@ -37,11 +43,15 @@ class SearchScreenTest {
     private var searched: String? = null
     private var reset = false
     private var retried = false
+    private var opened: SourceRef? = null
 
-    private fun show(state: SearchUiState) = compose.setContent {
+    private fun show(state: SearchUiState) = show(mutableStateOf(state))
+
+    /** Shows [state], which the test may change afterwards. */
+    private fun show(state: State<SearchUiState>) = compose.setContent {
         SeekMindTheme(dynamicColor = false) {
             SearchScreen(
-                state = state,
+                state = state.value,
                 zone = ZoneId.of("Europe/Paris"),
                 now = { NOW },
                 onQueryChange = {},
@@ -51,7 +61,7 @@ class SearchScreenTest {
                 onRemoveUnderstood = {},
                 onRetry = { retried = true },
                 onOpenResult = {},
-                onOpenSource = {},
+                onOpenSource = { opened = it },
                 onReset = { reset = true },
             )
         }
@@ -86,6 +96,45 @@ class SearchScreenTest {
         compose.onNodeWithText(context.getString(R.string.search_relaxed_time_label, "mardi soir")).assertIsDisplayed()
     }
 
+    /** One result at a time, at the top of the list: nothing depends on the height of the screen. */
+    @Test
+    fun theButtonOfAResultSaysWhatItWillDo() {
+        val state = mutableStateOf(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS))
+        show(state)
+        val expected = listOf(
+            source(SourceLevel.EXACT_URL) to context.getString(R.string.search_open_page),
+            source(SourceLevel.APP_SEARCH, "YouTube") to context.getString(R.string.search_search_in, "YouTube"),
+            source(SourceLevel.APP_LINK, "Instagram") to context.getString(R.string.search_open_in, "Instagram"),
+            source(SourceLevel.APP_ONLY, "Notes") to context.getString(R.string.search_open_app, "Notes"),
+        )
+        expected.forEachIndexed { index, (ref, label) ->
+            state.value = state.value.copy(results = listOf(item(index + 1L, ref)))
+            compose.onNodeWithText(label).assertIsDisplayed().assertIsEnabled()
+        }
+    }
+
+    @Test
+    fun theButtonOfAResultOpensItsWayBack() {
+        val results = listOf(item(1, source(SourceLevel.APP_SEARCH, "YouTube")), item(2, source(SourceLevel.EXACT_URL)))
+        show(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS, results = results))
+        compose.onNodeWithText(context.getString(R.string.search_search_in, "YouTube")).performClick()
+        assertThat(opened?.level).isEqualTo(SourceLevel.APP_SEARCH)
+        assertThat(opened?.appLabel).isEqualTo("YouTube")
+    }
+
+    @Test
+    fun aResultWhoseApplicationIsNotFoundHasADisabledButton() {
+        show(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS, results = listOf(item(1, UNAVAILABLE))))
+        compose.onNodeWithText(context.getString(R.string.search_app_not_found)).assertIsNotEnabled().performClick()
+        assertThat(opened).isNull()
+    }
+
+    @Test
+    fun anUnresolvedResultPromisesOnlyTheApplication() {
+        show(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS, results = listOf(item(1, source = null))))
+        compose.onNodeWithText(context.getString(R.string.search_open_app, "Notes")).assertIsNotEnabled()
+    }
+
     @Test
     fun noResultSaysItWasNotCounted() {
         show(SearchUiState(query = "introuvable", phase = SearchPhase.NO_RESULT, notCharged = true))
@@ -118,7 +167,11 @@ class SearchScreenTest {
     private companion object {
         const val NOW = 1_794_441_600_000L
 
-        fun item(id: Long) = SearchResultItem(
+        val UNAVAILABLE = SourceRef(SourceLevel.UNAVAILABLE, null, "Notes")
+
+        fun source(level: SourceLevel, app: String? = null) = SourceRef(level, "intent:#Intent;end", app)
+
+        fun item(id: Long, source: SourceRef? = source(SourceLevel.APP_ONLY, "Notes")) = SearchResultItem(
             SearchHit(
                 captureId = id,
                 score = 1.0,
@@ -133,6 +186,7 @@ class SearchScreenTest {
                 similarCount = 0,
             ),
             appLabel = "Notes",
+            source = source,
         )
     }
 }

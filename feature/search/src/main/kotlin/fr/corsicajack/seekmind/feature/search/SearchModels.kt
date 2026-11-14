@@ -3,6 +3,7 @@ package fr.corsicajack.seekmind.feature.search
 import fr.corsicajack.seekmind.core.model.Relaxation
 import fr.corsicajack.seekmind.core.model.SearchFilters
 import fr.corsicajack.seekmind.core.model.SearchHit
+import fr.corsicajack.seekmind.core.model.SourceRef
 import fr.corsicajack.seekmind.core.model.TimeRange
 import java.time.Instant
 import java.time.LocalDate
@@ -71,7 +72,8 @@ sealed interface UnderstoodFilter {
     }
 }
 
-data class SearchResultItem(val hit: SearchHit, val appLabel: String)
+/** A result and its way back to the source, null until it is resolved (off the main thread). */
+data class SearchResultItem(val hit: SearchHit, val appLabel: String, val source: SourceRef? = null)
 
 data class AppChoice(val packageName: String, val label: String)
 

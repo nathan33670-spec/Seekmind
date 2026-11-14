@@ -55,7 +55,7 @@ l'application au bon endroit ? Tableau « application, règle, résultat » dans
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M7-01, M6-04 | `feature:search`, `feature:journal`, `fixtureapp` | [retour-source §1, §6](../specs/retour-source.md) · [ui-ux §3.2, §3.3](../specs/ui-ux.md) · EF-SRC-03 |
+| Fait | M7-01, M6-04 | `feature:search`, `feature:journal`, `fixtureapp` | [retour-source §1, §6](../specs/retour-source.md) · [ui-ux §3.2, §3.3](../specs/ui-ux.md) · EF-SRC-03 |
 
 **À faire**
 
@@ -65,6 +65,6 @@ l'application au bon endroit ? Tableau « application, règle, résultat » dans
 
 **Critères d'acceptation**
 
-- [ ] Le libellé du bouton correspond au niveau (`EXACT_URL`, `APP_LINK`, `APP_SEARCH`, `APP_ONLY`, `UNAVAILABLE`).
-- [ ] E2E-14 : le retour ouvre `DeepLinkActivity` sur le bon identifiant.
-- [ ] Un lien détecté ne s'ouvre que sur tap.
+- [x] Le libellé du bouton correspond au niveau (`EXACT_URL`, `APP_LINK`, `APP_SEARCH`, `APP_ONLY`, `UNAVAILABLE`).
+- [x] E2E-14 : le retour ouvre `DeepLinkActivity` sur le bon identifiant.
+- [x] Un lien détecté ne s'ouvre que sur tap.

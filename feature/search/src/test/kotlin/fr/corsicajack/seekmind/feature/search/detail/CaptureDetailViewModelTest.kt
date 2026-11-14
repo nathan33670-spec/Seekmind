@@ -3,6 +3,9 @@ package fr.corsicajack.seekmind.feature.search.detail
 import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.database.store.CaptureStore
 import fr.corsicajack.seekmind.core.model.Capture
+import fr.corsicajack.seekmind.core.model.SourceLevel
+import fr.corsicajack.seekmind.core.model.SourceRef
+import fr.corsicajack.seekmind.core.model.port.SourceResolver
 import fr.corsicajack.seekmind.core.testing.Models
 import java.lang.reflect.Proxy
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +28,12 @@ class CaptureDetailViewModelTest {
     private val told = mutableListOf<Long>()
     private var available = true
     private var failDelete = false
+
+    private val resolver = object : SourceResolver {
+        override fun resolve(capture: Capture) = SourceRef(SourceLevel.APP_SEARCH, "intent:#Intent;end", "Notes")
+
+        override fun linksIn(capture: Capture) = listOf("https://exemple.fr/menu")
+    }
 
     /** Only get and delete are used by the detail. */
     private val store: CaptureStore = Proxy.newProxyInstance(
@@ -57,6 +66,7 @@ class CaptureDetailViewModelTest {
         terms = terms,
         store = { if (available) store else null },
         labels = { "Notes" },
+        resolver = resolver,
         io = StandardTestDispatcher(testScheduler),
         onDeleted = { told += it },
     )
@@ -71,6 +81,7 @@ class CaptureDetailViewModelTest {
         assertThat(state.appLabel).isEqualTo("Notes")
         assertThat(state.highlights).containsExactly(3..7)
         assertThat(state.links).containsExactly("https://exemple.fr/menu")
+        assertThat(state.source?.level).isEqualTo(SourceLevel.APP_SEARCH)
     }
 
     @Test

@@ -1,7 +1,5 @@
 package fr.corsicajack.seekmind
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.os.Process
 import android.view.WindowManager
@@ -20,8 +18,12 @@ import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.database.WipeService
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
 import fr.corsicajack.seekmind.core.designsystem.theme.SeekMindTheme
+import fr.corsicajack.seekmind.core.model.SourceRef
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import fr.corsicajack.seekmind.di.ApplicationScope
+import fr.corsicajack.seekmind.engine.source.LaunchResult
+import fr.corsicajack.seekmind.engine.source.SourceLinks
+import fr.corsicajack.seekmind.engine.source.SourceReturn
 import fr.corsicajack.seekmind.feature.journal.JournalRoute
 import fr.corsicajack.seekmind.feature.journal.JournalViewModel
 import fr.corsicajack.seekmind.feature.search.SearchRoute
@@ -63,6 +65,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var deletions: CaptureDeletions
 
+    /** Resolved off the main thread on first use: reading the rules is not done at start-up. */
+    @Inject lateinit var sourceReturn: dagger.Lazy<SourceReturn>
+
     /** Search terms of the result opened last, highlighted in its detail; in memory only (INV-06). */
     private var openedTerms: List<String> = emptyList()
 
@@ -97,6 +102,10 @@ class MainActivity : ComponentActivity() {
                 zone = ZoneId::systemDefault,
                 io = Dispatchers.IO,
                 deletions = deletions.events,
+                resolveSource = { hit ->
+                    val captures = (database.get() as? DatabaseState.Ready)?.database?.captures
+                    captures?.get(hit.captureId)?.let(sourceReturn.get().resolver::resolve)
+                },
             )
         }
         val state by searchViewModel.state.collectAsStateWithLifecycle()
@@ -108,7 +117,7 @@ class MainActivity : ComponentActivity() {
                 openedTerms = state.terms
                 openCapture(hit.captureId)
             },
-            onOpenSource = { hit -> openSource(hit.url, hit.packageName) },
+            onOpenSource = ::openSource,
             onReset = ::resetEverything,
         )
     }
@@ -122,6 +131,7 @@ class MainActivity : ComponentActivity() {
                 terms = terms,
                 store = { (database.get() as? DatabaseState.Ready)?.database?.captures },
                 labels = PackageManagerAppLabels(packageManager),
+                resolver = sourceReturn.get().resolver,
                 io = Dispatchers.IO,
                 onDeleted = deletions::publish,
             )
@@ -129,25 +139,19 @@ class MainActivity : ComponentActivity() {
         CaptureDetailRoute(
             viewModel = detail,
             zone = ZoneId.systemDefault(),
-            onOpenSource = { capture -> openSource(capture.url, capture.packageName) },
-            onOpenLink = { link -> openSource(link, packageName = null) },
+            onOpenSource = ::openSource,
+            onOpenLink = { link -> SourceLinks.refFor(link)?.let(::openSource) },
             onClose = close,
         )
     }
 
     /**
-     * Until the return to the source (M7): the page of an http(s) URL, otherwise the application. Only
-     * http(s) URLs leave SeekMind, to another application (INV-12).
+     * Opens the way back chosen by the user (docs/specs/retour-source.md §5): the launcher falls back to
+     * the next level on failure and never throws; only admitted schemes leave SeekMind (INV-12).
      */
-    private fun openSource(url: String?, packageName: String?) {
-        val page = url?.let(Uri::parse)?.takeIf { it.scheme == "https" || it.scheme == "http" }
-        val intent = if (page != null) {
-            Intent(Intent.ACTION_VIEW, page).addCategory(Intent.CATEGORY_BROWSABLE)
-        } else {
-            packageName?.let(packageManager::getLaunchIntentForPackage)
-        } ?: return
-        runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-            .onFailure { SmLog.w(TAG, "open_source_failed", it) }
+    private fun openSource(ref: SourceRef) {
+        val result = sourceReturn.get().launcher.launch(this, ref)
+        if (result == LaunchResult.Failed) SmLog.w(TAG, "open_source_failed", null, "level" to ref.level.ordinal)
     }
 
     /** « Réinitialiser SeekMind » (ENF-REL-02): erase, then close; the next start creates a new database. */

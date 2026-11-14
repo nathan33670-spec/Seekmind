@@ -13,6 +13,8 @@ import fr.corsicajack.seekmind.core.model.SearchHit
 import fr.corsicajack.seekmind.core.model.SearchRequest
 import fr.corsicajack.seekmind.core.model.SearchResults
 import fr.corsicajack.seekmind.core.model.Snippet
+import fr.corsicajack.seekmind.core.model.SourceLevel
+import fr.corsicajack.seekmind.core.model.SourceRef
 import fr.corsicajack.seekmind.core.model.Stage
 import fr.corsicajack.seekmind.core.model.TimeRange
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
@@ -67,7 +69,80 @@ class SearchViewModelTest {
         zone = { ZoneId.of("Europe/Paris") },
         io = StandardTestDispatcher(testScheduler),
         deletions = deletions,
+        resolveSource = { hit ->
+            resolved += hit.captureId
+            beforeResolve(hit)
+            sourceOf(hit)
+        },
     )
+
+    private val resolved = mutableListOf<Long>()
+    private var beforeResolve: suspend (SearchHit) -> Unit = {}
+    private var sourceOf: (SearchHit) -> SourceRef? = { hit ->
+        SourceRef(SourceLevel.APP_ONLY, "intent:#Intent;end", "App ${hit.captureId}")
+    }
+
+    @Test
+    fun eachResultGetsItsWayBackOnce() = runTest(dispatcher) {
+        val release = CompletableDeferred<Unit>()
+        engine.respond = { request ->
+            flow {
+                emit(results(Stage.LEXICAL, request, hit(1)))
+                release.await()
+                emit(results(Stage.HYBRID, request, hit(2), hit(1)))
+            }
+        }
+        val vm = viewModel()
+        vm.submit("tarte")
+        advanceUntilIdle()
+        assertThat(vm.state.value.results.single().source?.appLabel).isEqualTo("App 1")
+        release.complete(Unit)
+        advanceUntilIdle()
+        assertThat(vm.state.value.results.map { it.source?.appLabel }).containsExactly("App 2", "App 1").inOrder()
+        // The first result was not resolved again for the hybrid results.
+        assertThat(resolved).containsExactly(1L, 2L).inOrder()
+    }
+
+    @Test
+    fun aResolutionInterruptedByTheNextResultsKeepsWhatItDid() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        var firstOfTwo = true
+        // The first resolution of result 2 waits until the hybrid results replace it.
+        beforeResolve = { hit ->
+            if (hit.captureId == 2L && firstOfTwo) {
+                firstOfTwo = false
+                gate.await()
+            }
+        }
+        val release = CompletableDeferred<Unit>()
+        engine.respond = { request ->
+            flow {
+                emit(results(Stage.LEXICAL, request, hit(1), hit(2)))
+                release.await()
+                emit(results(Stage.HYBRID, request, hit(2), hit(1), hit(3)))
+            }
+        }
+        val vm = viewModel()
+        vm.submit("tarte")
+        advanceUntilIdle()
+        release.complete(Unit)
+        advanceUntilIdle()
+        assertThat(vm.state.value.results.map { it.source?.appLabel })
+            .containsExactly("App 2", "App 1", "App 3").inOrder()
+        // Result 1, resolved before the interruption, is not resolved again.
+        assertThat(resolved).containsExactly(1L, 2L, 2L, 3L).inOrder()
+    }
+
+    @Test
+    fun aFailedResolutionLeavesTheResultWithoutWayBack() = runTest(dispatcher) {
+        sourceOf = { hit -> if (hit.captureId == 1L) error("boom") else null }
+        engine.respond = { request -> flow { emit(results(Stage.HYBRID, request, hit(1), hit(2))) } }
+        val vm = viewModel()
+        vm.submit("tarte")
+        advanceUntilIdle()
+        assertThat(vm.state.value.phase).isEqualTo(SearchPhase.RESULTS)
+        assertThat(vm.state.value.results.map { it.source }).containsExactly(null, null)
+    }
 
     @Test
     fun aCaptureDeletedElsewhereLeavesTheResults() = runTest(dispatcher) {

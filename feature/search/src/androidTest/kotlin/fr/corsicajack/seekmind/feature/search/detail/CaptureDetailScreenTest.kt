@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalTextToolbar
 import androidx.compose.ui.platform.TextToolbar
 import androidx.compose.ui.platform.TextToolbarStatus
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -28,6 +29,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.designsystem.theme.SeekMindTheme
 import fr.corsicajack.seekmind.core.model.Capture
+import fr.corsicajack.seekmind.core.model.SourceLevel
+import fr.corsicajack.seekmind.core.model.SourceRef
 import fr.corsicajack.seekmind.core.model.TextSource
 import fr.corsicajack.seekmind.feature.search.R
 import java.time.ZoneId
@@ -46,7 +49,7 @@ class CaptureDetailScreenTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
 
-    private var openedSource: Capture? = null
+    private var openedSource: SourceRef? = null
     private var openedLink: String? = null
     private var deleted = false
 
@@ -72,7 +75,8 @@ class CaptureDetailScreenTest {
         capture = capture,
         appLabel = "Notes",
         highlights = TextMarks.highlights(capture.text, listOf("tarte")),
-        links = TextMarks.links(capture.text),
+        links = listOf(LINK),
+        source = SourceRef(SourceLevel.APP_ONLY, "intent:#Intent;end", "Notes"),
     )
 
     @Test
@@ -89,9 +93,23 @@ class CaptureDetailScreenTest {
     fun returnToTheSourceAndOpenALink() {
         show(loaded())
         compose.onNodeWithText(context.getString(R.string.search_open_app, "Notes")).performClick()
-        assertThat(openedSource?.id).isEqualTo(CAPTURE.id)
+        assertThat(openedSource?.level).isEqualTo(SourceLevel.APP_ONLY)
         compose.onNodeWithText(LINK).performScrollTo().performClick()
         assertThat(openedLink).isEqualTo(LINK)
+    }
+
+    @Test
+    fun theReturnButtonSaysWhatItWillDo() {
+        show(loaded().copy(source = SourceRef(SourceLevel.APP_SEARCH, "intent:#Intent;end", "YouTube")))
+        compose.onNodeWithText(context.getString(R.string.search_search_in, "YouTube")).performClick()
+        assertThat(openedSource?.level).isEqualTo(SourceLevel.APP_SEARCH)
+    }
+
+    @Test
+    fun anApplicationNotFoundDisablesTheReturn() {
+        show(loaded().copy(source = SourceRef(SourceLevel.UNAVAILABLE, null, "Notes")))
+        compose.onNodeWithText(context.getString(R.string.search_app_not_found)).assertIsNotEnabled().performClick()
+        assertThat(openedSource).isNull()
     }
 
     @Test

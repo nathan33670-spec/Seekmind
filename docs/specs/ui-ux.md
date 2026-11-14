@@ -97,9 +97,6 @@ qu'elle l'a quitté. En attendant les tickets suivants :
 
 - la pastille « Personnalisée » (choix de dates) n'est pas encore là : Aujourd'hui, Hier, 7 jours, 30 jours ;
 - le bandeau d'état de la mémorisation (ligne 1) arrive avec l'accueil et le statut du service (M6-02) ;
-- un tap sur une carte n'ouvre rien encore (détail : M6-04) ; le bouton de retour à la source ouvre la
-  page d'une URL http(s), sinon l'application (« Ouvrir la page », « Ouvrir {application} ») — le retour
-  complet de [retour-source](retour-source.md) arrive en M7 ;
 - « Sans crédit » affiche un état vide : la feuille de crédits arrive en M8 ; d'ici là, `EntitlementGate`
   est lié à une implémentation « tout autorisé » ;
 - la clé passée à `EntitlementGate` est la requête saisie (minuscules, espaces réduits) et les filtres
@@ -127,15 +124,20 @@ Mise en œuvre (M6-04) :
 - **Surlignage.** Les termes sont reconnus en début de mot, sans tenir compte de la casse ni des
   accents : ce sont les mots utiles et les codes de la requête analysée.
 - **Liens détectés.** Ce sont les adresses `http(s)://` du texte, sans leur ponctuation finale et sans
-  doublon. Un lien ne s'ouvre que si l'utilisateur le touche.
+  doublon, cinq au plus. Un lien ne s'ouvre que si l'utilisateur le touche.
 - **Copie.** Le bouton « Copier » et la sélection du texte posent le drapeau
   `ClipDescription.EXTRA_IS_SENSITIVE` sur le presse-papiers. Pour la sélection, le presse-papiers de
   l'écran est enveloppé. Le partage passe par le sélecteur du système.
 - **Suppression.** Une confirmation est demandée. La capture disparaît ensuite des résultats affichés et
   du journal : un événement de suppression est partagé entre les écrans. Si la capture n'existe plus,
   l'écran l'indique.
-- **Retour à la source.** Une page web s'ouvre dans le navigateur ; sinon, l'application s'ouvre sur son
-  écran d'accueil. Le retour précis est l'objet de M7-03.
+- **Retour à la source** (M7-03). Sur la carte d'un résultat comme dans le détail, le bouton porte le
+  libellé du niveau résolu ([retour-source §1](retour-source.md)). « Application introuvable » est
+  désactivé, et le résultat n'offre alors pas d'action d'accessibilité. La résolution d'un résultat se
+  fait hors du fil principal, une fois par capture et par recherche. Tant qu'elle n'est pas faite, le
+  bouton est désactivé et ne promet que l'application (« Ouvrir {application} »). Les liens détectés
+  (cinq au plus) viennent de `SourceResolver.linksIn` et s'ouvrent dans le navigateur par défaut,
+  `http(s)` seulement.
 
 ### 3.4 Journal (`feature:journal`)
 

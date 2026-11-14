@@ -42,8 +42,11 @@ import fr.corsicajack.seekmind.core.designsystem.component.EmptyState
 import fr.corsicajack.seekmind.core.designsystem.component.HighlightedText
 import fr.corsicajack.seekmind.core.designsystem.theme.Spacing
 import fr.corsicajack.seekmind.core.model.Capture
+import fr.corsicajack.seekmind.core.model.SourceRef
 import fr.corsicajack.seekmind.core.model.TextSource
 import fr.corsicajack.seekmind.feature.search.R
+import fr.corsicajack.seekmind.feature.search.canOpen
+import fr.corsicajack.seekmind.feature.search.sourceLabel
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -57,7 +60,7 @@ const val DETAIL_TEXT_TAG = "detail_text"
 fun CaptureDetailRoute(
     viewModel: CaptureDetailViewModel,
     zone: ZoneId,
-    onOpenSource: (Capture) -> Unit,
+    onOpenSource: (SourceRef) -> Unit,
     onOpenLink: (String) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
@@ -76,14 +79,15 @@ fun CaptureDetailRoute(
 
 /**
  * Detail of a capture (docs/specs/ui-ux.md §3.3): application, first and last seen, views, title, URL;
- * the whole text, selectable, search terms highlighted; return to the source, copy, share, delete with
- * confirmation; the links found in the text. Copies are marked sensitive ([SensitiveClipboard]).
+ * the whole text, selectable, search terms highlighted; return to the source with the label of its level
+ * (docs/specs/retour-source.md §1), copy, share, delete with confirmation; the links found in the text,
+ * opened only on tap. Copies are marked sensitive ([SensitiveClipboard]).
  */
 @Composable
 fun CaptureDetailScreen(
     state: CaptureDetailState,
     zone: ZoneId,
-    onOpenSource: (Capture) -> Unit,
+    onOpenSource: (SourceRef) -> Unit,
     onOpenLink: (String) -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
@@ -115,7 +119,7 @@ private fun Detail(
     state: CaptureDetailState,
     capture: Capture,
     zone: ZoneId,
-    onOpenSource: (Capture) -> Unit,
+    onOpenSource: (SourceRef) -> Unit,
     onOpenLink: (String) -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier,
@@ -155,14 +159,11 @@ private fun Detail(
             Text(text = stringResource(R.string.detail_from_image), style = MaterialTheme.typography.labelMedium)
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-            OutlinedButton(onClick = { onOpenSource(capture) }) {
-                Text(
-                    if (capture.url != null) {
-                        stringResource(R.string.search_open_page)
-                    } else {
-                        stringResource(R.string.search_open_app, state.appLabel)
-                    },
-                )
+            OutlinedButton(
+                onClick = { state.source?.takeIf(::canOpen)?.let(onOpenSource) },
+                enabled = canOpen(state.source),
+            ) {
+                Text(sourceLabel(state.source, state.appLabel))
             }
             OutlinedButton(onClick = { copy(context, sensitiveClip(clipLabel, capture.text)) }) {
                 Text(stringResource(R.string.detail_copy))
