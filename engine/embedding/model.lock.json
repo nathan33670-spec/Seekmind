@@ -5,8 +5,8 @@
     "revision": "1605fe3b64cb22dde93f30e8fbfb1889742d2753",
     "files": {
       "model.onnx": {
-        "sha256": "25c75b79fa03c29d351a304cfda9e9fc243fbd958a8686724972df9b2b6c1d65",
-        "size": 36365852
+        "sha256": "ded7f9f9557df388009a8b54b70b4ce006d427f44e06f161bb5a3a29afc172be",
+        "size": 36595240
       },
       "vocab.bin": {
         "sha256": "3bb4a5d9e2d381b3774fab1201855402ac50ea8226b5c4fdfe3a92bf5ad36084",
@@ -20,8 +20,8 @@
     "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
     "files": {
       "model.onnx": {
-        "sha256": "8da4c9ba0ad59f58e8566839425d7fd6339d31414d0ce5cba2d7d0afb75dd8b6",
-        "size": 118101091
+        "sha256": "c9391bd927dbf1aadedde96db8ad660034be110d04de4eb4ee6ec323d5dab618",
+        "size": 118330479
       },
       "vocab.bin": {
         "sha256": "7ac81a2015fe21c833d36b44df0c066bd8e6f56b30055ae3eb318994f8b21dce",
@@ -31,12 +31,12 @@
   },
   "testdata": {
     "embedding_golden_fr.json": {
-      "sha256": "2a9982680a9ae554c78793250423007badf413cdd11112b9e82b92a4b8797f4e",
-      "size": 190861
+      "sha256": "49adbea46bda6e13f0428c4ec26e95624d55c5eb279be97d5946b242215bee54",
+      "size": 190836
     },
     "embedding_golden_multi.json": {
-      "sha256": "8f723bf847b8c587188eac975d43914e69c73f43f726997b70ac83310e7834ad",
-      "size": 191028
+      "sha256": "bb9bd6887ff6f0f9b32ca41d1ab3b4244a68e6aa213052b456de64a1aaa19555",
+      "size": 191091
     },
     "tokenizer_golden_fr.jsonl": {
       "sha256": "1fa7a362d879d9c8f3a8630c2fd41462934e23f86500a5b511388d56062c5ff9",

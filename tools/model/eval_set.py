@@ -6,9 +6,8 @@ Ranks the 298 captures of testdata/eval/corpus.jsonl by cosine with each of the 
 testdata/eval/queries.jsonl, with the original (fp32) and the quantized model, and compares their
 Recall@5. Meaning only, without the time and application filters of the real search: it measures what
 quantization costs, not the search itself (that is SearchEvalDeviceTest, on a device). Called by
-verify.py, hence by build_model.py, which report the loss. With --strict (or strict=True), the check
-fails when quantization loses more than MAX_DROP: verify.py turns it on once the quantization settings
-are decided (ticket M5-07; the current settings lose more, see the report of the PR).
+verify.py, hence by build_model.py, with strict=True: the build fails when quantization loses more than MAX_DROP
+(docs/specs/embeddings.md §2). Without --strict, the command line only reports the loss.
 """
 
 from __future__ import annotations

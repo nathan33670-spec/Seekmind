@@ -46,14 +46,20 @@ Scripts Python, versions figées dans `tools/model/requirements.txt`. Un jeu d'a
 | `gen_sentences.py` | Produit les phrases sources versionnées de `tools/model/data/` (générateur déterministe, valeurs fictives) |
 | `compare_embedding_golden.py` | Workflow `model` : compare les vecteurs régénérés aux vecteurs committés (identifiants identiques, cosinus ≥ 0,99) |
 
-Quantification : `onnxruntime.quantization.quantize_dynamic(..., weight_type=QuantType.QInt8,
-per_channel=False, reduce_range=False)`.
+Quantification : `onnxruntime.quantization.quantize_dynamic(..., weight_type=QuantType.QUInt8,
+per_channel=True, reduce_range=False)`. Elle est faite par canal depuis la décision du porteur du
+14 novembre 2026 (ticket M5-07). Avec une échelle par tenseur, le modèle `fr` perdait 0,10 de Rappel@5
+par le sens sur le jeu d'évaluation, alors que le contrôle par cosinus passait. Les poids sont non
+signés (u8u8) : les exécuteurs x86 sans VNNI, émulateurs de la CI compris, ne saturent pas, et leurs
+vecteurs se rapprochent de ceux des téléphones.
 
 Contrôles de qualité, pour chaque modèle (échec du script sinon) :
 
 - cosinus moyen entre vecteurs du modèle d'origine et du modèle quantifié ≥ 0,98 sur 200 phrases ;
-- sur le jeu d'évaluation de la recherche, Rappel@5 du modèle quantifié ≥ Rappel@5 d'origine − 0,02
-  (contrôle ajouté par le ticket M5-07, quand le jeu d'évaluation existe).
+- sur le jeu d'évaluation de la recherche, Rappel@5 par le sens du modèle quantifié ≥ Rappel@5
+  d'origine − 0,03 (`eval_set.py`, ticket M5-07). Sur 80 requêtes, une requête vaut 0,0125 : le seuil
+  admet deux requêtes perdues. Avec 0,02, il n'en admettrait qu'une, et une seule requête de plus ou de
+  moins ferait basculer le contrôle.
 
 Le modèle `fr` est exporté par `torch.onnx.export` (exportateur TorchScript, opset 17) : entrées
 `input_ids` et `attention_mask`, sortie `last_hidden_state`, axes de lot et de séquence dynamiques. Le
@@ -68,18 +74,21 @@ celles des jeux de référence de `testdata/`, sont versionnées dans `engine/em
 les vecteurs s'écartent de ceux d'un téléphone (arithmétique exacte des instructions ARM) d'un cosinus
 d'environ 0,995, mesuré sur un exécuteur GitHub. Les vecteurs de référence de `testdata/` sont donc
 produits sur une machine ARM ou x86 avec VNNI (le générateur refuse les autres), et toute comparaison
-faite sur un exécuteur x86 quelconque (workflow `model`, évaluation de la recherche sur JVM) tolère cet
-écart. `reduce_range=True` éviterait la saturation au prix d'une précision moindre sur les téléphones :
+faite sur un exécuteur x86 quelconque (workflow `model`) tolère cet écart. `reduce_range=True` éviterait la saturation au prix d'une précision moindre sur les téléphones :
 écarté.
 
 Valeurs relevées à la construction (M0-10) :
 
 | | `fr` | `multi` |
 |---|---|---|
-| `model.onnx` quantifié | 36,4 Mo | 118,1 Mo |
+| `model.onnx` quantifié | 36,6 Mo | 118,3 Mo |
 | `vocab.bin` | 0,46 Mo | 4,1 Mo |
-| Archive `.smpack` | 36,8 Mo | 122,2 Mo |
-| Cosinus moyen origine / quantifié (minimum), 200 phrases | 0,9887 (0,9766) | 0,9888 (0,9788) |
+| Archive `.smpack` | 37,1 Mo | 122,4 Mo |
+| Cosinus moyen origine / quantifié (minimum), 200 phrases | 0,9965 (0,9901) | 0,9965 (0,9905) |
+| Rappel@5 par le sens sur `testdata/eval`, origine → quantifié | 0,863 → 0,838 | 0,863 → 0,863 |
+
+Avant le passage par canal : 36,4 Mo et 118,1 Mo, cosinus 0,9887 et 0,9888, Rappel@5 quantifié 0,762
+et 0,800.
 
 **Les artefacts binaires ne sont jamais committés.** Intégration au build :
 
