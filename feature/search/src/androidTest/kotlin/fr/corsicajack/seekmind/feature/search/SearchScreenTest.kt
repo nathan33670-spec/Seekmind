@@ -1,14 +1,16 @@
 package fr.corsicajack.seekmind.feature.search
 
 import android.os.Build
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -43,10 +45,13 @@ class SearchScreenTest {
     private var retried = false
     private var opened: SourceRef? = null
 
-    private fun show(state: SearchUiState) = compose.setContent {
+    private fun show(state: SearchUiState) = show(mutableStateOf(state))
+
+    /** Shows [state], which the test may change afterwards. */
+    private fun show(state: State<SearchUiState>) = compose.setContent {
         SeekMindTheme(dynamicColor = false) {
             SearchScreen(
-                state = state,
+                state = state.value,
                 zone = ZoneId.of("Europe/Paris"),
                 now = { NOW },
                 onQueryChange = {},
@@ -91,28 +96,23 @@ class SearchScreenTest {
         compose.onNodeWithText(context.getString(R.string.search_relaxed_time_label, "mardi soir")).assertIsDisplayed()
     }
 
+    /** One result at a time, at the top of the list: nothing depends on the height of the screen. */
     @Test
     fun theButtonOfAResultSaysWhatItWillDo() {
-        val results = listOf(
-            item(1, source(SourceLevel.EXACT_URL)),
-            item(2, source(SourceLevel.APP_SEARCH, "YouTube")),
-            item(3, source(SourceLevel.APP_LINK, "Instagram")),
-            item(4, source(SourceLevel.APP_ONLY, "Notes")),
+        val state = mutableStateOf(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS))
+        show(state)
+        val expected = listOf(
+            source(SourceLevel.EXACT_URL) to context.getString(R.string.search_open_page),
+            source(SourceLevel.APP_SEARCH, "YouTube") to context.getString(R.string.search_search_in, "YouTube"),
+            source(SourceLevel.APP_LINK, "Instagram") to context.getString(R.string.search_open_in, "Instagram"),
+            source(SourceLevel.APP_ONLY, "Notes") to context.getString(R.string.search_open_app, "Notes"),
         )
-        show(SearchUiState(query = "tarte", phase = SearchPhase.RESULTS, results = results))
-        compose.onNodeWithText(context.getString(R.string.search_open_page)).assertIsDisplayed()
-        compose.onNodeWithText(
-            context.getString(R.string.search_search_in, "YouTube"),
-        ).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText(
-            context.getString(R.string.search_open_in, "Instagram"),
-        ).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText(
-            context.getString(R.string.search_open_app, "Notes"),
-        ).performScrollTo().assertIsDisplayed()
+        expected.forEachIndexed { index, (ref, label) ->
+            state.value = state.value.copy(results = listOf(item(index + 1L, ref)))
+            compose.onNodeWithText(label).assertIsDisplayed().assertIsEnabled()
+        }
     }
 
-    /** Clicked without scrolling first: a tap right after the list scrolls can be taken by the list. */
     @Test
     fun theButtonOfAResultOpensItsWayBack() {
         val results = listOf(item(1, source(SourceLevel.APP_SEARCH, "YouTube")), item(2, source(SourceLevel.EXACT_URL)))
