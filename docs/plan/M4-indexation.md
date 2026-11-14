@@ -62,7 +62,7 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M0-10, M1-01 | `engine:embedding` | [embeddings §3](../specs/embeddings.md) · risque R-12 |
+| Fait | M0-10, M1-01 | `engine:embedding` | [embeddings §3](../specs/embeddings.md) · risque R-12 |
 
 **À faire**
 
@@ -74,10 +74,10 @@ M4-01 et M4-02 ne dépendent que de M1 et précèdent M2-06. M4-03 et M4-04 peuv
 
 **Critères d'acceptation**
 
-- [ ] Parité exacte sur au moins 99,5 % des 1 000 phrases, **pour chacun des deux vocabulaires** ; les
+- [x] Parité exacte sur au moins 99,5 % des 1 000 phrases, **pour chacun des deux vocabulaires** ; les
       divergences sont listées et expliquées dans la PR.
-- [ ] Cas limites : chaîne vide, espaces seules, émojis, caractères inconnus consécutifs (un seul jeton inconnu), texte plus long que la limite.
-- [ ] Tokenisation d'un passage de 800 caractères en moins de 5 ms sur JVM ; mémoire du vocabulaire mesurée.
+- [x] Cas limites : chaîne vide, espaces seules, émojis, caractères inconnus consécutifs (un seul jeton inconnu), texte plus long que la limite.
+- [x] Tokenisation d'un passage de 800 caractères en moins de 5 ms sur JVM ; mémoire du vocabulaire mesurée.
 
 Si le seuil n'est pas atteint après analyse des divergences : s'arrêter, passer le ticket à `Bloqué` et
 proposer un ADR (bibliothèque native de tokenisation).
