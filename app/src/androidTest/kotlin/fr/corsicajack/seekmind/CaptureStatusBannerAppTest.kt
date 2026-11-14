@@ -77,12 +77,13 @@ class CaptureStatusBannerAppTest {
         compose.onAllNodes(hasText(reactivate)).fetchSemanticsNodes().isNotEmpty() == present
     }
 
-    /** Adds SeekMind's service to the enabled ones, or takes it out; the other services stay as they are. */
+    /**
+     * During the test, SeekMind's service is the only one, and accessibility goes from off to on: the
+     * state change is what the status listens to. The settings of the device are restored after the test.
+     */
     private fun setServiceEnabled(enabled: Boolean) {
-        val others = services.orEmpty().split(':').filter { it.isNotBlank() && it != service }
-        val list = if (enabled) others + service else others
-        restore("enabled_accessibility_services", list.joinToString(":").ifEmpty { null })
-        restore("accessibility_enabled", if (list.isEmpty()) "0" else "1")
+        restore("enabled_accessibility_services", if (enabled) service else null)
+        restore("accessibility_enabled", if (enabled) "1" else "0")
     }
 
     private fun setting(name: String): String? =
