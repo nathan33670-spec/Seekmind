@@ -48,7 +48,10 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
    installées par famille, rappel des exclusions d'office ; choix enregistré avant toute redirection.
 5. Écran d'activation : étapes illustrées, ouverture des réglages d'accessibilité, détection au retour, confirmation.
 6. Parcours de refus : mode limité et bandeau permanent qui rouvre la divulgation.
-7. Reconsentement quand `DISCLOSURE_VERSION` dépasse la version enregistrée.
+7. Reconsentement quand `DISCLOSURE_VERSION` dépasse la version enregistrée. `CaptureStatusRepository`
+   compare alors la version (`consent.version == DISCLOSURE_VERSION`, et plus seulement `consent != null`) :
+   un consentement d'une version périmée donne `ConsentMissing`, jamais `ServiceDisabled`. Sinon, le
+   bandeau « Réactiver » (M6-09) ouvrirait les réglages du système sans nouvelle divulgation.
 8. Texte de divulgation de la variante `ads` (celui de la variante `offline` arrive avec M8-06).
 9. Emplacement pour la proposition du pack de langue en fin de parcours (branchée par M6-06).
 
@@ -207,7 +210,7 @@ liste des défauts corrigés dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-03, M2-01 | `feature:search`, `feature:settings` | [ui-ux §3.2](../specs/ui-ux.md) · EF-CAP-05 · risque R-04 |
+| Fait | M6-03, M2-01 | `feature:search`, `feature:settings` | [ui-ux §3.2](../specs/ui-ux.md) · EF-CAP-05 · risque R-04 |
 
 **À faire**
 
@@ -219,5 +222,5 @@ liste des défauts corrigés dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] Chaque état de `CaptureStatus` produit le bon bandeau et la bonne action.
-- [ ] Service désactivé dans les réglages système → bandeau « Réactiver » au retour dans l'application.
+- [x] Chaque état de `CaptureStatus` produit le bon bandeau et la bonne action.
+- [x] Service désactivé dans les réglages système → bandeau « Réactiver » au retour dans l'application.

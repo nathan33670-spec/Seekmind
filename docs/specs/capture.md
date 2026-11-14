@@ -319,6 +319,9 @@ le consentement et la pause. L'interface l'observe (EF-CAP-05).
 
 Priorité, du premier état qui s'applique au dernier : `ConsentMissing` (sans consentement, l'interface
 rouvre la divulgation avant tout passage par les réglages système), `ServiceDisabled`, `Paused`, `Active`.
+Un consentement d'une version de la divulgation antérieure à `DISCLOSURE_VERSION` compte comme absent
+(`ConsentMissing`). Aujourd'hui, seule la présence du consentement est testée : la comparaison des
+versions arrive avec M6-02, qui crée la constante.
 `Paused.until` vaut `null` pour une pause sans limite (`pausedUntil = Long.MAX_VALUE`). `lastCaptureAt`
 est publié par le pipeline (`onCaptureStored`).
 

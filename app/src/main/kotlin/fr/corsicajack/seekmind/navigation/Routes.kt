@@ -25,6 +25,10 @@ data object SettingsRoute
 @Serializable
 data class CaptureRoute(val captureId: Long)
 
+/** « Le service s'arrête tout seul » (ticket M6-09): the troubleshooting page, opened from the search banner. */
+@Serializable
+data object ServiceHelpRoute
+
 /** The three destinations of the bottom bar (docs/specs/ui-ux.md §2), in display order. */
 enum class TopLevelDestination(val route: Any, @param:StringRes val label: Int, @param:DrawableRes val icon: Int) {
     SEARCH(SearchRoute, R.string.app_nav_search, SeekMindIcons.Search),

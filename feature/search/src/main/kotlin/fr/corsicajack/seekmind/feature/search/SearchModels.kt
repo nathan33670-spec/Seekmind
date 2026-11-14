@@ -1,5 +1,6 @@
 package fr.corsicajack.seekmind.feature.search
 
+import fr.corsicajack.seekmind.core.model.CaptureStatus
 import fr.corsicajack.seekmind.core.model.Relaxation
 import fr.corsicajack.seekmind.core.model.SearchFilters
 import fr.corsicajack.seekmind.core.model.SearchHit
@@ -78,6 +79,8 @@ data class SearchResultItem(val hit: SearchHit, val appLabel: String, val source
 data class AppChoice(val packageName: String, val label: String)
 
 data class SearchUiState(
+    /** The capture status (EF-CAP-05): the banner and « Dernière mémorisation ». Null until known. */
+    val capture: CaptureStatus? = null,
     val query: String = "",
     val period: Period? = null,
     /** Application chosen with the chip, or null. */

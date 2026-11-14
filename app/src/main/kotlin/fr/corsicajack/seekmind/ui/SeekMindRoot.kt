@@ -31,9 +31,10 @@ fun navItemTag(destination: TopLevelDestination): String = "nav_${destination.na
 @Composable
 fun SeekMindRoot(
     navController: NavHostController = rememberNavController(),
-    searchContent: @Composable (openCapture: (Long) -> Unit) -> Unit = {},
+    searchContent: @Composable (openCapture: (Long) -> Unit, openHelp: () -> Unit) -> Unit = { _, _ -> },
     journalContent: @Composable (openCapture: (Long) -> Unit) -> Unit = {},
     captureContent: @Composable (captureId: Long, close: () -> Unit) -> Unit = { _, _ -> },
+    helpContent: @Composable () -> Unit = {},
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val current = backStackEntry?.destination
@@ -58,6 +59,7 @@ fun SeekMindRoot(
             searchContent = searchContent,
             journalContent = journalContent,
             captureContent = captureContent,
+            helpContent = helpContent,
         )
     }
 }

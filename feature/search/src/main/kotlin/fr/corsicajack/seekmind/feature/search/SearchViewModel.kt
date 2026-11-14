@@ -6,6 +6,7 @@ import fr.corsicajack.seekmind.core.common.SmLog
 import fr.corsicajack.seekmind.core.database.store.SearchHistoryEntry
 import fr.corsicajack.seekmind.core.database.store.SearchHistoryStore
 import fr.corsicajack.seekmind.core.model.Authorization
+import fr.corsicajack.seekmind.core.model.CaptureStatus
 import fr.corsicajack.seekmind.core.model.ParsedQuery
 import fr.corsicajack.seekmind.core.model.SearchFilters
 import fr.corsicajack.seekmind.core.model.SearchHit
@@ -61,6 +62,8 @@ class SearchViewModel(
     deletions: Flow<Long> = emptyFlow(),
     /** The way back to the source of a result (docs/specs/retour-source.md §3); called off the main thread. */
     private val resolveSource: suspend (SearchHit) -> SourceRef? = { null },
+    /** The capture status (docs/specs/capture.md §8): the banner of the screen. */
+    captureStatus: Flow<CaptureStatus> = emptyFlow(),
 ) : ViewModel() {
     private val _state = MutableStateFlow(SearchUiState())
     val state: StateFlow<SearchUiState> = _state.asStateFlow()
@@ -79,6 +82,9 @@ class SearchViewModel(
     private var pinned = SearchFilters()
 
     init {
+        viewModelScope.launch {
+            captureStatus.collect { status -> _state.update { it.copy(capture = status) } }
+        }
         viewModelScope.launch {
             deletions.collect { id ->
                 _state.update { state -> state.copy(results = state.results.filter { it.hit.captureId != id }) }
