@@ -78,7 +78,13 @@ private const val ALL_APPS_KEY = "*"
 
 /** The journal bound to its [JournalViewModel]. */
 @Composable
-fun JournalRoute(viewModel: JournalViewModel, zone: ZoneId, today: () -> LocalDate, modifier: Modifier = Modifier) {
+fun JournalRoute(
+    viewModel: JournalViewModel,
+    zone: ZoneId,
+    today: () -> LocalDate,
+    modifier: Modifier = Modifier,
+    onOpen: (Long) -> Unit = {},
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     JournalScreen(
         state = state,
@@ -91,6 +97,7 @@ fun JournalRoute(viewModel: JournalViewModel, zone: ZoneId, today: () -> LocalDa
         onCommit = viewModel::commitPending,
         onDeleteDay = viewModel::deleteDay,
         modifier = modifier,
+        onOpen = onOpen,
     )
 }
 
@@ -112,6 +119,8 @@ fun JournalScreen(
     onDeleteDay: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
+    /** Opens the detail of a line (EF-JRN-02). */
+    onOpen: (Long) -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.journal_deleted)
@@ -170,7 +179,7 @@ fun JournalScreen(
                     icon = SeekMindIcons.Journal,
                 )
 
-                else -> JournalList(state, zone, today, listState, onDelete, onDeleteDay)
+                else -> JournalList(state, zone, today, listState, onDelete, onDeleteDay, onOpen)
             }
         }
         SnackbarHost(hostState = snackbar, modifier = Modifier.align(Alignment.BottomCenter))
@@ -186,6 +195,7 @@ private fun JournalList(
     listState: LazyListState,
     onDelete: (Long) -> Unit,
     onDeleteDay: (LocalDate) -> Unit,
+    onOpen: (Long) -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val timeFormat = remember(locale) { DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale) }
@@ -199,6 +209,7 @@ private fun JournalList(
                     entry = entry,
                     time = timeFormat.format(Instant.ofEpochMilli(entry.lastSeenAt).atZone(zone)),
                     onDelete = onDelete,
+                    onOpen = onOpen,
                 )
             }
         }
@@ -265,7 +276,7 @@ private fun DayHeader(date: LocalDate, today: LocalDate, locale: Locale, onDelet
 }
 
 @Composable
-private fun SwipeToDeleteRow(entry: JournalEntry, time: String, onDelete: (Long) -> Unit) {
+private fun SwipeToDeleteRow(entry: JournalEntry, time: String, onDelete: (Long) -> Unit, onOpen: (Long) -> Unit) {
     val currentDelete by rememberUpdatedState(onDelete)
     val swipe = rememberSwipeToDismissBoxState()
     val deleteLabel = stringResource(R.string.journal_delete)
@@ -295,13 +306,13 @@ private fun SwipeToDeleteRow(entry: JournalEntry, time: String, onDelete: (Long)
         },
         onDismiss = { value -> if (value != SwipeToDismissBoxValue.Settled) currentDelete(entry.captureId) },
     ) {
-        JournalRow(entry = entry, time = time)
+        JournalRow(entry = entry, time = time, onOpen = onOpen)
     }
 }
 
 @Composable
-private fun JournalRow(entry: JournalEntry, time: String) {
-    Surface(modifier = Modifier.fillMaxWidth()) {
+private fun JournalRow(entry: JournalEntry, time: String, onOpen: (Long) -> Unit) {
+    Surface(onClick = { onOpen(entry.captureId) }, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.heightIn(
                 min = Spacing.minTouchTarget,

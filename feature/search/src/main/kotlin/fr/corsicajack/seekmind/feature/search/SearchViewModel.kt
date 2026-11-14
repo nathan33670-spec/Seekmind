@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -53,6 +54,8 @@ class SearchViewModel(
     private val now: () -> Long,
     private val zone: () -> ZoneId,
     private val io: CoroutineDispatcher,
+    /** Captures deleted elsewhere (detail, journal): removed from the results shown. */
+    deletions: Flow<Long> = emptyFlow(),
 ) : ViewModel() {
     private val _state = MutableStateFlow(SearchUiState())
     val state: StateFlow<SearchUiState> = _state.asStateFlow()
@@ -64,6 +67,11 @@ class SearchViewModel(
     private var pinned = SearchFilters()
 
     init {
+        viewModelScope.launch {
+            deletions.collect { id ->
+                _state.update { state -> state.copy(results = state.results.filter { it.hit.captureId != id }) }
+            }
+        }
         viewModelScope.launch {
             historyEnabled.flatMapLatest { enabled ->
                 recordHistory = enabled
@@ -230,6 +238,7 @@ class SearchViewModel(
                 understood = understood,
                 relaxed = results.relaxed,
                 relaxedLabel = results.parsed.rangeLabel,
+                terms = (results.parsed.tokens + results.parsed.codeTokens).distinct(),
                 semanticAvailable = results.semanticAvailable,
             )
         }

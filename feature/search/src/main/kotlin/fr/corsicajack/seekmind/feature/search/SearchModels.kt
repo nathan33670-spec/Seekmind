@@ -97,6 +97,8 @@ data class SearchUiState(
     val notCharged: Boolean = false,
     /** The search failed after some results were shown: they stay, with a « Réessayer » notice. */
     val failedAfterResults: Boolean = false,
+    /** Words of the last query, highlighted in the detail of a result. */
+    val terms: List<String> = emptyList(),
 )
 
 /**

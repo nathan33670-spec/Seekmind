@@ -94,7 +94,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-03 | `feature:search` | [ui-ux §3.3](../specs/ui-ux.md) · EF-JRN-02 |
+| Fait | M6-03 | `feature:search` | [ui-ux §3.3](../specs/ui-ux.md) · EF-JRN-02 |
 
 **À faire**
 
@@ -104,8 +104,8 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 **Critères d'acceptation**
 
-- [ ] Suppression → la capture disparaît de la recherche et du journal.
-- [ ] La copie pose le drapeau « contenu sensible ».
+- [x] Suppression → la capture disparaît de la recherche et du journal.
+- [x] La copie pose le drapeau « contenu sensible ».
 
 ---
 

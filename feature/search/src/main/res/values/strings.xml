@@ -38,4 +38,21 @@
     <string name="search_failed_message">Your memory is intact. Try again in a moment.</string>
     <string name="search_failed_partial">The search could not be completed</string>
     <string name="search_retry">Try again</string>
+    <string name="detail_seen">Seen from %1$s to %2$s</string>
+    <plurals name="detail_views">
+        <item quantity="one">Seen %1$d time</item>
+        <item quantity="other">Seen %1$d times</item>
+    </plurals>
+    <string name="detail_from_image">Text read in the image</string>
+    <string name="detail_copy">Copy</string>
+    <string name="detail_share">Share</string>
+    <string name="detail_delete">Delete</string>
+    <string name="detail_delete_title">Delete this screen?</string>
+    <string name="detail_delete_text">It will be removed from your memory for good, from the search and from the journal.</string>
+    <string name="detail_links">Links</string>
+    <string name="detail_delete_failed">Deletion failed. Try again.</string>
+    <string name="detail_clip_label">Remembered text</string>
+    <string name="detail_missing_title">This screen is no longer in your memory</string>
+    <string name="detail_missing_message">It was deleted meanwhile.</string>
+    <string name="detail_unavailable_message">SeekMind cannot read its data on this phone.</string>
 </resources>

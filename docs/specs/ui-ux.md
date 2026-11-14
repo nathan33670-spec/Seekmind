@@ -118,6 +118,25 @@ Application, dates de première et dernière vue, nombre de vues, titre, URL ; t
 avec les termes de la recherche surlignés ; actions : retour à la source, copier, partager, supprimer
 (avec confirmation) ; liens détectés.
 
+Mise en œuvre (M6-04) :
+
+- **Ouverture.** On ouvre le détail depuis un résultat de recherche ou une ligne du journal. La route ne
+  porte que l'identifiant de la capture. Les termes à surligner sont ceux de la dernière recherche. Ils
+  restent en mémoire et ne passent ni par la route ni par l'état sauvegardé (INV-06). Depuis le journal,
+  rien n'est surligné.
+- **Surlignage.** Les termes sont reconnus en début de mot, sans tenir compte de la casse ni des
+  accents : ce sont les mots utiles et les codes de la requête analysée.
+- **Liens détectés.** Ce sont les adresses `http(s)://` du texte, sans leur ponctuation finale et sans
+  doublon. Un lien ne s'ouvre que si l'utilisateur le touche.
+- **Copie.** Le bouton « Copier » et la sélection du texte posent le drapeau
+  `ClipDescription.EXTRA_IS_SENSITIVE` sur le presse-papiers. Pour la sélection, le presse-papiers de
+  l'écran est enveloppé. Le partage passe par le sélecteur du système.
+- **Suppression.** Une confirmation est demandée. La capture disparaît ensuite des résultats affichés et
+  du journal : un événement de suppression est partagé entre les écrans. Si la capture n'existe plus,
+  l'écran l'indique.
+- **Retour à la source.** Une page web s'ouvre dans le navigateur ; sinon, l'application s'ouvre sur son
+  écran d'accueil. Le retour précis est l'objet de M7-03.
+
 ### 3.4 Journal (`feature:journal`)
 
 Liste regroupée par jour de dernière vue (en-têtes collants : « Aujourd'hui », « Hier », puis le jour

@@ -53,6 +53,8 @@ class SearchViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
+    private val deletions = kotlinx.coroutines.flow.MutableSharedFlow<Long>(extraBufferCapacity = 8)
+
     private fun TestScope.viewModel() = SearchViewModel(
         engine = { if (available) engine else null },
         gate = gate,
@@ -64,7 +66,20 @@ class SearchViewModelTest {
         now = { NOW },
         zone = { ZoneId.of("Europe/Paris") },
         io = StandardTestDispatcher(testScheduler),
+        deletions = deletions,
     )
+
+    @Test
+    fun aCaptureDeletedElsewhereLeavesTheResults() = runTest(dispatcher) {
+        engine.respond = { request -> flow { emit(results(Stage.HYBRID, request, hit(1), hit(2))) } }
+        val vm = viewModel()
+        vm.submit("tarte")
+        advanceUntilIdle()
+        assertThat(vm.state.value.terms).containsExactly("tarte")
+        deletions.emit(1)
+        advanceUntilIdle()
+        assertThat(vm.state.value.results.map { it.hit.captureId }).containsExactly(2L)
+    }
 
     @Test
     fun idleShowsTheRecentSearchesAndTheIndexedApps() = runTest(dispatcher) {

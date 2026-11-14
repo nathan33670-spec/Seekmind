@@ -8,9 +8,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,6 +33,10 @@ class JournalViewModel(
     private val zone: () -> ZoneId,
     private val io: CoroutineDispatcher,
     private val commitScope: CoroutineScope,
+    /** Captures deleted elsewhere (the detail screen): their line goes. */
+    deletions: Flow<Long> = emptyFlow(),
+    /** Told after a line is deleted here, so that the other screens drop it too. */
+    private val onDeleted: suspend (Long) -> Unit = {},
 ) : ViewModel() {
     private val _state = MutableStateFlow(JournalUiState())
     val state: StateFlow<JournalUiState> = _state.asStateFlow()
@@ -45,6 +51,12 @@ class JournalViewModel(
 
     init {
         reload()
+        viewModelScope.launch {
+            deletions.collect { id ->
+                loaded = loaded.filter { it.captureId != id }
+                publish { it }
+            }
+        }
     }
 
     fun loadMore() {
@@ -91,7 +103,10 @@ class JournalViewModel(
         val id = _state.value.pendingDeletion ?: return
         loaded = loaded.filter { it.captureId != id }
         publish { it.copy(pendingDeletion = null) }
-        commitScope.launch(io) { store()?.delete(id) }
+        commitScope.launch(io) {
+            store()?.delete(id)
+            onDeleted(id)
+        }
     }
 
     /** Deletes every capture seen on [date] (`CaptureStore.deleteByRange`), then reloads. */
