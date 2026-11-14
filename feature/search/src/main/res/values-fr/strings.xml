@@ -60,4 +60,25 @@
     <string name="detail_missing_title">Cet écran n\'est plus dans votre mémoire</string>
     <string name="detail_missing_message">Il a été supprimé entre-temps.</string>
     <string name="detail_unavailable_message">SeekMind ne peut pas lire ses données sur ce téléphone.</string>
+    <string name="search_status_paused">Mémorisation en pause</string>
+    <string name="search_status_paused_until">Mémorisation en pause jusqu\'à %1$s</string>
+    <string name="search_status_resume">Reprendre</string>
+    <string name="search_status_disabled">Service désactivé</string>
+    <string name="search_status_reactivate">Réactiver</string>
+    <string name="search_status_help">Le service s\'arrête tout seul ?</string>
+    <string name="search_status_consent">La mémorisation n\'est pas activée</string>
+    <string name="search_status_enable">Activer la mémorisation</string>
+    <string name="search_last_capture_now">Dernière mémorisation à l\'instant</string>
+    <plurals name="search_last_capture_minutes">
+        <item quantity="one">Dernière mémorisation il y a %1$d min</item>
+        <item quantity="other">Dernière mémorisation il y a %1$d min</item>
+    </plurals>
+    <plurals name="search_last_capture_hours">
+        <item quantity="one">Dernière mémorisation il y a %1$d heure</item>
+        <item quantity="other">Dernière mémorisation il y a %1$d heures</item>
+    </plurals>
+    <plurals name="search_last_capture_days">
+        <item quantity="one">Dernière mémorisation il y a %1$d jour</item>
+        <item quantity="other">Dernière mémorisation il y a %1$d jours</item>
+    </plurals>
 </resources>

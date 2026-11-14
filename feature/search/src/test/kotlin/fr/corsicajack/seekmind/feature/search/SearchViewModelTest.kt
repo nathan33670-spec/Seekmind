@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.database.store.SearchHistoryEntry
 import fr.corsicajack.seekmind.core.database.store.SearchHistoryStore
 import fr.corsicajack.seekmind.core.model.Authorization
+import fr.corsicajack.seekmind.core.model.CaptureStatus
 import fr.corsicajack.seekmind.core.model.Entitlement
 import fr.corsicajack.seekmind.core.model.MatchKind
 import fr.corsicajack.seekmind.core.model.ParsedQuery
@@ -69,6 +70,7 @@ class SearchViewModelTest {
         zone = { ZoneId.of("Europe/Paris") },
         io = StandardTestDispatcher(testScheduler),
         deletions = deletions,
+        captureStatus = captureStatus,
         resolveSource = { hit ->
             resolved += hit.captureId
             beforeResolve(hit)
@@ -77,6 +79,20 @@ class SearchViewModelTest {
     )
 
     private val resolved = mutableListOf<Long>()
+    private val captureStatus = kotlinx.coroutines.flow.MutableStateFlow<CaptureStatus>(CaptureStatus.ConsentMissing)
+
+    @Test
+    fun theScreenFollowsTheCaptureStatus() = runTest(dispatcher) {
+        val vm = viewModel()
+        advanceUntilIdle()
+        assertThat(vm.state.value.capture).isEqualTo(CaptureStatus.ConsentMissing)
+        captureStatus.value = CaptureStatus.ServiceDisabled
+        advanceUntilIdle()
+        assertThat(vm.state.value.capture).isEqualTo(CaptureStatus.ServiceDisabled)
+        captureStatus.value = CaptureStatus.Active(lastCaptureAt = NOW - 120_000)
+        advanceUntilIdle()
+        assertThat(vm.state.value.capture).isEqualTo(CaptureStatus.Active(NOW - 120_000))
+    }
     private var beforeResolve: suspend (SearchHit) -> Unit = {}
     private var sourceOf: (SearchHit) -> SourceRef? = { hit ->
         SourceRef(SourceLevel.APP_ONLY, "intent:#Intent;end", "App ${hit.captureId}")

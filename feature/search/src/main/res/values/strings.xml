@@ -58,4 +58,25 @@
     <string name="detail_missing_title">This screen is no longer in your memory</string>
     <string name="detail_missing_message">It was deleted meanwhile.</string>
     <string name="detail_unavailable_message">SeekMind cannot read its data on this phone.</string>
+    <string name="search_status_paused">Remembering paused</string>
+    <string name="search_status_paused_until">Remembering paused until %1$s</string>
+    <string name="search_status_resume">Resume</string>
+    <string name="search_status_disabled">Service turned off</string>
+    <string name="search_status_reactivate">Turn back on</string>
+    <string name="search_status_help">Does the service stop on its own?</string>
+    <string name="search_status_consent">Remembering is not turned on</string>
+    <string name="search_status_enable">Turn on remembering</string>
+    <string name="search_last_capture_now">Last remembered just now</string>
+    <plurals name="search_last_capture_minutes">
+        <item quantity="one">Last remembered %1$d min ago</item>
+        <item quantity="other">Last remembered %1$d min ago</item>
+    </plurals>
+    <plurals name="search_last_capture_hours">
+        <item quantity="one">Last remembered %1$d hour ago</item>
+        <item quantity="other">Last remembered %1$d hours ago</item>
+    </plurals>
+    <plurals name="search_last_capture_days">
+        <item quantity="one">Last remembered %1$d day ago</item>
+        <item quantity="other">Last remembered %1$d days ago</item>
+    </plurals>
 </resources>
