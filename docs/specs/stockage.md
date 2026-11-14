@@ -205,7 +205,7 @@ interface VectorStore {
     suspend fun pendingChunks(limit: Int): List<PendingChunk>                 // les plus récents d'abord
     suspend fun saveEmbeddings(rows: List<NewEmbedding>)                      // + chunk.state = 1, une transaction
     suspend fun markFailed(chunkId: Long)
-    suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow>
+    suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow>  // codes binaire et int8, dates, paquet
     suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row>
     suspend fun pendingCount(): Int
     suspend fun resetForModel(modelId: Int)                                   // vide embedding, remet chunk.state à 0, écrit meta.model_id

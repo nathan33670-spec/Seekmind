@@ -44,7 +44,15 @@ internal class FakeVectorStore(private val codec: VectorCodec) : VectorStore {
     override suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow> {
         pageReads++
         return rows.filter { it.id > embeddingId }.take(limit).map {
-            BinaryRow(it.id, it.captureId, it.first, it.last, it.packageName, codec.binary(it.vector))
+            BinaryRow(
+                it.id,
+                it.captureId,
+                it.first,
+                it.last,
+                it.packageName,
+                codec.binary(it.vector),
+                codec.int8(it.vector),
+            )
         }
     }
 

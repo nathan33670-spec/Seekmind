@@ -6,11 +6,12 @@ import fr.corsicajack.seekmind.core.model.SearchFilters
  * The in-memory part of the vector index (docs/specs/recherche.md §6.1): one entry per vector in
  * parallel primitive arrays, oldest first. Not thread-safe: [VectorIndex] guards it.
  */
-internal class BinaryCodes(private val words: Int) {
+internal class BinaryCodes(private val words: Int, private val dimensions: Int = words * Long.SIZE_BITS) {
     var size = 0
         private set
 
     private var codes = LongArray(0)
+    private var int8 = ByteArray(0)
     private var embeddingIds = LongArray(0)
     private var captureIds = LongArray(0)
     private var firstSeen = LongArray(0)
@@ -23,13 +24,23 @@ internal class BinaryCodes(private val words: Int) {
     /** The id of the last vector added; 0 when empty. */
     val lastEmbeddingId: Long get() = if (size == 0) 0L else embeddingIds[size - 1]
 
-    fun add(embeddingId: Long, captureId: Long, first: Long, last: Long, packageName: String, code: LongArray) {
+    fun add(
+        embeddingId: Long,
+        captureId: Long,
+        first: Long,
+        last: Long,
+        packageName: String,
+        code: LongArray,
+        vector: ByteArray,
+    ) {
         require(code.size == words) { "a code holds $words words: ${code.size}" }
+        require(vector.size == dimensions) { "an int8 vector holds $dimensions bytes: ${vector.size}" }
         require(embeddingId > lastEmbeddingId) {
             "vectors come in increasing id order: $embeddingId after $lastEmbeddingId"
         }
         ensureCapacity(size + 1)
         code.copyInto(codes, size * words)
+        vector.copyInto(int8, size * dimensions)
         embeddingIds[size] = embeddingId
         captureIds[size] = captureId
         firstSeen[size] = first
@@ -45,9 +56,18 @@ internal class BinaryCodes(private val words: Int) {
     fun lastSeen(index: Int) = lastSeen[index]
 
     /** Bytes held by the arrays, for the diagnostics. */
-    val bytes: Long get() = codes.size * 8L +
+    val bytes: Long get() = codes.size * 8L + int8.size +
         (embeddingIds.size + captureIds.size + firstSeen.size + lastSeen.size) * 8L +
         packageIndices.size * 4L
+
+    /** `Σ query[i] × int8[i]` for the vector at [index]: the rescore of docs/specs/embeddings.md §6, before `/ S`. */
+    fun dotInt8(index: Int, query: FloatArray): Float {
+        require(query.size == dimensions) { "expected $dimensions components, got ${query.size}" }
+        val offset = index * dimensions
+        var sum = 0f
+        for (d in 0 until dimensions) sum += query[d] * int8[offset + d]
+        return sum
+    }
 
     /**
      * Allowed packages as a mask over the package table, or null for every package. Packages absent
@@ -101,6 +121,7 @@ internal class BinaryCodes(private val words: Int) {
         if (needed <= embeddingIds.size) return
         val capacity = maxOf(needed, embeddingIds.size * 2, INITIAL_CAPACITY)
         codes = codes.copyOf(capacity * words)
+        int8 = int8.copyOf(capacity * dimensions)
         embeddingIds = embeddingIds.copyOf(capacity)
         captureIds = captureIds.copyOf(capacity)
         firstSeen = firstSeen.copyOf(capacity)
