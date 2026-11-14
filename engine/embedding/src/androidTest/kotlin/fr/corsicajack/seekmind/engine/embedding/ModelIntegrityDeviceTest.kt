@@ -46,6 +46,24 @@ class ModelIntegrityDeviceTest {
         }
     }
 
+    /** The failed check is remembered: a search does not read and hash the model again. */
+    @Test
+    fun aFailedCheckIsNotRepeated() {
+        var modelReads = 0
+        val altered = loader { path ->
+            val bytes = context.assets.open(path).use { it.readBytes() }
+            if (path.endsWith("model.onnx")) {
+                modelReads++
+                bytes[0] = (bytes[0] + 1).toByte()
+            }
+            ByteArrayInputStream(bytes)
+        }
+        assertThrows(CorruptModelException::class.java) { altered.copyAsset(FR_ASSET) }
+        assertThrows(CorruptModelException::class.java) { altered.copyAsset(FR_ASSET) }
+        assertThrows(CorruptModelException::class.java) { altered.verifyAsset(FR_ASSET) }
+        assertThat(modelReads).isEqualTo(1)
+    }
+
     @Test
     fun anAlteredVocabularyIsRefused() {
         val altered = loader { path ->

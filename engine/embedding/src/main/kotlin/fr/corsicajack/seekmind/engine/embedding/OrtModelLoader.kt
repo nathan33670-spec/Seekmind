@@ -9,6 +9,7 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.nio.channels.FileChannel
+import java.util.concurrent.ConcurrentHashMap
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -42,6 +43,10 @@ class OrtModelLoader(
     private val openAsset: (String) -> InputStream = { context.assets.open(it) },
 ) {
     private val environment: OrtEnvironment = OrtEnvironment.getEnvironment()
+
+    // A failed check, by asset and manifest: rethrown without reading the model again, until another
+    // application version brings another manifest.
+    private val failures = ConcurrentHashMap<String, CorruptModelException>()
 
     fun open(location: ModelLocation, intraOpThreads: Int): LoadedSession {
         val options = sessionOptions(intraOpThreads)
@@ -90,17 +95,22 @@ class OrtModelLoader(
         ) {
             return target
         }
+        val failureKey = path + "\n" + manifest.decodeToString()
+        failures[failureKey]?.let { throw it }
         if (!directory.isDirectory && !directory.mkdirs()) throw IOException("cannot create $directory")
         copiedManifest.delete()
-        files.keys.filter { it != name }.forEach { check(sibling(path, it), files[it]) }
         val partial = File(target.path + ".part")
         try {
+            files.keys.filter { it != name }.forEach { check(sibling(path, it), files[it]) }
             openChecked(path).use { input ->
                 partial.outputStream().use { ModelIntegrity.copyChecked(name, input, it, files[name]) }
             }
         } catch (failure: Throwable) {
             partial.delete()
-            if (failure is CorruptModelException) target.delete()
+            if (failure is CorruptModelException) {
+                target.delete()
+                failures[failureKey] = failure
+            }
             throw failure
         }
         if (!partial.renameTo(target)) throw IOException("cannot rename $partial")
@@ -110,9 +120,16 @@ class OrtModelLoader(
 
     /** Checks every file of the manifest next to [path] without copying them. */
     fun verifyAsset(path: String) {
-        val files = manifest(path).second
-        if (path.substringAfterLast('/') !in files) throw CorruptModelException("$path is not in its manifest")
-        files.forEach { (file, expected) -> check(sibling(path, file), expected) }
+        val (manifest, files) = manifest(path)
+        val failureKey = path + "\n" + manifest.decodeToString()
+        failures[failureKey]?.let { throw it }
+        try {
+            if (path.substringAfterLast('/') !in files) throw CorruptModelException("$path is not in its manifest")
+            files.forEach { (file, expected) -> check(sibling(path, file), expected) }
+        } catch (failure: CorruptModelException) {
+            failures[failureKey] = failure
+            throw failure
+        }
     }
 
     private fun check(asset: String, expected: ExpectedFile?) = openChecked(asset).use {

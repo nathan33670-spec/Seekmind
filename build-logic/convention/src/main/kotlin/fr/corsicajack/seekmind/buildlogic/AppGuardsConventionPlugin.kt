@@ -59,10 +59,8 @@ class AppGuardsConventionPlugin : Plugin<Project> {
             tasks.register<VerifyBundleTask>("verify${suffix}Bundle") {
                 group = "verification"
                 description = "Checks the content and the download size of the ${variant.name} bundle."
-                dependsOn(makeApks)
-                apks.set(
-                    layout.buildDirectory.file("intermediates/apks_from_bundle/${variant.name}/$makeApks/bundle.apks"),
-                )
+                // The declared output of the AGP task, whatever its path (it also carries the task dependency).
+                apks.fileProvider(tasks.named(makeApks).map { it.outputs.files.singleFile })
                 limitBytes.set(MAX_BASE_DOWNLOAD_BYTES)
                 report.set(layout.buildDirectory.file("reports/guards/bundle-${variant.name}.txt"))
             }
