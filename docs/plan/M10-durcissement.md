@@ -77,6 +77,10 @@ protocole et l'outillage, puis corrige d'après les résultats.
    présente dans plus de 60 % d'entre elles (barre d'onglets, menus) est retirée du texte soumis au
    modèle d'embeddings. Elle reste dans le texte stocké et dans l'index plein texte.
 2. Mesurer l'effet sur le jeu d'évaluation, enrichi de captures comportant ce bruit.
+3. Analyseur temporel : un jour de la semaine précédé de « le » (« cours de yoga le lundi », « réunion le
+   jeudi ») peut désigner une habitude, et non une date. Aujourd'hui, il devient un filtre de date, et la
+   requête q78 du jeu d'évaluation est manquée (recherche §11.1). À trancher sur des requêtes réelles :
+   ignorer cette forme, ou chercher avec et sans le filtre.
 
 **Critères d'acceptation**
 

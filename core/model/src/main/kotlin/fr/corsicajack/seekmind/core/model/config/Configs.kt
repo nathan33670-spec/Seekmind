@@ -93,6 +93,13 @@ data class SearchConfig(
     val indexPageSize: Int = 5_000,
     val cacheSize: Int = 5,
     val cacheTtlMs: Long = 600_000,
+    /** Fusion weights `w_lex`, `w_sem` per query profile (§7). */
+    val lexicalWeightDefault: Double = 1.0,
+    val semanticWeightDefault: Double = 1.0,
+    val lexicalWeightCode: Double = 2.0,
+    val semanticWeightCode: Double = 0.5,
+    val lexicalWeightNatural: Double = 0.8,
+    val semanticWeightNatural: Double = 1.2,
 )
 
 /** docs/specs/monetisation.md §7. The `offline` variant injects `dailyFreeCredits = 5`. */
