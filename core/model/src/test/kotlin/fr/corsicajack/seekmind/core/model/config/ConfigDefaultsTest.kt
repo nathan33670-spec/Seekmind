@@ -81,7 +81,7 @@ class ConfigDefaultsTest {
     fun `search, docs-specs-recherche §10`() {
         assertThat(SearchConfig()).isEqualTo(
             SearchConfig(
-                lexicalLimit = 100, binaryTopK = 200, semanticTopK = 100, semanticFloor = 0.78f, rrfK = 60,
+                lexicalLimit = 100, binaryTopK = 400, semanticTopK = 100, semanticFloor = 0.78f, rrfK = 60,
                 recencyBoost = 0.15, recencyHalfLifeDays = 30.0, collapseMaxHamming = 6, indexPageSize = 5_000,
                 cacheSize = 5, cacheTtlMs = 600_000,
             ),

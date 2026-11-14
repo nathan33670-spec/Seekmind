@@ -188,7 +188,7 @@ sequenceDiagram
   and
     H->>E: embed("query: …")
     E-->>H: vecteur
-    H->>H: index binaire en mémoire → 200 candidats → rescore int8
+    H->>H: index binaire en mémoire → 400 candidats → rescore int8
   end
   H->>H: fusion RRF, filtres
   H-->>UI: résultats hybrides (émission 2)

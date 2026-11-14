@@ -230,7 +230,7 @@ Soit 84 octets par vecteur : 8 Mo pour 100 000 vecteurs, 25 Mo pour 300 000.
 
 1. `q = EmbeddingEngine.embedQuery(parsed.text)` ; code binaire de `q`.
 2. **Présélection** : parcours linéaire ; pour chaque vecteur passant les filtres (dates, paquets),
-   distance de Hamming sur 6 mots (`Long.bitCount`) ; conservation des `binaryTopK` (200) plus proches
+   distance de Hamming sur 6 mots (`Long.bitCount`) ; conservation des `binaryTopK` (400) plus proches
    dans un tas borné.
 3. **Rescore** : lecture des vecteurs int8 des candidats (`VectorStore.int8Vectors`) ; similarité
    `(Σ q[i] × d[i]) / S`.
@@ -243,6 +243,58 @@ M5-07** sur le jeu d'évaluation (plus haute valeur qui ne dégrade pas le Rappe
 
 Si le moteur d'embeddings est indisponible ou qu'aucun vecteur n'existe encore, la recherche se limite
 aux mots-clés et `semanticAvailable = false`.
+
+### 6.3 Implémentation (M5-05)
+
+Paquet `fr.corsicajack.seekmind.engine.search.vector` :
+
+- `VectorIndex.search(query, filters)` prend le vecteur de la requête (calculé par la recherche hybride,
+  M5-06) et rend des `SemanticHit(captureId, embeddingId, similarity)` : meilleur fragment de chaque
+  capture, trié par similarité puis par dernière vue. `refresh()` met l'index à jour sans chercher (à
+  l'ouverture de l'écran), `release()` le libère, `isEmpty()` sert à `semanticAvailable`.
+- `BinaryCodes` tient les tableaux du §6.1, qui grandissent par doublement ; les noms de paquets sont
+  remplacés par un indice dans une table. Les filtres sont appliqués pendant le parcours : dates
+  (`last_seen_at ≥ from` et `first_seen_at ≤ to`, comme la requête lexicale) et paquets (masque sur la
+  table). Le tas borné des candidats est fait de deux `IntArray` alloués une fois : le parcours
+  n'alloue rien. À distance égale, le vecteur le plus récent est gardé.
+- Codes et rescore : `VectorCodec` de `engine:embedding`.
+
+Limite connue : les dates de première et dernière vue sont celles du chargement. Une capture revue
+(`touch`) n'a pas de nouveau vecteur et garde son ancienne dernière vue jusqu'au prochain rechargement
+complet. Un filtre de dates peut donc l'exclure de la branche sémantique ; la branche lexicale, elle, la
+trouve.
+
+Mesures (JVM, 20 000 vecteurs normalisés, 100 requêtes, rappel des 10 plus proches voisins exacts parmi
+les résultats, présélection puis rescore int8) :
+
+| Jeu de vecteurs | Rappel@10, 400 candidats | 200 candidats |
+|---|---|---|
+| 2 000 groupes de 10 vecteurs, requêtes tirées près d'un centre | 0,997 | 0,995 |
+| Mêmes groupes autour d'une direction commune (similarité moyenne 0,64, comme les vecteurs e5) | **0,924** | 0,878 |
+| Vecteurs isotropes (cas le plus défavorable pour un code de signes) | 0,806 | 0,677 |
+
+Le code de signes perd de l'information quand tous les vecteurs partagent une direction : avec 200
+candidats, le cas proche des vecteurs e5 restait sous la cible de 0,90. **`binaryTopK` vaut donc 400**
+(décision du porteur, 13 novembre 2026), au prix de 200 lectures int8 de plus par recherche. Le ticket
+M5-07 le recalibre sur les vrais vecteurs.
+
+Coût sur la base chiffrée (`VectorIndexDeviceTest`, 20 000 vecteurs, médiane de 15 recherches sans
+filtre, émulateurs x86_64 de la CI, APK de test debuggable, exécution `device-tests` 43518022426) :
+
+| | API 30 | API 34 | API 36 |
+|---|---|---|---|
+| Recherche, 400 candidats | 54 ms | 29 ms | 30 ms |
+| Recherche, 200 candidats | 22 ms | 17 ms | 14 ms |
+| Chargement de l'index (20 000 vecteurs) | 2,0 à 2,7 s | 1,2 à 1,4 s | 1,2 à 1,9 s |
+
+**À suivre (M5-08, mesures à 100 000 captures).** Avec 400 candidats, la branche sémantique atteint
+déjà, à 20 000 vecteurs, le budget de 30 ms d'ENF-PERF-04 (recherche hors embedding de la requête). Le
+temps vient surtout de la lecture des vecteurs int8 en base (le parcours binaire est de l'ordre de la
+milliseconde). Le chargement est lui aussi loin de la cible de l'ADR-0005 (≤ 500 ms pour 100 000
+vecteurs). Pistes : lire les int8 en une requête par lot d'identifiants plus larges, garder les int8 en
+mémoire (384 octets par vecteur), ou paginer le chargement par plus grosses pages. Ces mesures sur
+émulateur debuggable sont à confirmer sur le téléphone. Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour
+10 parcours, mesurés par `ThreadMXBean`).
 
 ## 7. Fusion
 
@@ -300,7 +352,7 @@ fusion(A, B) → assouplissement éventuel               → émettre SearchResu
 ```kotlin
 data class SearchConfig(
     val lexicalLimit: Int = 100,
-    val binaryTopK: Int = 200,
+    val binaryTopK: Int = 400,
     val semanticTopK: Int = 100,
     val semanticFloor: Float = 0.78f,
     val rrfK: Int = 60,

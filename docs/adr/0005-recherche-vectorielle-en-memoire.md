@@ -23,7 +23,8 @@ Les vecteurs sont de simples colonnes BLOB dans la base chiffrée ; la recherche
 est faite **par l'application**, en deux étapes :
 
 1. **Présélection binaire en mémoire** : chaque vecteur a un code de 384 bits (signe de chaque
-   composante). Un parcours linéaire par distance de Hamming retient 200 candidats.
+   composante). Un parcours linéaire par distance de Hamming retient 400 candidats (200 à l'origine ;
+   porté à 400 le 13 novembre 2026, au ticket M5-05, voir les conséquences).
 2. **Rescore** : les vecteurs int8 des candidats sont lus en base et comparés au vecteur de la requête.
 
 Tout est en Kotlin, derrière l'interface `VectorIndex`. Détail : [specs/recherche §6](../specs/recherche.md).
@@ -32,11 +33,13 @@ Tout est en Kotlin, derrière l'interface `VectorIndex`. Détail : [specs/recher
 
 - Aucune compilation native supplémentaire ; logique entièrement testable sur JVM.
 - Coût à 100 000 vecteurs : environ 8 Mo de mémoire et quelques millisecondes de parcours ; le rescore
-  lit 200 lignes. La cible « hors embedding de la requête ≤ 30 ms » est réaliste ; le temps total est
+  lit 400 lignes. La cible « hors embedding de la requête ≤ 30 ms » est réaliste ; le temps total est
   dominé par l'embedding de la requête, d'où l'affichage immédiat des résultats par mots-clés.
 - Le rappel de la présélection binaire à 384 dimensions est inférieur à celui d'une recherche exacte :
   il est mesuré par les tests (comparaison à la recherche exhaustive) et par l'évaluation de la
-  recherche ; `binaryTopK` est le réglage.
+  recherche ; `binaryTopK` est le réglage. Mesuré au ticket M5-05 sur 20 000 vecteurs qui partagent une
+  direction, comme les vecteurs e5 : rappel des 10 plus proches voisins de 0,878 avec 200 candidats, de
+  0,924 avec 400. Le porteur a retenu 400 ; M5-07 recalibre sur les vrais vecteurs.
 - L'index est rechargé depuis la base à l'ouverture de la recherche (cible ≤ 500 ms pour 100 000).
 - Au-delà de quelques centaines de milliers de vecteurs, il faudra un index approché : l'interface
   `VectorIndex` permet de le substituer sans toucher au reste.
