@@ -21,7 +21,8 @@ import java.util.concurrent.TimeUnit
  * Runs the embedding batches (docs/specs/indexation.md §7). Built by the worker factory of :app, which
  * passes a runner on the database of the process, or null while it is not open. A model that cannot be
  * loaded asks for a retry, with an exponential backoff; any other end is a success, even with fragments
- * left: the next period goes on. The charging work plans its successor while fragments are left.
+ * left: the next period goes on. The charging work plans its successor only when its deadline ended it
+ * with fragments left ([EmbeddingScheduler.planAgain]).
  */
 class EmbeddingWorker(
     context: Context,
@@ -45,7 +46,7 @@ class EmbeddingWorker(
             "median_ms_per_chunk" to report.medianMsPerChunk,
         )
         if (report.reason == StopReason.MODEL_UNAVAILABLE) return Result.retry()
-        if (tags.contains(EmbeddingScheduler.CHARGING) && pendingCount() > 0) {
+        if (tags.contains(EmbeddingScheduler.CHARGING) && EmbeddingScheduler.planAgain(report.reason, pendingCount())) {
             EmbeddingScheduler.scheduleCharging(WorkManager.getInstance(applicationContext), after = true)
         }
         return Result.success()
@@ -75,6 +76,15 @@ object EmbeddingScheduler {
         .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
         .addTag(CHARGING)
         .build()
+
+    /**
+     * Whether the charging work plans its successor: only when its deadline stopped it with fragments
+     * left. Not when the governor suspends the embeddings (a successor would start at once, again and
+     * again, while the phone is hot on charge: the periodic work resumes later), nor when WorkManager
+     * stopped it (WorkManager runs it again once its constraints hold), nor when the model is missing
+     * (WorkManager retries with a backoff).
+     */
+    fun planAgain(reason: StopReason, pending: Int): Boolean = reason == StopReason.DEADLINE && pending > 0
 
     /** At start-up and when the service connects; keeps the works already planned. */
     fun schedule(workManager: WorkManager) {

@@ -161,6 +161,14 @@ interface VectorStore {
     suspend fun modelId(): Int?
 
     /**
+     * meta.int8_scale: the scale the stored int8 codes were made with; null before the first
+     * [setInt8Scale]. Codes made at another scale than the codec's are misread: reset first.
+     */
+    suspend fun int8Scale(): Float?
+
+    suspend fun setInt8Scale(scale: Float)
+
+    /**
      * meta.index_generation, 0 before any deletion: incremented in the same transaction as every
      * deletion of captures or of vectors; the in-memory index reloads when it changes.
      */

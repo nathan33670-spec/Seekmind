@@ -13,6 +13,7 @@ import fr.corsicajack.seekmind.core.database.schema.EmbeddingEntity
 
 internal const val INDEX_GENERATION = "index_generation"
 internal const val MODEL_ID = "model_id"
+internal const val INT8_SCALE = "int8_scale"
 
 /** Row types read by the DAOs. */
 internal data class SummaryRow(
@@ -229,6 +230,14 @@ internal abstract class VectorDao {
 
     @Query("SELECT CAST(value AS INTEGER) FROM meta WHERE key = '$MODEL_ID'")
     abstract suspend fun modelId(): Int?
+
+    @Query("SELECT value FROM meta WHERE key = '$INT8_SCALE'")
+    abstract suspend fun int8Scale(): String?
+
+    @Query(
+        "INSERT INTO meta(key, value) VALUES ('$INT8_SCALE', :scale) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    )
+    abstract suspend fun setInt8Scale(scale: String)
 
     @Query(
         "INSERT INTO meta(key, value) VALUES ('$INDEX_GENERATION', '1') " +

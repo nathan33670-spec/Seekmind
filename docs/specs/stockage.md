@@ -137,7 +137,7 @@ CREATE TABLE metric_daily (
 
 CREATE TABLE meta (
   key   TEXT PRIMARY KEY NOT NULL,
-  value TEXT NOT NULL                      -- schema_version, model_id (modèle actif), index_generation
+  value TEXT NOT NULL                      -- schema_version, model_id (modèle actif), int8_scale, index_generation
 );
 ```
 
@@ -211,6 +211,8 @@ interface VectorStore {
     suspend fun pendingCount(): Int
     suspend fun resetForModel(modelId: Int)                                   // vide embedding, remet chunk.state à 0, écrit meta.model_id
     suspend fun modelId(): Int?                                               // meta.model_id, null avant le premier resetForModel (M4-05)
+    suspend fun int8Scale(): Float?                                           // meta.int8_scale : échelle des codes int8 stockés (M4-05)
+    suspend fun setInt8Scale(scale: Float)
     suspend fun indexGeneration(): Long                                       // meta.index_generation, 0 au départ
 }
 

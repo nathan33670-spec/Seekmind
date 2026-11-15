@@ -336,8 +336,13 @@ référence, modèles `fr` et `multi` quantifiés :
 La plus grande composante vaut 0,18 pour les deux modèles. Le critère du ticket (moins de 0,1 %
 d'écrêtage) admettrait jusqu'à `S ≈ 965`, mais le gain de cosinus au-delà de 600 est négligeable ;
 600 garde une marge pour des textes réels aux composantes plus fortes que celles des phrases de
-référence (jusqu'à 0,21 sans écrêtage). Un changement d'échelle n'exige aucune migration : la
-similarité de rescore divise par `S`.
+référence (jusqu'à 0,21 sans écrêtage).
+
+**Un changement d'échelle impose de recalculer les vecteurs.** Les codes stockés valent
+`round(v × S_ancien)` et le rescore divise par `S_nouveau` : toute similarité serait multipliée par
+`S_ancien / S_nouveau` (0,67 de 400 à 600) et passerait sous `semanticFloor`, sans erreur. L'échelle est
+donc enregistrée dans `meta.int8_scale` ; les lots d'embeddings la comparent à celle du codec, comme le
+modèle, et réinitialisent les vecteurs si elle diffère ([indexation §7.3](indexation.md)).
 
 Similarité de rescore entre une requête en flottants `q` et un document int8 `d` :
 `(Σ q[i] × d[i]) / S`, approximation du cosinus.

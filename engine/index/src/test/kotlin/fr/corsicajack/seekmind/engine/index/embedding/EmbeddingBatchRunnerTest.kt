@@ -33,8 +33,12 @@ class EmbeddingBatchRunnerTest {
     private val provider = object : EmbeddingEngineProvider {
         var loadFails = false
 
+        /** Loads that succeed before every later one fails, as after a release and a failed reload. */
+        var loadsBeforeFailing = Int.MAX_VALUE
+
         override suspend fun <T> use(block: suspend (EmbeddingEngine) -> T): T {
             check(!loadFails) { "model missing" }
+            check(loadsBeforeFailing-- > 0) { "reload failed" }
             return block(engine)
         }
     }
@@ -132,6 +136,39 @@ class EmbeddingBatchRunnerTest {
     }
 
     @Test
+    fun anEngineLostBetweenTwoBatchesCountsNothingAgainstTheFragments() = runTest {
+        store.add(10)
+        // The first use checks the model, the second embeds a batch, every later one fails.
+        provider.loadsBeforeFailing = 2
+        val report = runner().run()
+        assertThat(report.reason).isEqualTo(StopReason.MODEL_UNAVAILABLE)
+        assertThat(report.embedded).isEqualTo(4)
+        assertThat(report.failed).isEqualTo(0)
+        assertThat(store.attempts).isEmpty()
+        assertThat(store.pending).hasSize(6)
+    }
+
+    @Test
+    fun anotherInt8ScaleResetsTheVectorsFirst() = runTest {
+        store.scale = 400f
+        store.add(2)
+        runner().run()
+        assertThat(store.resets).containsExactly(FakeEmbeddingEngine.MODEL_ID)
+        assertThat(store.scale).isEqualTo(EmbeddingConfig().int8Scale)
+    }
+
+    @Test
+    fun theChargingWorkPlansAgainOnlyAfterItsDeadline() {
+        assertThat(EmbeddingScheduler.planAgain(StopReason.DEADLINE, pending = 5)).isTrue()
+        assertThat(EmbeddingScheduler.planAgain(StopReason.DEADLINE, pending = 0)).isFalse()
+        // A successor would start at once and stop again, as long as the phone is hot on charge.
+        assertThat(EmbeddingScheduler.planAgain(StopReason.THROTTLED, pending = 5)).isFalse()
+        assertThat(EmbeddingScheduler.planAgain(StopReason.STOPPED, pending = 5)).isFalse()
+        assertThat(EmbeddingScheduler.planAgain(StopReason.MODEL_UNAVAILABLE, pending = 5)).isFalse()
+        assertThat(EmbeddingScheduler.planAgain(StopReason.QUEUE_EMPTY, pending = 0)).isFalse()
+    }
+
+    @Test
     fun anotherModelResetsTheVectorsFirst() = runTest {
         store.model = 1
         store.add(2)
@@ -171,6 +208,7 @@ class EmbeddingBatchRunnerTest {
         val failedChunks = mutableListOf<Long>()
         val resets = mutableListOf<Int>()
         var model: Int? = FakeEmbeddingEngine.MODEL_ID
+        var scale: Float? = EmbeddingConfig().int8Scale
 
         fun add(count: Int, from: Int = 1, title: String? = null) {
             for (id in from until from + count) {
@@ -201,6 +239,12 @@ class EmbeddingBatchRunnerTest {
         }
 
         override suspend fun modelId(): Int? = model
+
+        override suspend fun int8Scale(): Float? = scale
+
+        override suspend fun setInt8Scale(scale: Float) {
+            this.scale = scale
+        }
 
         override suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow> = emptyList()
 
