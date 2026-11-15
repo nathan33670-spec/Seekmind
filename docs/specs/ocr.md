@@ -183,7 +183,13 @@ L'OCR est lancé si **toutes** ces conditions sont vraies :
 | Le budget le permet | ≥ 5 s depuis le dernier OCR, ≤ 6 par minute, ≤ 400 par jour |
 
 Les seuils sont des valeurs de départ ; le ticket M3-04 les ajuste sur dix applications réelles et
-consigne les mesures.
+consigne les mesures (validation reportée à M10-01, décision du porteur du 15 novembre 2026).
+
+Implémentation (M3-04), paquet `fr.corsicajack.seekmind.engine.ocr.policy` : `OcrPolicy.shouldOcr`
+vérifie les conditions dans l'ordre du tableau. Une réponse positive compte dans le budget et entre
+dans le mémo, quel que soit le sort de la capture d'écran : un écran dont l'OCR a échoué n'est pas
+relu aussitôt. La minute et le jour sont des fenêtres glissantes sur l'horloge monotone
+(`Clock.elapsedRealtime`).
 
 ## 6. Gouverneur thermique et énergétique
 
@@ -208,7 +214,17 @@ data class GovernorState(
 | En charge | `ACTION_BATTERY_CHANGED` | `embeddingThreads = 4` (sinon 2) |
 
 Les récepteurs sont enregistrés dynamiquement, non exportés. Le gouverneur est partagé avec
-`engine:index` (lots d'embeddings).
+`engine:index` (lots d'embeddings) : l'interface `ThermalGovernor`, `GovernorState` et `ThrottleReason`
+sont des ports de `core:model` (`port/DevicePorts.kt`), comme `OcrEngine`, pour qu'aucun des deux
+moteurs ne dépende de l'autre.
+
+Implémentation (M3-04), paquet `fr.corsicajack.seekmind.engine.ocr.policy` :
+
+| Élément | Rôle |
+|---|---|
+| `GovernorRules` | État pour des signaux donnés. Raison retenue quand plusieurs signaux tiennent : chaleur, puis économie d'énergie, puis batterie. Fils des embeddings : `EmbeddingConfig.threadsCharging` en charge, sinon `threadsDefault`. |
+| `AndroidDeviceSignals` | Signaux de l'appareil : écouteur d'état thermique de `PowerManager`, un récepteur non exporté pour `ACTION_POWER_SAVE_MODE_CHANGED` et `ACTION_BATTERY_CHANGED` (diffusion persistante : l'état initial est lu à l'enregistrement). « En charge » signifie branché (`EXTRA_PLUGGED` non nul), que la batterie se remplisse ou non. |
+| `SignalThermalGovernor` | `ThermalGovernor` sur un flux de signaux, réels ou simulés dans les tests. |
 
 ## 7. Fusion avec le texte de l'arbre
 

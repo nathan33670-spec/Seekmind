@@ -68,7 +68,7 @@ flowchart LR
 | `:benchmark` | Microbenchmarks des modules `core` (outillage de test, jamais livré) | `InsertCaptureBenchmark`, `LexicalQueryBenchmark` |
 | `:engine:privacy` | Décision de capture, familles et listes d'applications, masquage | `PrivacyGate`, `AppFamilies`, `SensitiveApps`, `Redactor` |
 | `:engine:capture` | Service d'accessibilité, anti-rebond, lecture de l'arbre, orchestration | `SeekMindAccessibilityService`, `Debouncer`, `TreeExtractor`, `CapturePipeline` |
-| `:engine:ocr` | Capture d'écran en RAM, sonde de fenêtre sécurisée, reconnaissance | `ScreenshotSource`, `SecureWindowProbe`, `OcrEngine`, `OcrPolicy`, `ThermalGovernor` |
+| `:engine:ocr` | Capture d'écran en RAM, sonde de fenêtre sécurisée, reconnaissance | `ScreenshotSource`, `SecureWindowProbe`, `OcrEngine`, `OcrPolicy`, `ThermalGovernor` (ports dans `core:model`) |
 | `:engine:index` | Normalisation, déduplication, fragments, file et lot d'embeddings | `TextNormalizer`, `SimHash`, `Chunker`, `IngestService`, `EmbeddingWorker` |
 | `:engine:embedding` | Tokenizer, runtime ONNX, quantification, catalogue de modèles et packs de langue | `Tokenizer`, `EmbeddingEngine`, `VectorCodec`, `ModelCatalog`, `ModelPackInstaller` |
 | `:engine:search` | Analyse de requête, recherche lexicale et vectorielle, fusion | `QueryParser`, `LexicalSearcher`, `VectorIndex`, `HybridSearcher` |
