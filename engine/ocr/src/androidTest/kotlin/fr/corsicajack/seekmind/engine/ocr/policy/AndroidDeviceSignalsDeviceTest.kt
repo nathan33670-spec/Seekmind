@@ -1,6 +1,10 @@
 package fr.corsicajack.seekmind.engine.ocr.policy
 
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
 import android.os.ParcelFileDescriptor
+import android.os.PowerManager
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -98,7 +102,7 @@ class AndroidDeviceSignalsDeviceTest {
             SystemClock.sleep(POLL_MS)
         }
         val state = governor.state.value
-        val message = "signals ${signals.state.value}"
+        val message = if (state.reason == expected) "" else diagnosis()
         assertWithMessage(message).that(state.reason).isEqualTo(expected)
         assertWithMessage(message).that(state.allowsOcr).isEqualTo(expected == null)
         assertWithMessage(message).that(state.allowsEmbedding).isEqualTo(expected == null)
@@ -109,14 +113,31 @@ class AndroidDeviceSignalsDeviceTest {
         while (!condition(signals.state.value) && SystemClock.elapsedRealtime() < deadline) {
             SystemClock.sleep(POLL_MS)
         }
-        assertWithMessage("$what: signals ${signals.state.value}").that(condition(signals.state.value)).isTrue()
+        assertWithMessage("$what: ${diagnosis()}").that(condition(signals.state.value)).isTrue()
     }
 
-    /** Runs [command] and waits for its end (its output is read and dropped). */
-    private fun shell(command: String) {
+    /** Runs [command] and waits for its end; returns its output. */
+    private fun shell(command: String): String =
         ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand(command)).use {
-            it.readBytes()
+            it.readBytes().decodeToString()
         }
+
+    /**
+     * What the device itself says, next to what the receiver saw: the last battery broadcast (sticky),
+     * the power manager, and the battery service. No captured content (INV-07).
+     */
+    private fun diagnosis(): String {
+        val sticky = instrumentation.targetContext.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val power = instrumentation.targetContext.getSystemService(PowerManager::class.java)
+        val battery = shell("dumpsys battery").lines().filter { line ->
+            listOf("powered", "status", "level").any { line.contains(it, ignoreCase = true) }
+        }.joinToString("; ") { it.trim() }
+        return "signals ${signals.state.value}; sticky plugged=${sticky?.getIntExtra(
+            BatteryManager.EXTRA_PLUGGED,
+            -1,
+        )} " +
+            "level=${sticky?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)}; powerSave=${power.isPowerSaveMode}; " +
+            "low_power=${shell("settings get global low_power").trim()}; battery: $battery"
     }
 
     private companion object {
