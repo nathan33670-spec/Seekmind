@@ -494,7 +494,7 @@ Entre parenthèses, la première mesure (exécution 43585148277, modèles quanti
   - Les poids du profil naturel (1,0/1,0 ou 0,6/1,4) ne changent rien. Un poids sémantique de 1,3 pour le profil par défaut fait perdre une requête à chaque modèle.
 
   **Les réglages par défaut sont conservés.** Une recalibration demande un jeu plus grand ou des captures réelles (M10-03).
-- **Quantification.** Sur la JVM, sans les filtres, la quantification par tenseur faisait passer le Rappel@5 par le sens de 0,863 à 0,762 pour `fr` et à 0,800 pour `multi`. Les modèles sont maintenant quantifiés par canal, avec des poids non signés (0,838 pour `fr`, 0,863 pour `multi`, [embeddings §2](embeddings.md)) : c'est la décision du porteur de traiter cette perte dans un ticket séparé ; le seuil de perte admise lui reste soumis.
+- **Quantification.** Sur la JVM, sans les filtres, la quantification par tenseur faisait passer le Rappel@5 par le sens de 0,863 à 0,762 pour `fr` et à 0,800 pour `multi`. Les modèles sont maintenant quantifiés par canal, avec des poids non signés (0,838 pour `fr`, 0,863 pour `multi`, [embeddings §2](embeddings.md)) : décision du porteur, qui admet au plus deux requêtes perdues à la quantification.
 
 ## 12. Tests attendus
 

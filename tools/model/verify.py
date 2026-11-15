@@ -5,7 +5,7 @@
 - vocab.bin decodes, and matches the tokenizer of the pinned revision;
 - MODEL_MANIFEST.json describes the files of the set;
 - mean cosine between the original and the quantized model >= 0.98 on 200 sentences;
-- Recall@5 by meaning on testdata/eval: the quantized model loses at most 0.03 (eval_set.py);
+- Recall@5 by meaning on testdata/eval: the quantized model loses at most 2 queries (eval_set.py);
 - with --lock: model.onnx and vocab.bin match engine/embedding/model.lock.json.
 """
 

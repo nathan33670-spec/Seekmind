@@ -56,10 +56,13 @@ vecteurs se rapprochent de ceux des téléphones.
 Contrôles de qualité, pour chaque modèle (échec du script sinon) :
 
 - cosinus moyen entre vecteurs du modèle d'origine et du modèle quantifié ≥ 0,98 sur 200 phrases ;
-- sur le jeu d'évaluation de la recherche, Rappel@5 par le sens du modèle quantifié ≥ Rappel@5
-  d'origine − 0,03 (`eval_set.py`, ticket M5-07). Sur 80 requêtes, une requête vaut 0,0125 : le seuil
-  admet deux requêtes perdues. Avec 0,02, il n'en admettrait qu'une, et une seule requête de plus ou de
-  moins ferait basculer le contrôle.
+- sur le jeu d'évaluation de la recherche (80 requêtes), le modèle quantifié retrouve parmi ses cinq
+  premiers résultats, par le sens, au plus **deux requêtes de moins** que le modèle d'origine
+  (`eval_set.py`, `MAX_LOST_QUERIES`, ticket M5-07 ; décision du porteur du 15 novembre 2026). Le
+  seuil est un nombre de requêtes et non une fraction, pour ne pas dériver si le jeu change de taille.
+  La marge est nulle pour `fr`, qui en perd exactement deux (0,863 → 0,838) : une requête de plus
+  perdue, à un changement d'outil ou de version d'ONNX Runtime, fait échouer la construction et
+  rouvre la décision. `multi` n'en perd aucune.
 
 Le modèle `fr` est exporté par `torch.onnx.export` (exportateur TorchScript, opset 17) : entrées
 `input_ids` et `attention_mask`, sortie `last_hidden_state`, axes de lot et de séquence dynamiques. Le
