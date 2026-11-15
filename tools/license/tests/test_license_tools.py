@@ -25,6 +25,13 @@ def test_keygen_writes_a_private_pem_readable_by_its_owner_only_and_a_public_spk
     assert verify(public, token)
 
 
+def test_keygen_refuses_a_directory_of_the_repository():
+    with pytest.raises(ValueError):
+        keygen("license", "l9", HERE / "out")
+    with pytest.raises(SystemExit):
+        __import__("seekmind_keys").main(["keygen", "--purpose", "license", "--kid", "l9"])
+
+
 def test_keygen_never_overwrites_a_key(tmp_path):
     keygen("license", "l9", tmp_path)
     with pytest.raises(FileExistsError):

@@ -52,6 +52,10 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
    compare alors la version (`consent.version == DISCLOSURE_VERSION`, et plus seulement `consent != null`) :
    un consentement d'une version périmée donne `ConsentMissing`, jamais `ServiceDisabled`. Sinon, le
    bandeau « Réactiver » (M6-09) ouvrirait les réglages du système sans nouvelle divulgation.
+   La même comparaison vaut pour les deux autres contrôles du consentement, et d'abord pour celui du
+   pipeline, qui fait foi pour INV-04 : `CaptureGate` dans `PipelineModule` (`:app`) et la porte
+   d'`EventRouter` (`engine:capture`). Une règle unique, par exemple `Settings.hasCurrentConsent(version)`,
+   appelée par les trois, évite qu'ils divergent.
 8. Texte de divulgation de la variante `ads` (celui de la variante `offline` arrive avec M8-06).
 9. Emplacement pour la proposition du pack de langue en fin de parcours (branchée par M6-06).
 
@@ -177,7 +181,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 - [x] Test Compose : verrouillé → aucun nœud de contenu dans l'arbre de l'interface.
 - [x] Retour au premier plan avant 5 minutes → pas de nouvelle authentification ; après → authentification.
-- [x] Toutes les activités déclarées portent `FLAG_SECURE` (test parcourant le manifeste).
+- [x] Toutes les activités déclarées portent `FLAG_SECURE` (test parcourant le manifeste ; exceptions nommées : [ui-ux §3.6](../specs/ui-ux.md)).
 
 **Validation manuelle** — déverrouillage par empreinte et par code sur un vrai téléphone ; aperçu masqué dans les applications récentes.
 
