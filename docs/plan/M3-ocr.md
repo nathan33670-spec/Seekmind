@@ -57,7 +57,7 @@ stade ; il est rejoué par les testeurs du test fermé (M11-05, risque R-14).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M3-01, M0-07 | `engine:ocr` | [ocr §4, §7](../specs/ocr.md) · EF-OCR-01, EF-OCR-04 |
+| Fait | M3-01, M0-07 | `engine:ocr` | [ocr §4, §7](../specs/ocr.md) · EF-OCR-01, EF-OCR-04 |
 
 **À faire**
 
@@ -67,8 +67,10 @@ stade ; il est rejoué par les testeurs du test fermé (M11-05, risque R-14).
 
 **Critères d'acceptation**
 
-- [ ] Trois images de synthèse (texte clair sur fond sombre, sombre sur clair, petit corps) : texte reconnu.
-- [ ] Fusion : une ligne déjà présente dans l'arbre n'est pas ajoutée ; une ligne nouvelle l'est ; l'origine OCR est marquée.
+- [x] Trois images de synthèse (texte clair sur fond sombre, sombre sur clair, petit corps) : texte reconnu
+      (`MlKitOcrEngineDeviceTest`).
+- [x] Fusion : une ligne déjà présente dans l'arbre n'est pas ajoutée ; une ligne nouvelle l'est ; l'origine OCR est marquée
+      (`OcrMergeTest`).
 
 ---
 

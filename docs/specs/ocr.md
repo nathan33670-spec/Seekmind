@@ -130,6 +130,10 @@ data class OcrLine(val text: String, val bounds: IntRect, val confidence: Float?
 - La `Task` de ML Kit est adaptée en fonction suspendue par `suspendCancellableCoroutine` (pas de
   dépendance supplémentaire).
 - Filtrage : lignes d'au moins 3 caractères alphanumériques ; confiance ≥ 0,45 lorsqu'elle est fournie.
+- Implémentation (M3-03), paquet `fr.corsicajack.seekmind.engine.ocr.recognition` : `MlKitOcrEngine`
+  (reconnaisseur unique, `Task` adaptée, annulation de la coroutine propagée) et `OcrLineFilter`
+  (`OcrConfig.minLineConfidence`). Les tests sur appareil d'`engine:ocr` exécutent ML Kit : leur
+  manifeste retire les mêmes composants de transport que l'application (§4.1).
 
 ### 4.1 Télémétrie de ML Kit
 
@@ -209,6 +213,11 @@ Les récepteurs sont enregistrés dynamiquement, non exportés. Le gouverneur es
    son recouvrement de mots (Jaccard) avec une ligne de l'arbre atteint 0,8.
 3. Les lignes d'OCR restantes sont ajoutées après celles de l'arbre, de haut en bas.
 4. `textSource` porte le bit OCR si au moins une ligne d'OCR est conservée.
+
+Implémentation (M3-03) : `OcrMerge.merge(tree, ocr)` rend les lignes fusionnées, les bits de
+`textSource` (arbre si l'arbre a des lignes, OCR si une ligne d'OCR est conservée) et le nombre de lignes
+d'OCR conservées. Le recouvrement de mots se calcule sur les mots de la forme de comparaison (suites de
+lettres et de chiffres). L'intégration au pipeline relève de M3-05.
 
 ## 8. Configuration
 
