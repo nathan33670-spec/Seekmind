@@ -25,12 +25,14 @@ tasks.withType<Test>().configureEach {
     systemProperty("seekmind.testdata", testdata.path)
     systemProperty("seekmind.modelOut", modelOut.path)
     systemProperty("seekmind.bundledModel", bundled.path)
+    systemProperty("seekmind.modelLock", file("model.lock.json").path)
     inputs.dir(testdata).withPropertyName("testdata").withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(fileTree(modelOut) { include("*/vocab.bin") }).withPropertyName("vocabularies")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(fileTree(bundled) { include("*/vocab.bin") }).withPropertyName("bundledVocabularies")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.property("ci", providers.environmentVariable("CI").orElse("false"))
+    inputs.file(file("model.lock.json")).withPropertyName("modelLock").withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 dependencies {
@@ -41,6 +43,7 @@ dependencies {
     testImplementation(project(":core:testing"))
     testImplementation(libs.junit)
     testImplementation(libs.truth)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)

@@ -44,6 +44,15 @@ class ModelIntegrityTest {
     }
 
     @Test
+    fun aLargerFileIsRefusedBeforeItIsWrittenFurther() {
+        val output = ByteArrayOutputStream()
+        assertThrows(CorruptModelException::class.java) {
+            ModelIntegrity.copyChecked("model.onnx", ByteArrayInputStream(ByteArray(10_000_000)), output, expected)
+        }
+        assertThat(output.size()).isAtMost(bytes.size)
+    }
+
+    @Test
     fun aFileMissingFromTheManifestIsRefused() {
         assertThrows(CorruptModelException::class.java) {
             ModelIntegrity.copyChecked("model.onnx", ByteArrayInputStream(bytes), null, null)

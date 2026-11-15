@@ -204,7 +204,7 @@ interface SearchStore {
 
 interface VectorStore {
     suspend fun pendingChunks(limit: Int): List<PendingChunk>                 // les plus récents d'abord
-    suspend fun saveEmbeddings(rows: List<NewEmbedding>)                      // + chunk.state = 1, une transaction
+    suspend fun saveEmbeddings(rows: List<NewEmbedding>): Int                 // une transaction ; écarte les lignes d'un autre modèle que meta.model_id (leurs fragments restent en attente), rend le nombre enregistré (M4-07)
     suspend fun markFailed(chunkId: Long)
     suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow>  // codes binaire et int8, dates, paquet
     suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row>

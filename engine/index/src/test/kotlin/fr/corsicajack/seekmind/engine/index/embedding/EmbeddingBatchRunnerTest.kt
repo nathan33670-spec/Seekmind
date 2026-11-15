@@ -148,6 +148,30 @@ class EmbeddingBatchRunnerTest {
         assertThat(store.pending).hasSize(6)
     }
 
+    /**
+     * Another model is activated while a batch is computed: the activation resets the vectors to the new
+     * model, the engine of the next batches is the new one. No vector of the old model stays.
+     */
+    @Test
+    fun anActivationDuringABatchLeavesNoVectorOfTheOldModel() = runTest {
+        store.add(10)
+        engine.afterBatch = {
+            if (engine.modelId == FakeEmbeddingEngine.MODEL_ID) {
+                // The batch was computed with the old engine; the activation happens before it is saved.
+                store.model = 1_000
+                engine.modelId = 1_000
+            }
+        }
+        val report = runner().run()
+        assertThat(report.reason).isEqualTo(StopReason.MODEL_CHANGED)
+        assertThat(store.saved.flatten()).isEmpty()
+        assertThat(store.pending).hasSize(10)
+        // The next run goes on with the new model.
+        runner().run()
+        assertThat(store.saved.flatten().map { it.modelId }.toSet()).containsExactly(1_000)
+        assertThat(store.pending).isEmpty()
+    }
+
     @Test
     fun anotherInt8ScaleResetsTheVectorsFirst() = runTest {
         store.scale = 400f
@@ -183,7 +207,7 @@ class EmbeddingBatchRunnerTest {
     /** Fails on the batches that hold one of [failing]. */
     private class FlakyEngine : EmbeddingEngine {
         private val delegate = FakeEmbeddingEngine()
-        override val modelId = delegate.modelId
+        override var modelId = delegate.modelId
         override val dimensions = delegate.dimensions
         var failing: Set<String> = emptySet()
         var afterBatch: () -> Unit = {}
@@ -219,9 +243,12 @@ class EmbeddingBatchRunnerTest {
 
         override suspend fun pendingChunks(limit: Int) = pending.values.take(limit)
 
-        override suspend fun saveEmbeddings(rows: List<NewEmbedding>) {
-            saved += rows
-            rows.forEach { pending.remove(it.chunkId) }
+        /** As the real store: the rows of another model than [model] are dropped, their chunks stay pending. */
+        override suspend fun saveEmbeddings(rows: List<NewEmbedding>): Int {
+            val kept = rows.filter { model == null || it.modelId == model }
+            if (kept.isNotEmpty()) saved += kept
+            kept.forEach { pending.remove(it.chunkId) }
+            return kept.size
         }
 
         override suspend fun markFailed(chunkId: Long) {

@@ -151,9 +151,9 @@ internal class RoomVectorStore(private val dao: VectorDao, private val config: I
         PendingChunk(it.id, it.capture_id, it.window_title, it.text.substring(start, end), it.attempts)
     }
 
-    override suspend fun saveEmbeddings(rows: List<NewEmbedding>) {
-        if (rows.isEmpty()) return
-        dao.save(
+    override suspend fun saveEmbeddings(rows: List<NewEmbedding>): Int {
+        if (rows.isEmpty()) return 0
+        return dao.save(
             rows.map {
                 EmbeddingEntity(
                     chunkId = it.chunkId,
