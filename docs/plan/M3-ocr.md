@@ -78,7 +78,7 @@ stade ; il est rejoué par les testeurs du test fermé (M11-05, risque R-14).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M3-03 | `engine:ocr` | [ocr §5, §6](../specs/ocr.md) · EF-OCR-03 · ENF-BAT-01 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M3-03 | `engine:ocr` | [ocr §5, §6](../specs/ocr.md) · EF-OCR-03 · ENF-BAT-01 |
 
 **À faire**
 
@@ -87,8 +87,11 @@ stade ; il est rejoué par les testeurs du test fermé (M11-05, risque R-14).
 
 **Critères d'acceptation**
 
-- [ ] Table de décision de `OcrPolicy` ; budgets par intervalle, par minute et par jour (horloge simulée).
-- [ ] Le gouverneur suspend l'OCR et les embeddings pour chacun des trois signaux, et les rétablit.
+- [x] Table de décision de `OcrPolicy` ; budgets par intervalle, par minute et par jour (horloge simulée)
+      (`OcrPolicyTest`).
+- [x] Le gouverneur suspend l'OCR et les embeddings pour chacun des trois signaux, et les rétablit
+      (`ThermalGovernorTest` avec signaux simulés ; `AndroidDeviceSignalsDeviceTest` sur les vrais signaux,
+      pilotés par `cmd thermalservice`, `cmd power` et `dumpsys battery`).
 
 **Validation manuelle** — sur dix applications (dont Instagram, TikTok, YouTube, un jeu, une application
 Flutter) : relever quand l'OCR se déclenche et ce qu'il apporte ; ajuster les seuils de `OcrConfig` ;
