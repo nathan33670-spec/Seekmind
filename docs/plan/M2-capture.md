@@ -133,7 +133,7 @@ identifiants pour les sept pays, tous vérifiés par `tools/privacy/verify_sensi
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M2-01 à M2-05, M4-02 | `engine:capture`, `app` | [capture §6](../specs/capture.md) · INV-04, INV-05 |
+| Fait | M2-01 à M2-05, M4-02 | `engine:capture`, `app` | [capture §6](../specs/capture.md) · INV-04, INV-05 |
 
 **À faire**
 
@@ -146,10 +146,10 @@ identifiants pour les sept pays, tous vérifiés par `tools/privacy/verify_sensi
 
 **Critères d'acceptation**
 
-- [ ] Test JVM du pipeline avec doubles : chaque étape produit le bon `DropReason` ; l'ordre est respecté
-      (aucune lecture de l'arbre si le paquet est refusé).
-- [ ] Une exception dans une étape donne `Dropped(ERROR)` et n'atteint pas le service.
-- [ ] Sans consentement courant : aucune lecture (E2E-09).
+- [x] Test JVM du pipeline avec doubles : chaque étape produit le bon `DropReason` ; l'ordre est respecté
+      (aucune lecture de l'arbre si le paquet est refusé) (`CapturePipelineTest`).
+- [x] Une exception dans une étape donne `Dropped(ERROR)` et n'atteint pas le service (`CapturePipelineTest`).
+- [x] Sans consentement courant : aucune lecture (`CapturePipelineTest` ; le scénario sur appareil E2E-09 est écrit avec les autres en M2-08).
 
 ---
 

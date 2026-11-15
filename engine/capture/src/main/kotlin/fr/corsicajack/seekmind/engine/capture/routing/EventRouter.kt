@@ -2,6 +2,7 @@ package fr.corsicajack.seekmind.engine.capture.routing
 
 import android.accessibilityservice.AccessibilityService
 import fr.corsicajack.seekmind.core.common.Clock
+import fr.corsicajack.seekmind.engine.capture.pipeline.ConnectedService
 
 /**
  * Entry point of the accessibility events (docs/specs/capture.md §2). Runs on the main thread, where
@@ -15,6 +16,8 @@ class EventRouter(
     private val loop: CaptureLoop,
     private val environment: CaptureEnvironment,
     private val clock: Clock,
+    /** The service for the pipeline's reads (docs/specs/capture.md §6). */
+    private val connected: ConnectedService = ConnectedService(),
 ) {
     /** Gate on the settings: consent recorded, and the pause end, if any. */
     private class Gate(val consented: Boolean, val pausedUntil: Long?) {
@@ -41,11 +44,16 @@ class EventRouter(
         }
     }
 
+    /** The packages never read (§5.3), for the privacy gate; empty until the service is connected. */
+    fun ignoredPackages(): Set<String> = ignored.orEmpty()
+
     fun attach(service: AccessibilityService) {
+        connected.service = service
         environment.start(service, listener)
     }
 
     fun detach() {
+        connected.service = null
         environment.stop()
         ignored = null
         gate = null

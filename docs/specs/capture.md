@@ -269,6 +269,17 @@ En v1.1, une dixième étape notifiera le module des actions contextuelles ; ell
 Toute exception est interceptée au niveau de `onStable()`, comptée (`ERROR`) et n'atteint jamais le
 service. Chaque issue incrémente un compteur de `metric_daily`.
 
+Implémentation (M2-06), paquet `fr.corsicajack.seekmind.engine.capture.pipeline` :
+
+| Élément | Rôle |
+|---|---|
+| `CapturePipeline` | Les neuf étapes, `events` et le rappel des issues. Compteurs : `capture_stored`, `capture_deduplicated`, `capture_dropped_<motif>` (motif en minuscules), au jour local. Une panne des compteurs ne change pas l'issue. La contre-pression (un seul déclenchement en attente) est celle de `Debouncer` (§3). |
+| `ScreenSource`, `A11yScreenSource` | Étapes 1 et 2 : verrouillage (`KeyguardManager.isKeyguardLocked`), fenêtre active (`A11yUiNode.activeWindow`) du service connecté (`ConnectedService`, posé par `EventRouter`). |
+| `ScreenshotStep` | Étape 6. `NotProbed` (aucune sonde, aucun OCR) jusqu'à M3-05, qui branche la sonde et `OcrPolicy`. |
+| `LineMerger` | Étape 7 : fusion des lignes de l'arbre et de l'OCR. `Append` jusqu'à M3-05 (`OcrMerge`). |
+
+`:app` (`PipelineModule`) lie le pipeline comme `StableScreenHandler`. Il crée aussi `DefaultPrivacyGate`, avec les règles de la base et les familles des réglages, et l'écriture par `IngestService` une fois la base ouverte : une capture avant cela compte comme `ERROR`.
+
 ```kotlin
 data class RawCapture(
     val meta: ScreenMeta,
