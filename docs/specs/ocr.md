@@ -219,7 +219,7 @@ Les récepteurs sont enregistrés dynamiquement, non exportés. Le gouverneur es
 sont des ports de `core:model` (`port/DevicePorts.kt`), comme `OcrEngine`, pour qu'aucun des deux
 moteurs ne dépende de l'autre.
 
-Les décisions (`OcrPolicy.shouldOcr`, début d'un lot d'embeddings) lisent `current()`, pas `state`. Sur
+Les décisions (`OcrPolicy.shouldOcr`, début d'un lot d'embeddings et contrôle entre deux lots) lisent `current()`, pas `state`. Sur
 API 34+, les diffusions destinées à un processus en cache attendent qu'il en sorte : un processus réveillé
 pour un travail verrait encore l'appareil tel qu'il était. `current()` relit la diffusion persistante de
 la batterie, l'économie d'énergie et l'état thermique (`AndroidDeviceSignals.refresh`).

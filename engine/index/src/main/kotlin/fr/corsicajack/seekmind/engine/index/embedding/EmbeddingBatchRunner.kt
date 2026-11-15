@@ -96,7 +96,7 @@ class EmbeddingBatchRunner(
         while (true) {
             if (isStopped()) return report(StopReason.STOPPED)
             if (clock.elapsedRealtime() >= deadline) return report(StopReason.DEADLINE)
-            if (!governor.state.value.allowsEmbedding) return report(StopReason.THROTTLED)
+            if (!governor.current().allowsEmbedding) return report(StopReason.THROTTLED)
             val batch = vectors.pendingChunks(config.embedBatchSize)
             if (batch.isEmpty()) return report(StopReason.QUEUE_EMPTY)
 
