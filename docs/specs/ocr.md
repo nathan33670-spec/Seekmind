@@ -130,6 +130,14 @@ data class OcrLine(val text: String, val bounds: IntRect, val confidence: Float?
 - La `Task` de ML Kit est adaptée en fonction suspendue par `suspendCancellableCoroutine` (pas de
   dépendance supplémentaire).
 - Filtrage : lignes d'au moins 3 caractères alphanumériques ; confiance ≥ 0,45 lorsqu'elle est fournie.
+- Implémentation (M3-03), paquet `fr.corsicajack.seekmind.engine.ocr.recognition` : `MlKitOcrEngine`
+  (reconnaisseur unique, `Task` adaptée) et `OcrLineFilter`
+  (`OcrConfig.minLineConfidence`). Les tests sur appareil d'`engine:ocr` exécutent ML Kit : leur
+  manifeste retire les mêmes composants de transport que l'application (§4.1).
+- Une `Task` de ML Kit ne s'annule pas et lit le bitmap jusqu'à sa fin, alors que l'appelant le recycle
+  dès le retour de `recognize` (INV-03). `recognize` attend donc toujours la fin de sa `Task`, même si sa
+  coroutine est annulée, et ne relance l'annulation qu'ensuite. `close()` ne libère le reconnaisseur
+  qu'une fois les reconnaissances en cours terminées ; un appel ultérieur à `recognize` est refusé.
 
 ### 4.1 Télémétrie de ML Kit
 
@@ -175,7 +183,13 @@ L'OCR est lancé si **toutes** ces conditions sont vraies :
 | Le budget le permet | ≥ 5 s depuis le dernier OCR, ≤ 6 par minute, ≤ 400 par jour |
 
 Les seuils sont des valeurs de départ ; le ticket M3-04 les ajuste sur dix applications réelles et
-consigne les mesures.
+consigne les mesures (validation reportée à M10-01, décision du porteur du 15 novembre 2026).
+
+Implémentation (M3-04), paquet `fr.corsicajack.seekmind.engine.ocr.policy` : `OcrPolicy.shouldOcr`
+vérifie les conditions dans l'ordre du tableau. Une réponse positive compte dans le budget et entre
+dans le mémo, quel que soit le sort de la capture d'écran : un écran dont l'OCR a échoué n'est pas
+relu aussitôt. La minute et le jour sont des fenêtres glissantes sur l'horloge monotone
+(`Clock.elapsedRealtime`).
 
 ## 6. Gouverneur thermique et énergétique
 
@@ -200,15 +214,31 @@ data class GovernorState(
 | En charge | `ACTION_BATTERY_CHANGED` | `embeddingThreads = 4` (sinon 2) |
 
 Les récepteurs sont enregistrés dynamiquement, non exportés. Le gouverneur est partagé avec
-`engine:index` (lots d'embeddings).
+`engine:index` (lots d'embeddings) : l'interface `ThermalGovernor`, `GovernorState` et `ThrottleReason`
+sont des ports de `core:model` (`port/DevicePorts.kt`), comme `OcrEngine`, pour qu'aucun des deux
+moteurs ne dépende de l'autre.
+
+Implémentation (M3-04), paquet `fr.corsicajack.seekmind.engine.ocr.policy` :
+
+| Élément | Rôle |
+|---|---|
+| `GovernorRules` | État pour des signaux donnés. Raison retenue quand plusieurs signaux tiennent : chaleur, puis économie d'énergie, puis batterie. Fils des embeddings : `EmbeddingConfig.threadsCharging` en charge, sinon `threadsDefault`. |
+| `AndroidDeviceSignals` | Signaux de l'appareil : écouteur d'état thermique de `PowerManager`, un récepteur non exporté pour `ACTION_POWER_SAVE_MODE_CHANGED` et `ACTION_BATTERY_CHANGED` (diffusion persistante : l'état initial est lu à l'enregistrement). « En charge » signifie branché (`EXTRA_PLUGGED` non nul), que la batterie se remplisse ou non. |
+| `SignalThermalGovernor` | `ThermalGovernor` sur un flux de signaux, réels ou simulés dans les tests. |
 
 ## 7. Fusion avec le texte de l'arbre
 
 1. Forme de comparaison d'une ligne : minuscules, sans diacritiques, espaces réduits.
-2. Une ligne d'OCR est écartée si sa forme de comparaison est contenue dans le texte de l'arbre, ou si
-   son recouvrement de mots (Jaccard) avec une ligne de l'arbre atteint 0,8.
-3. Les lignes d'OCR restantes sont ajoutées après celles de l'arbre, de haut en bas.
+2. Une ligne d'OCR est écartée si sa forme de comparaison est contenue dans une ligne de l'arbre, mot pour
+   mot (« jeu » n'est pas dans « jeudi »), ou si son recouvrement de mots (Jaccard) avec une ligne de
+   l'arbre atteint 0,8.
+3. Les lignes d'OCR restantes sont ajoutées après celles de l'arbre, dans l'ordre de lecture : par rangées
+   (lignes dont les hauteurs se recouvrent de plus de la moitié), chaque rangée de gauche à droite.
 4. `textSource` porte le bit OCR si au moins une ligne d'OCR est conservée.
+
+Implémentation (M3-03) : `OcrMerge.merge(tree, ocr)` rend les lignes fusionnées, les bits de
+`textSource` (arbre si l'arbre a des lignes, OCR si une ligne d'OCR est conservée) et le nombre de lignes
+d'OCR conservées. Les mots sont les suites de lettres et de chiffres de la forme de comparaison. L'intégration au pipeline relève de M3-05.
 
 ## 8. Configuration
 
