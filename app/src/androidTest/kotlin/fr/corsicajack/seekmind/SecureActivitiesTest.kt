@@ -29,13 +29,19 @@ class SecureActivitiesTest {
                 .that(SecureActivity::class.java.isAssignableFrom(Class.forName(name)))
                 .isTrue()
         }
-        // Debug builds also hold the activity of the Compose preview tooling, absent from release
-        // builds (whose components :app:verify*ReleaseManifest checks). Any other one would escape
-        // the rule above.
-        assertThat(DEBUG_TOOLING).containsAtLeastElementsIn(others)
+        // Any other activity would escape the rule above.
+        assertThat(DEBUG_TOOLING + PLAY_DIALOG).containsAtLeastElementsIn(others)
     }
 
     private companion object {
+        /** The Compose preview tooling, in debug builds only. */
         val DEBUG_TOOLING = setOf("androidx.compose.ui.tooling.PreviewActivity")
+
+        /**
+         * Play Asset Delivery (M4-07, ADR-0012): a transparent, non-exported activity that only starts
+         * the Play Store's own confirmation dialog for a language pack. It shows no content of
+         * SeekMind; removing it would break the pack's confirmation on mobile data.
+         */
+        val PLAY_DIALOG = setOf("com.google.android.play.core.common.PlayCoreDialogWrapperActivity")
     }
 }

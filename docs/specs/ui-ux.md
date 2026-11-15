@@ -202,7 +202,12 @@ désactivé avec une explication, et il est relu au retour sur l'écran.
 Toutes les activités dérivent de `SecureActivity`, qui pose `FLAG_SECURE` (EF-PRIV-11). Le manifeste
 commun retire `com.google.android.gms.common.api.GoogleApiActivity`, activité translucide des services
 Google Play apportée par ML Kit : elle n'affiche que la résolution d'un Play Services manquant, que le
-modèle embarqué de ML Kit ne demande jamais, et ne pourrait pas poser `FLAG_SECURE`.
+modèle embarqué de ML Kit ne demande jamais, et ne pourrait pas poser `FLAG_SECURE`. Seule exception admise
+(décision du porteur, 15 novembre 2026) : `com.google.android.play.core.common.PlayCoreDialogWrapperActivity`,
+de Play Asset Delivery ([ADR-0012](../adr/0012-composants-exportes-de-play-asset-delivery.md)).
+Transparente et non exportée, elle ne fait que lancer la confirmation du Play Store pour un pack de
+langue et n'affiche aucun contenu de SeekMind ; la retirer casserait cette confirmation.
+`SecureActivitiesTest` la nomme.
 
 ### 3.7 Résultats de `LinkActivity`
 
