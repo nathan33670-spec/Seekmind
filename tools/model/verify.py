@@ -5,8 +5,7 @@
 - vocab.bin decodes, and matches the tokenizer of the pinned revision;
 - MODEL_MANIFEST.json describes the files of the set;
 - mean cosine between the original and the quantized model >= 0.98 on 200 sentences;
-- Recall@5 by meaning on testdata/eval, original and quantized: reported (eval_set.py; enforced once the
-  quantization settings are decided, ticket M5-07);
+- Recall@5 by meaning on testdata/eval: the quantized model loses at most 2 queries (eval_set.py);
 - with --lock: model.onnx and vocab.bin match engine/embedding/model.lock.json.
 """
 
@@ -42,6 +41,8 @@ def verify(source: common.ModelSource) -> float:
             raise SystemExit(f"{source.id}: MODEL_MANIFEST.json does not describe {name}")
     if manifest["modelId"] != source.model_id or manifest["source"]["revision"] != source.revision:
         raise SystemExit(f"{source.id}: MODEL_MANIFEST.json names another model")
+    if manifest.get("quantization") != common.QUANTIZATION:
+        raise SystemExit(f"{source.id}: MODEL_MANIFEST.json describes another quantization than build_model.py")
 
     tok = runtime.tokenizer(source, common.MAX_PASSAGE_TOKENS)
     original, quantized = runtime.session(out / common.FP32_FILE), runtime.session(out / common.MODEL_FILE)
@@ -53,7 +54,7 @@ def verify(source: common.ModelSource) -> float:
     print(f"{source.id}: mean cosine original/quantized {mean:.4f} (min {min(cosines):.4f}) on {len(cosines)} sentences")
     if mean < MIN_MEAN_COSINE:
         raise SystemExit(f"{source.id}: mean cosine {mean:.4f} < {MIN_MEAN_COSINE}")
-    eval_set.check(source)
+    eval_set.check(source, strict=True)
     return mean
 
 

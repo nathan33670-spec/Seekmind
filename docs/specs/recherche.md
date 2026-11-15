@@ -444,57 +444,57 @@ Rappel@5 par le sens, modèle original contre modèle quantifié, sur le même j
 
 ### 11.1 Résultats (M5-07)
 
-Mesures du 14 novembre 2026, exécution `device-tests` 43585148277 (API 34 ; le test passe aussi sur les
-API 30 et 36), modèles quantifiés actuels, `SearchConfig` par défaut.
+Mesures du 14 novembre 2026, exécution `device-tests` 43610735658 (API 34 ; le test passe aussi sur les
+API 30 et 36), modèles quantifiés par canal (§2 des [embeddings](embeddings.md)), `SearchConfig` par défaut.
+Entre parenthèses, la première mesure (exécution 43585148277, modèles quantifiés par tenseur).
 
 | Modèle · configuration | Rappel@1 | Rappel@5 | MRR |
 |---|---|---|---|
-| `fr` · hybride, requêtes en français (49) | 0,878 | **0,959** | **0,916** |
-| `fr` · hybride, tout le jeu (80) | 0,813 | 0,913 | 0,859 |
+| `fr` · hybride, requêtes en français (49) | 0,918 | **1,0** (0,959) | **0,953** (0,916) |
+| `fr` · hybride, tout le jeu (80) | 0,838 | 0,950 (0,913) | 0,884 (0,859) |
 | `fr` · mots-clés seuls, tout le jeu | 0,750 | 0,838 | 0,785 |
-| `fr` · sens seul, tout le jeu | 0,500 | 0,825 | 0,650 |
-| `multi` · hybride, tout le jeu (80) | 0,825 | **0,925** | **0,875** |
+| `fr` · sens seul, tout le jeu | 0,513 | 0,875 (0,825) | 0,674 (0,650) |
+| `multi` · hybride, tout le jeu (80) | 0,825 | **0,950** (0,925) | **0,885** (0,875) |
 | `multi` · mots-clés seuls, tout le jeu | 0,750 | 0,838 | 0,785 |
-| `multi` · sens seul, tout le jeu | 0,475 | 0,825 | 0,645 |
+| `multi` · sens seul, tout le jeu | 0,513 | 0,863 (0,825) | 0,675 (0,645) |
 
 - **Seuils d'EF-SRCH-01 à 03 tenus**, sur les groupes que le test contrôle :
 
   | Modèle · groupe contrôlé | Effectif | Valeur | Seuil |
   |---|---|---|---|
-  | `fr` · requêtes en français, hybride | 49 | Rappel@5 0,959 · MRR 0,916 | 0,85 · 0,70 |
+  | `fr` · requêtes en français, hybride | 49 | Rappel@5 1,0 · MRR 0,953 | 0,85 · 0,70 |
   | `fr` · codes en français | 9 | Rappel@1 1,0 | 0,90 |
-  | `fr` · paraphrases en français | 15 | Rappel@5 0,933 (q32 manquée) | 0,75 |
-  | `multi` · tout le jeu, hybride | 80 | Rappel@5 0,925 · MRR 0,875 | 0,85 · 0,70 |
+  | `fr` · paraphrases en français | 15 | Rappel@5 1,0 | 0,75 |
+  | `multi` · tout le jeu, hybride | 80 | Rappel@5 0,950 · MRR 0,885 | 0,85 · 0,70 |
   | `multi` · codes | 12 | Rappel@1 1,0 | 0,90 |
-  | `multi` · paraphrases | 32 | Rappel@5 0,844 | 0,75 |
+  | `multi` · paraphrases | 32 | Rappel@5 0,875 | 0,75 |
 
   Les effectifs sont petits : sur 15 paraphrases, une requête pèse 6,7 points ; sur 9 codes, 11 points.
   Un seuil se joue donc à une ou deux requêtes près. Les lignes `m5_07_*_hybrid_scope_*` du rapport
   donnent ces valeurs à chaque exécution.
-  - L'hybride fait mieux que chaque méthode seule : 0,913 et 0,925 en Rappel@5, contre 0,838 pour les mots-clés seuls et 0,825 pour le sens seul.
+  - L'hybride fait mieux que chaque méthode seule : 0,950 en Rappel@5 pour les deux modèles, contre 0,838 pour les mots-clés seuls et 0,863 à 0,875 pour le sens seul.
 - **Risque R-06 : ce que `fr` perd face à `multi`.**
   - Requêtes en anglais, hybride : Rappel@5 0,905 contre 0,952, soit une requête sur 21.
-  - Requêtes bilingues : 0,7 pour les deux.
-  - Sens seul, requêtes en anglais : 0,857 pour les deux.
+  - Requêtes bilingues : 0,8 pour les deux.
+  - Sens seul, requêtes en anglais : 0,857 pour `fr`, 0,810 pour `multi`.
   - La perte est faible sur ce jeu, où les contenus anglais restent proches du vocabulaire courant.
-- **Requêtes manquées par l'hybride** (absentes des cinq premiers), toutes de type paraphrase, bilingue ou temporel :
+- **Requêtes manquées par l'hybride** (absentes des cinq premiers), toutes de type paraphrase ou bilingue :
 
   | Requête | Type | Manquée par |
   |---|---|---|
-  | q32 « billet d'avion pour le Portugal » | paraphrase | `fr` et `multi` |
+  | q34 « code du réseau sans fil de la coloc » | paraphrase en français | `multi` seulement |
   | q48 « someone to watch the kids… » | paraphrase en anglais | `fr` seulement |
   | q49 « help carrying furniture… » | paraphrase en anglais | `fr` et `multi` |
-  | q58 « recette la semaine dernière » | temporelle, sans mot commun | `fr` et `multi` |
-  | q72, q77, q78 | bilingues | `fr` et `multi` |
+  | q72, q78 | bilingues | `fr` et `multi` |
 
-  q78 (« cours de yoga le lundi ») est pénalisée par l'analyseur temporel : « le lundi » devient un filtre de date, alors que la requête parle d'un rendez-vous récurrent.
+  q32 et q58, manquées avec les modèles par tenseur, sont retrouvées. q78 (« cours de yoga le lundi ») est pénalisée par l'analyseur temporel : « le lundi » devient un filtre de date, alors que la requête parle d'un rendez-vous récurrent.
 - **Calibration** (balayage sur l'hybride) :
-  - `semanticFloor` de 0,70 à 0,82 ne change rien pour `fr` (0,959 / 0,916). Pour `multi`, 0,80 gagne une requête (0,938), et 0,82 la reperd : c'est dans le bruit d'un jeu de 80 requêtes.
+  - `semanticFloor` de 0,70 à 0,82 ne change pas le Rappel@5 de `fr` (1,0). Pour `multi`, 0,80 gagne trois requêtes (0,988), 0,82 en reperd deux, et 0,70 à 0,76 en perdent une. C'est dans le bruit d'un jeu de 80 requêtes, mais c'est la piste à suivre avec des captures réelles.
   - `binaryTopK` = 200 donne le même Rappel@5.
-  - Les poids du profil naturel (1,0/1,0 ou 0,6/1,4) ne changent rien. Un poids sémantique de 1,3 pour le profil par défaut fait perdre une requête à `fr`.
+  - Les poids du profil naturel (1,0/1,0 ou 0,6/1,4) ne changent rien. Un poids sémantique de 1,3 pour le profil par défaut fait perdre une requête à chaque modèle.
 
-  **Les réglages par défaut sont conservés.** Aucun essai ne gagne plus d'une requête. Une recalibration demande un jeu plus grand ou des captures réelles (M10-03).
-- **Quantification.** Sur la JVM, sans les filtres, le Rappel@5 par le sens passe de 0,863 à 0,762 pour `fr` (0,775 sur la CI) et à 0,800 pour `multi`. La quantification par canal en récupère l'essentiel (0,825 à 0,838 pour `fr`, 0,863 pour `multi`). Le choix est laissé au porteur du projet : l'hybride tient déjà ses seuils avec les modèles actuels.
+  **Les réglages par défaut sont conservés.** Une recalibration demande un jeu plus grand ou des captures réelles (M10-03).
+- **Quantification.** Sur la JVM, sans les filtres, la quantification par tenseur faisait passer le Rappel@5 par le sens de 0,863 à 0,762 pour `fr` et à 0,800 pour `multi`. Les modèles sont maintenant quantifiés par canal, avec des poids non signés (0,838 pour `fr`, 0,863 pour `multi`, [embeddings §2](embeddings.md)) : décision du porteur, qui admet au plus deux requêtes perdues à la quantification.
 
 ## 12. Tests attendus
 

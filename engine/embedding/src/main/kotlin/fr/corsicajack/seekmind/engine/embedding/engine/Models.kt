@@ -29,7 +29,7 @@ object BuiltInModels {
         id = "fr",
         modelId = 1,
         languages = setOf("fr"),
-        sizeBytes = 36_365_852L + 460_929L,
+        sizeBytes = 36_595_240L + 460_929L,
         delivery = Delivery.BUNDLED,
         packName = null,
     )
@@ -38,7 +38,7 @@ object BuiltInModels {
         id = "multi",
         modelId = 2,
         languages = emptySet(),
-        sizeBytes = 118_101_091L + 4_081_365L,
+        sizeBytes = 118_330_479L + 4_081_365L,
         delivery = Delivery.PACK,
         packName = "modelpack_multi",
     )
