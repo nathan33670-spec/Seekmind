@@ -137,7 +137,7 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M4-04 | `engine:embedding`, `modelpack_multi`, `app`, CI | [embeddings §2, §5.2](../specs/embeddings.md) · [architecture §9](../03-architecture.md) · ENF-STO-02 |
+| Fait | M4-04 | `engine:embedding`, `modelpack_multi`, `app`, CI | [embeddings §2, §5.2](../specs/embeddings.md) · [architecture §9](../03-architecture.md) · ENF-STO-02 |
 
 **À faire**
 
@@ -150,9 +150,10 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 **Critères d'acceptation**
 
-- [ ] Le lot `release` contient le modèle `fr` non compressé et le pack `multi` séparé ; taille de
+- [x] Le lot `release` contient le modèle `fr` non compressé et le pack `multi` séparé ; taille de
       téléchargement de base mesurée et ≤ 100 Mo.
-- [ ] Modèle absent ou altéré : la recherche par mots-clés fonctionne, la recherche sémantique se
+      `:app:verifyAdsReleaseBundle`, `:app:verifyOfflineReleaseBundle` : 51,6 Mo.
+- [x] Modèle absent ou altéré : la recherche par mots-clés fonctionne, la recherche sémantique se
       déclare indisponible, sans plantage.
 
 ---

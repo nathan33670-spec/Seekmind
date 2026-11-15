@@ -129,7 +129,7 @@ en français pour le modèle `fr`, sur tout le jeu pour `multi`.
 | ENF-BAT-01, 02 | **Manuel**, appareil réel : `dumpsys batterystats --reset`, 24 h d'usage type dont 4 h d'écran, puis `dumpsys batterystats --charged <appId>` ; rapport de la consommation estimée et du temps CPU. Répété avec la mémorisation en pause pour obtenir la différence. |
 | ENF-MEM-01, 02 | `dumpsys meminfo <appId>` au repos après 10 min de capture, puis pendant un lot d'embeddings. |
 | ENF-STO-01 | Taille de la base après le scénario de 24 h. |
-| ENF-STO-02 | `bundletool get-size total` sur l'AAB. |
+| ENF-STO-02 | `bundletool get-size total` sur l'AAB (`:app:verifyAdsReleaseBundle`, `:app:verifyOfflineReleaseBundle`). |
 
 Les résultats sont consignés dans `docs/mesures/` (un fichier par campagne : appareil, version, chiffres).
 

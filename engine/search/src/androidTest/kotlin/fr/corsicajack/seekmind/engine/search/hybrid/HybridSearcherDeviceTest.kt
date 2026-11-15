@@ -20,15 +20,24 @@ import fr.corsicajack.seekmind.core.model.port.EmbeddingEngineProvider
 import fr.corsicajack.seekmind.core.testing.FakeEmbeddingEngine
 import fr.corsicajack.seekmind.core.testing.Models
 import fr.corsicajack.seekmind.core.testing.TemporaryDatabase
+import fr.corsicajack.seekmind.engine.embedding.OrtModelLoader
 import fr.corsicajack.seekmind.engine.embedding.codec.VectorCodec
+import fr.corsicajack.seekmind.engine.embedding.engine.BuiltInModels
+import fr.corsicajack.seekmind.engine.embedding.engine.OrtEmbeddingEngineFactory
+import fr.corsicajack.seekmind.engine.embedding.engine.SharedEmbeddingEngineProvider
 import fr.corsicajack.seekmind.engine.search.lexical.LexicalSearcher
 import fr.corsicajack.seekmind.engine.search.query.AppExtractor
 import fr.corsicajack.seekmind.engine.search.query.QueryParser
 import fr.corsicajack.seekmind.engine.search.query.StopWords
 import fr.corsicajack.seekmind.engine.search.query.TemporalParser
 import fr.corsicajack.seekmind.engine.search.vector.VectorIndex
+import java.io.ByteArrayInputStream
+import java.io.File
 import java.time.ZoneId
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -69,10 +78,11 @@ class HybridSearcherDeviceTest {
         return id
     }
 
-    private fun searcher(): HybridSearcher {
-        val provider = object : EmbeddingEngineProvider {
-            override suspend fun <T> use(block: suspend (EmbeddingEngine) -> T): T = block(engine)
-        }
+    private val fakeProvider = object : EmbeddingEngineProvider {
+        override suspend fun <T> use(block: suspend (EmbeddingEngine) -> T): T = block(engine)
+    }
+
+    private fun searcher(provider: EmbeddingEngineProvider = fakeProvider): HybridSearcher {
         val index = VectorIndex(handle.vectors, config, codec, Dispatchers.Default)
         return HybridSearcher(
             parser = QueryParser(StopWords.load(context.resources), TemporalParser()),
@@ -105,6 +115,36 @@ class HybridSearcherDeviceTest {
         val semanticOnly = hybrid.hits.single { it.captureId == other }
         assertThat(semanticOnly.matchedBy).containsExactly(MatchKind.SEMANTIC)
         assertThat(semanticOnly.snippet.text).startsWith("Horaires d'ouverture")
+    }
+
+    /** Ticket M4-06: a missing or altered model leaves the keyword search working, without a crash. */
+    @Test
+    fun anAlteredModelLeavesTheKeywordSearch() = runBlocking<Unit> {
+        File(context.noBackupFilesDir, "model/fr").deleteRecursively()
+        val tart = capture("Recette de la tarte aux pommes de grand-mère", at = NOW - DAY)
+        val altered = OrtModelLoader(context) { path ->
+            val bytes = context.assets.open(path).use { it.readBytes() }
+            if (path.endsWith("model.onnx")) bytes[bytes.size / 2] = (bytes[bytes.size / 2] + 1).toByte()
+            ByteArrayInputStream(bytes)
+        }
+        val embeddingConfig = EmbeddingConfig()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        try {
+            val provider = SharedEmbeddingEngineProvider(
+                OrtEmbeddingEngineFactory(context, embeddingConfig, Dispatchers.IO, Dispatchers.Default, altered),
+                { BuiltInModels.bundledFr },
+                { 1 },
+                embeddingConfig,
+                scope,
+            )
+            val emissions = searcher(provider).search(request("tarte")).toList()
+            assertThat(emissions.first().hits.map { it.captureId }).containsExactly(tart)
+            val last = emissions.last()
+            assertThat(last.semanticAvailable).isFalse()
+            assertThat(last.hits.map { it.captureId }).containsExactly(tart)
+        } finally {
+            scope.cancel()
+        }
     }
 
     @Test
