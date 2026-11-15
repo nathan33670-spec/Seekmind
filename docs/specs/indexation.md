@@ -147,6 +147,17 @@ libérer le moteur
 - Le travail rend `Result.success()` même s'il reste des fragments : la prochaine période reprend.
 - Compteurs de diagnostic : fragments vectorisés, durée médiane par fragment, arrêts par motif.
 
+Implémentation (M4-05), paquet `fr.corsicajack.seekmind.engine.index.embedding` :
+
+| Élément | Rôle |
+|---|---|
+| `EmbeddingBatchRunner` | La boucle ci-dessus, en logique pure, testée sur la JVM. Le modèle est chargé d'abord : s'il ne peut pas l'être, rien n'est compté contre les fragments (`MODEL_UNAVAILABLE`). Le modèle des vecteurs stockés (`VectorStore.modelId`) est ensuite comparé à celui du moteur (§7.3). Le moteur est pris **par lot**, et non pour tout le travail, pour qu'une recherche puisse calculer le vecteur de sa requête entre deux lots. Un lot en échec est repris fragment par fragment : seuls les fragments fautifs voient leur nombre d'essais augmenter. |
+| `EmbeddingWorker` | Le travail WorkManager, construit par la fabrique de `:app`. `Result.retry()` (temporisation exponentielle) si le modèle ne se charge pas ; sinon `Result.success()`. Le travail en charge se replanifie (`APPEND_OR_REPLACE`) tant qu'il reste des fragments. Compteurs dans le journal (`SmLog`, sans contenu). |
+| `EmbeddingScheduler` | Les deux travaux du §7.1, sans contrainte réseau, planifiés au démarrage de l'application. |
+
+Le gouverneur (`ThermalGovernor`, [ocr §6](ocr.md)) est un singleton de `:app`, partagé avec la
+recherche : il fixe aussi le nombre de fils du moteur.
+
 ### 7.3 Changement de modèle
 
 Le modèle actif change dans deux cas : une mise à jour de l'application qui remplace le modèle

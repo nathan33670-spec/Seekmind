@@ -182,6 +182,8 @@ internal class RoomVectorStore(private val dao: VectorDao, private val config: I
 
     override suspend fun resetForModel(modelId: Int) = dao.reset(modelId)
 
+    override suspend fun modelId(): Int? = dao.modelId()
+
     override suspend fun indexGeneration(): Long = dao.generation() ?: 0
 }
 

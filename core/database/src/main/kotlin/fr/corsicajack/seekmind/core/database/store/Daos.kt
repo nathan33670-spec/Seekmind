@@ -227,6 +227,9 @@ internal abstract class VectorDao {
     )
     abstract suspend fun setModelId(modelId: String)
 
+    @Query("SELECT CAST(value AS INTEGER) FROM meta WHERE key = '$MODEL_ID'")
+    abstract suspend fun modelId(): Int?
+
     @Query(
         "INSERT INTO meta(key, value) VALUES ('$INDEX_GENERATION', '1') " +
             "ON CONFLICT(key) DO UPDATE SET value = CAST(value AS INTEGER) + 1",

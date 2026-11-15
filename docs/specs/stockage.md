@@ -210,6 +210,7 @@ interface VectorStore {
     suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row>
     suspend fun pendingCount(): Int
     suspend fun resetForModel(modelId: Int)                                   // vide embedding, remet chunk.state à 0, écrit meta.model_id
+    suspend fun modelId(): Int?                                               // meta.model_id, null avant le premier resetForModel (M4-05)
     suspend fun indexGeneration(): Long                                       // meta.index_generation, 0 au départ
 }
 

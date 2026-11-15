@@ -73,7 +73,8 @@ data class EmbeddingConfig(
     val maxPassageTokens: Int = 256,
     val maxQueryTokens: Int = 64,
     val subBatchSize: Int = 8,
-    val int8Scale: Float = 400f,
+    /** Calibrated on the 1,000 reference sentences (M4-05): no component clipped, max |v| = 0.18 < 127/600. */
+    val int8Scale: Float = 600f,
     val idleCloseMs: Long = 60_000,
     val threadsDefault: Int = 2,
     val threadsCharging: Int = 4,

@@ -157,6 +157,9 @@ interface VectorStore {
     /** Empties the vectors, puts every chunk back to pending and records [modelId] as meta.model_id. */
     suspend fun resetForModel(modelId: Int)
 
+    /** meta.model_id: the model of the stored vectors; null before the first [resetForModel]. */
+    suspend fun modelId(): Int?
+
     /**
      * meta.index_generation, 0 before any deletion: incremented in the same transaction as every
      * deletion of captures or of vectors; the in-memory index reloads when it changes.

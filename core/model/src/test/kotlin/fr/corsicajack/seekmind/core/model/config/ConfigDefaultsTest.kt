@@ -68,7 +68,7 @@ class ConfigDefaultsTest {
                 maxPassageTokens = 256,
                 maxQueryTokens = 64,
                 subBatchSize = 8,
-                int8Scale = 400f,
+                int8Scale = 600f,
                 idleCloseMs = 60_000,
                 threadsDefault = 2,
                 threadsCharging = 4,
