@@ -10,6 +10,7 @@ import fr.corsicajack.seekmind.engine.embedding.engine.ModelSource
 import java.io.File
 import java.nio.file.Files
 import java.security.MessageDigest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -77,10 +78,11 @@ class DefaultModelCatalogTest {
     }
     private val activated = mutableListOf<String>()
 
-    private suspend fun catalog() = DefaultModelCatalog.create(installer, setting, expected = { digests }) {
-        activated +=
-            it.id
-    }
+    private suspend fun catalog() =
+        DefaultModelCatalog.create(installer, setting, Dispatchers.Unconfined, expected = { digests }) {
+            activated +=
+                it.id
+        }
 
     @Test
     fun nothingIsDownloadedWithoutAnActionOfTheUser() = runTest {

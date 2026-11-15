@@ -97,6 +97,7 @@ class ModelPackE2ETest {
         val catalog = DefaultModelCatalog.create(
             installer,
             setting,
+            Dispatchers.IO,
             models = BuiltInModels.all + testPack,
             expected = { if (it.id == "test") PackLock.FR else PackLock.byModel[it.id] },
         ) { spec ->

@@ -59,6 +59,7 @@ object ModelModule {
     ): Deferred<DefaultModelCatalog> = scope.async(DefaultDispatcherProvider.io) {
         DefaultModelCatalog.create(
             installer = installer,
+            io = DefaultDispatcherProvider.io,
             setting = object : ActiveModelSetting {
                 override suspend fun get() = settings.current().activeModelId
 

@@ -11,11 +11,15 @@ import fr.corsicajack.seekmind.engine.embedding.engine.BuiltInModels
 import fr.corsicajack.seekmind.engine.embedding.engine.LoadableModel
 import fr.corsicajack.seekmind.engine.embedding.engine.ModelFiles
 import fr.corsicajack.seekmind.engine.embedding.engine.ModelSource
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /** The active model setting (`activeModelId`, docs/specs/embeddings.md §5.1). */
 interface ActiveModelSetting {
@@ -34,7 +38,8 @@ class PackUnavailableException(message: String) : IllegalStateException(message)
  *
  * [activate] (§5.3): checks the files of a pack against [expected], records the setting, then calls
  * [onActivated], which closes the engine session and resets the vectors (wired by `:app`). [remove] of
- * the active pack makes `fr` active again first.
+ * the active pack makes `fr` active again first. Both are serialised, and the digests are computed on
+ * [io] (the `multi` model weighs 118 MB).
  */
 class DefaultModelCatalog private constructor(
     override val models: List<ModelSpec>,
@@ -42,8 +47,10 @@ class DefaultModelCatalog private constructor(
     private val setting: ActiveModelSetting,
     private val expected: (ModelSpec) -> Map<String, ExpectedFile>?,
     private val onActivated: suspend (ModelSpec) -> Unit,
+    private val io: CoroutineDispatcher,
     initial: ModelSpec,
 ) : ModelCatalog {
+    private val changes = Mutex()
     private val activeModel = MutableStateFlow(initial)
     override val active: StateFlow<ModelSpec> = activeModel.asStateFlow()
 
@@ -55,22 +62,25 @@ class DefaultModelCatalog private constructor(
     /** Starts the installation of a pack: on an action of the user only. */
     suspend fun install(id: String): Flow<PackState> = installer.install(spec(id))
 
-    override suspend fun activate(id: String) {
-        val spec = spec(id)
+    override suspend fun activate(id: String) = changes.withLock { activateLocked(spec(id)) }
+
+    private suspend fun activateLocked(spec: ModelSpec) {
         if (spec == activeModel.value) return
         if (spec.delivery == Delivery.PACK) {
             val files = installer.location(spec) ?: throw PackUnavailableException("${spec.id} is not installed")
-            if (!matches(spec, files)) throw PackUnavailableException("${spec.id} does not match its digests")
+            if (!withContext(io) { matches(spec, files) }) {
+                throw PackUnavailableException("${spec.id} does not match its digests")
+            }
         }
         setting.set(spec.id)
         activeModel.value = spec
         onActivated(spec)
     }
 
-    suspend fun remove(id: String) {
+    suspend fun remove(id: String) = changes.withLock {
         val spec = spec(id)
-        if (spec.delivery == Delivery.BUNDLED) return
-        if (activeModel.value == spec) activate(BuiltInModels.FR.id)
+        if (spec.delivery == Delivery.BUNDLED) return@withLock
+        if (activeModel.value == spec) activateLocked(BuiltInModels.FR)
         installer.remove(spec)
     }
 
@@ -108,6 +118,7 @@ class DefaultModelCatalog private constructor(
         suspend fun create(
             installer: ModelPackInstaller,
             setting: ActiveModelSetting,
+            io: CoroutineDispatcher,
             models: List<ModelSpec> = BuiltInModels.all,
             expected: (ModelSpec) -> Map<String, ExpectedFile>? = { PackLock.byModel[it.id] },
             onActivated: suspend (ModelSpec) -> Unit,
@@ -119,7 +130,7 @@ class DefaultModelCatalog private constructor(
             } else {
                 stored
             }
-            return DefaultModelCatalog(models, installer, setting, expected, onActivated, initial)
+            return DefaultModelCatalog(models, installer, setting, expected, onActivated, io, initial)
         }
     }
 }

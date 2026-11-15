@@ -141,8 +141,11 @@ interface VectorStore {
     /** Most recent first. */
     suspend fun pendingChunks(limit: Int): List<PendingChunk>
 
-    /** Inserts the vectors and marks their chunks as embedded, in one transaction. */
-    suspend fun saveEmbeddings(rows: List<NewEmbedding>)
+    /**
+     * Inserts the vectors and marks their chunks as embedded, in one transaction; rows of another model
+     * than meta.model_id are dropped (their chunks stay pending). Returns the number of rows saved.
+     */
+    suspend fun saveEmbeddings(rows: List<NewEmbedding>): Int
 
     /** attempts + 1; the chunk is marked failed at IndexConfig.maxAttempts (it stays searchable by keywords). */
     suspend fun markFailed(chunkId: Long)

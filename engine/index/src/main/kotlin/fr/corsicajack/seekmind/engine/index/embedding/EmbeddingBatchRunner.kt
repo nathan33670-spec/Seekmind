@@ -12,7 +12,16 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
 /** Why a run of [EmbeddingBatchRunner] ended. */
-enum class StopReason { QUEUE_EMPTY, DEADLINE, THROTTLED, STOPPED, MODEL_UNAVAILABLE }
+enum class StopReason {
+    QUEUE_EMPTY,
+    DEADLINE,
+    THROTTLED,
+    STOPPED,
+    MODEL_UNAVAILABLE,
+
+    /** Another model became active during the run: the next run compares the models again. */
+    MODEL_CHANGED,
+}
 
 /** What a run did: counters and durations only, never content (INV-07). */
 data class BatchReport(
@@ -41,7 +50,9 @@ data class BatchReport(
  *   then not reloadable), the run ends with [StopReason.MODEL_UNAVAILABLE] and nothing is counted.
  *
  * The engine is taken per batch, never for the whole run, so that a search can embed its query between
- * two batches.
+ * two batches. Each row carries the model id of the engine that computed it; when that is no longer the
+ * model the run started with (activation of another model meanwhile), the run ends with
+ * [StopReason.MODEL_CHANGED]. The store drops the rows of a model that is no longer the active one.
  */
 class EmbeddingBatchRunner(
     private val vectors: VectorStore,
@@ -91,10 +102,10 @@ class EmbeddingBatchRunner(
 
             val batchStart = clock.elapsedRealtime()
             var engineLost = false
-            val rows = embed(batch, modelId) ?: buildList {
+            val rows = embed(batch) ?: buildList {
                 // The batch failed: fragment by fragment, so that one bad fragment does not hold the others.
                 for (chunk in batch) {
-                    val row = embed(listOf(chunk), modelId)
+                    val row = embed(listOf(chunk))
                     if (row != null) {
                         addAll(row)
                     } else if (engineLoads()) {
@@ -106,14 +117,20 @@ class EmbeddingBatchRunner(
                     }
                 }
             }
+            var dropped = false
             if (rows.isNotEmpty()) {
-                vectors.saveEmbeddings(rows)
-                embedded += rows.size
-                val each = (clock.elapsedRealtime() - batchStart) / rows.size
-                repeat(rows.size) { perChunk += each }
+                val saved = vectors.saveEmbeddings(rows)
+                dropped = saved < rows.size
+                embedded += saved
+                if (saved > 0) {
+                    val each = (clock.elapsedRealtime() - batchStart) / saved
+                    repeat(saved) { perChunk += each }
+                }
             }
             batches++
             if (engineLost) return report(StopReason.MODEL_UNAVAILABLE)
+            // Rows dropped by the store, or computed by another engine: another model became active.
+            if (dropped || rows.any { it.modelId != modelId }) return report(StopReason.MODEL_CHANGED)
             if (!charging()) pause(config.interBatchPauseMs)
         }
     }
@@ -128,11 +145,14 @@ class EmbeddingBatchRunner(
         false
     }
 
-    /** The rows of [chunks], or null when the engine fails on them. */
-    private suspend fun embed(chunks: List<PendingChunk>, modelId: Int): List<NewEmbedding>? = try {
-        val computed = engines.use { engine -> engine.embedPassages(chunks.map(::passage)) }
+    /** The rows of [chunks], tagged with the model of the engine that computed them, or null when it fails. */
+    private suspend fun embed(chunks: List<PendingChunk>): List<NewEmbedding>? = try {
+        val (engineModel, computed) = engines.use { engine ->
+            engine.modelId to
+                engine.embedPassages(chunks.map(::passage))
+        }
         chunks.zip(computed) { chunk, vector ->
-            NewEmbedding(chunk.chunkId, chunk.captureId, modelId, codec.int8(vector), codec.binary(vector))
+            NewEmbedding(chunk.chunkId, chunk.captureId, engineModel, codec.int8(vector), codec.binary(vector))
         }
     } catch (cancelled: CancellationException) {
         throw cancelled

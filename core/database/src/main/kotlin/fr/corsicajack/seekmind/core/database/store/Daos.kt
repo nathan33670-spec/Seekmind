@@ -189,10 +189,19 @@ internal abstract class VectorDao {
     @Query("UPDATE chunk SET state = 1 WHERE id IN (:chunkIds)")
     abstract suspend fun markEmbedded(chunkIds: List<Long>)
 
+    /**
+     * Saves the rows of the model of meta.model_id only (all of them before the first reset): a batch
+     * computed with a model that was replaced meanwhile is dropped, its chunks stay pending. The number
+     * of rows saved.
+     */
     @Transaction
-    open suspend fun save(rows: List<EmbeddingEntity>) {
-        insertEmbeddings(rows)
-        markEmbedded(rows.map { it.chunkId })
+    open suspend fun save(rows: List<EmbeddingEntity>): Int {
+        val current = modelId()
+        val kept = if (current == null) rows else rows.filter { it.modelId == current }
+        if (kept.isEmpty()) return 0
+        insertEmbeddings(kept)
+        markEmbedded(kept.map { it.chunkId })
+        return kept.size
     }
 
     @Query(
