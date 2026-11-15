@@ -25,11 +25,19 @@ protocole et l'outillage, puis corrige d'après les résultats.
 3. Variante `ads` : vérifier que le SDK publicitaire ne consomme rien (processeur, réseau, réveils) en
    dehors des demandes de publicité.
 4. D'après les relevés, ajuster les réglages (`CaptureConfig`, `OcrConfig`, `IndexConfig`) et corriger les postes excessifs.
-5. Faire, sur le même téléphone, les validations manuelles reportées ici par le porteur, puis passer
-   chaque ticket à « Fait » :
+5. Faire, sur le même téléphone, les validations manuelles reportées ici par le porteur (décision du
+   15 novembre 2026 : toutes, le plus tard possible), puis retirer la mention « reportée » du statut de
+   chaque ticket. La liste à jour est celle des tickets dont le statut porte « validation manuelle
+   reportée à M10-01 » ; au 15 novembre 2026 :
+   - **M0-07** : 20 reconnaissances ML Kit en mode avion, installation neuve (prototype S2) ;
+   - **M0-08** : lecture de l'arbre de trois applications courantes et sonde sur un onglet privé de
+     Chrome (prototype S3) ;
    - **M0-09** : mesures du prototype d'embeddings (S4) ;
+   - **M5-08** : bancs de la recherche à 100 000 captures ;
    - **M7-02** : les sept règles par application (tableau de la PR #40) ; une règle qui échoue est
      retirée de `source_rules.json`.
+
+   Une validation qui échoue rouvre le ticket (statut `En cours`) et bloque M10-01 jusqu'à sa correction.
 
 **Critères d'acceptation**
 

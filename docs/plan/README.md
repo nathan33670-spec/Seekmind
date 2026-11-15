@@ -22,7 +22,7 @@ ne déborde pas du périmètre, et passe le statut du ticket à `Fait` dans la m
 
 | Champ | Sens |
 |---|---|
-| **Statut** | `À faire`, `En cours`, `Fait`, `Bloqué` (avec la raison), `Reporté` |
+| **Statut** | `À faire`, `En cours`, `Fait`, `Bloqué` (avec la raison), `Reporté`. « `Fait` — validation manuelle reportée à M10-01 » : tout est fait sauf la vérification sur téléphone, renvoyée à la campagne M10-01 ; le ticket compte comme `Fait` pour ses dépendants |
 | **Dépend de** | Tickets qui doivent être `Fait` avant de commencer |
 | **Référence** | Sections de spécification à lire — elles font foi en cas de doute |
 | **À faire** | Étapes, dans l'ordre |
@@ -59,7 +59,7 @@ Tickets soumis à l'accord du porteur du projet :
 | Confidentialité et consentement | M2-05, M2-06, M3-02, M6-02 |
 | Publicité, crédits, activation, variante de repli | Tous les tickets de M8 |
 | Publication | Tous les tickets de M11 |
-| Validation sur téléphone | Tout ticket portant la mention « Validation manuelle » |
+| Validation sur téléphone | Tout ticket portant la mention « Validation manuelle ». Décision du porteur du 15 novembre 2026 : les vérifications sur le téléphone de test sont faites le plus tard possible, à la campagne M10-01 ; la PR est fusionnée sans elles, avec l'accord du porteur, et le ticket passe à « `Fait` — validation manuelle reportée à M10-01 ». Ne sont pas reportées, et restent des conditions de fusion de leur ticket, les validations qui ne se font pas sur ce téléphone : actions du porteur (réglages du dépôt, Play Console, piste de test interne), relecture juridique, publication (M11) |
 | Règles du projet | Toute PR qui modifie `AGENTS.md`, un ADR, un garde-fou ou une liste blanche |
 
 L'auteur d'une PR ne la relit pas lui-même et ne la fusionne pas : la fusion est automatique (réglage du

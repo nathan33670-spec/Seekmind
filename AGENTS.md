@@ -106,6 +106,12 @@ Un ticket est `Fait` lorsque **tout** ce qui suit est vrai :
 - [ ] La documentation touchée est à jour (spec, ADR, `docs/plan/` : statut du ticket passé à `Fait`).
 - [ ] La PR décrit les écarts éventuels par rapport à la spec.
 
+Exception (décision du porteur, 15 novembre 2026) : les vérifications sur le téléphone de test sont faites
+le plus tard possible, à la campagne M10-01. Un ticket dont seule une telle vérification reste à faire
+porte le statut « `Fait` — validation manuelle reportée à M10-01 » et compte comme `Fait` pour ses
+dépendants (`docs/plan/README.md` §1.2). Les autres validations manuelles (actions du porteur dans la
+Play Console, relecture juridique, réglages du dépôt) ne sont pas reportées.
+
 ## 6. Interdits
 
 - Ajouter une permission au manifeste, une dépendance, un composant exporté ou un processus sans que le
