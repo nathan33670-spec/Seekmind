@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="settings_security_title">Sécurité</string>
+    <string name="settings_lock_title">Verrouiller SeekMind</string>
+    <string name="settings_lock_summary">Demander votre empreinte, votre visage ou le code de verrouillage pour ouvrir SeekMind.</string>
+    <string name="settings_lock_unavailable">Indisponible&#160;: définissez un verrouillage de l\'écran sur ce téléphone (code, schéma ou mot de passe) pour l\'utiliser.</string>
+    <string name="settings_lock_grace_title">Verrouiller de nouveau après</string>
+    <string name="settings_lock_grace_immediately">Dès que vous quittez l\'application</string>
+    <plurals name="settings_lock_grace_minutes">
+        <item quantity="one">%d minute en arrière-plan</item>
+        <item quantity="many">%d minutes en arrière-plan</item>
+        <item quantity="other">%d minutes en arrière-plan</item>
+    </plurals>
+    <string name="settings_cancel">Annuler</string>
     <string name="settings_help_title">Le service s\'arrête tout seul</string>
     <string name="settings_help_intro">Pour économiser la batterie, certains téléphones arrêtent les applications qu\'ils jugent inactives, services d\'accessibilité compris. SeekMind ne mémorise alors plus rien, jusqu\'à ce que vous le réactiviez.</string>
     <string name="settings_help_reactivate">Si l\'écran de recherche indique « Service désactivé », touchez « Réactiver » et réactivez SeekMind dans les réglages d\'accessibilité. Pour qu\'il ne s\'arrête plus, excluez SeekMind de l\'optimisation de la batterie, comme indiqué ci-dessous pour votre téléphone.</string>

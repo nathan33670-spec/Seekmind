@@ -103,7 +103,7 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| `Fait` — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
 
 **À faire**
 

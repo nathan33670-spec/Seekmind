@@ -5,13 +5,13 @@ import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import fr.corsicajack.seekmind.apps.PackageManagerAppLabels
 import fr.corsicajack.seekmind.capture.CaptureDeletions
@@ -35,7 +35,13 @@ import fr.corsicajack.seekmind.feature.search.SearchViewModel
 import fr.corsicajack.seekmind.feature.search.StatusAction
 import fr.corsicajack.seekmind.feature.search.detail.CaptureDetailRoute
 import fr.corsicajack.seekmind.feature.search.detail.CaptureDetailViewModel
+import fr.corsicajack.seekmind.feature.settings.SecuritySettingsRoute
+import fr.corsicajack.seekmind.feature.settings.SecuritySettingsViewModel
 import fr.corsicajack.seekmind.feature.settings.help.ServiceHelpScreen
+import fr.corsicajack.seekmind.lock.AppLock
+import fr.corsicajack.seekmind.lock.BiometricAuthenticator
+import fr.corsicajack.seekmind.lock.LockGate
+import fr.corsicajack.seekmind.lock.LockState
 import fr.corsicajack.seekmind.search.SearchStack
 import fr.corsicajack.seekmind.ui.SeekMindRoot
 import java.time.LocalDate
@@ -50,11 +56,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Launcher activity, host of every screen. Its window is secure (EF-PRIV-11): it shows remembered
- * content, so it is kept out of screenshots, screen recordings and the recent apps thumbnail.
+ * Launcher activity, host of every screen. Its window is secure ([SecureActivity]) and its content
+ * is composed only once the application lock allows it ([AppLock]).
  */
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : SecureActivity() {
+    @Inject lateinit var appLock: AppLock
+
+    @Inject lateinit var settings: SettingsRepository
+
     /** Opened on first use, off the main thread. */
     @Inject lateinit var database: Provider<DatabaseState>
 
@@ -64,8 +74,6 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var search: SearchStack
 
     @Inject lateinit var entitlements: EntitlementGate
-
-    @Inject lateinit var settings: SettingsRepository
 
     @Inject lateinit var wipe: WipeService
 
@@ -82,17 +90,26 @@ class MainActivity : ComponentActivity() {
     private var openedTerms: List<String> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             SeekMindTheme {
-                SeekMindRoot(
-                    searchContent = { open, help -> SearchContent(open, help) },
-                    journalContent = { open -> JournalContent(open) },
-                    captureContent = { id, close -> CaptureContent(id, close) },
-                    helpContent = { ServiceHelpScreen() },
-                )
+                val lockState by appLock.state.collectAsStateWithLifecycle(initialValue = LockState.PENDING)
+                // Outside the gate, so that the screens come back as they were after an unlock.
+                val navController = rememberNavController()
+                LockGate(
+                    state = lockState,
+                    onUnlock = { BiometricAuthenticator.authenticate(this, appLock::onAuthenticated) },
+                ) {
+                    SeekMindRoot(
+                        navController = navController,
+                        searchContent = { open, help -> SearchContent(open, help) },
+                        journalContent = { open -> JournalContent(open) },
+                        captureContent = { id, close -> CaptureContent(id, close) },
+                        helpContent = { ServiceHelpScreen() },
+                        settingsContent = { SettingsContent() },
+                    )
+                }
             }
         }
     }
@@ -199,12 +216,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        appLock.onForeground()
         search.onForeground()
     }
 
     override fun onStop() {
         super.onStop()
-        if (!isChangingConfigurations) search.onBackground()
+        if (!isChangingConfigurations) {
+            appLock.onBackground()
+            search.onBackground()
+        }
     }
 
     @Composable
@@ -229,6 +250,14 @@ class MainActivity : ComponentActivity() {
                 openCapture(id)
             },
         )
+    }
+
+    @Composable
+    private fun SettingsContent() {
+        val security = viewModel {
+            SecuritySettingsViewModel(settings, appLock::isDeviceSecure, appLock::onAuthenticated)
+        }
+        SecuritySettingsRoute(viewModel = security)
     }
 
     private companion object {
