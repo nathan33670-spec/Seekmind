@@ -53,9 +53,13 @@ class AndroidDeviceSignalsDeviceTest {
     fun powerSaving() {
         // Android refuses the battery saver on a power source.
         shell("dumpsys battery unplug")
+        // `cmd power set-mode` has no effect on some images (API 36): the global setting is what the
+        // power manager follows, and it sends ACTION_POWER_SAVE_MODE_CHANGED.
         shell("cmd power set-mode 1")
+        shell("settings put global low_power 1")
         awaitReason(ThrottleReason.POWER_SAVE)
         shell("cmd power set-mode 0")
+        shell("settings put global low_power 0")
         awaitReason(null)
     }
 
@@ -79,6 +83,7 @@ class AndroidDeviceSignalsDeviceTest {
     private fun reset() {
         shell("cmd thermalservice reset")
         shell("cmd power set-mode 0")
+        shell("settings put global low_power 0")
         shell("dumpsys battery reset")
     }
 
