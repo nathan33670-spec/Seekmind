@@ -11,11 +11,13 @@ private const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
  */
 object ManifestRules {
     private val componentTags = listOf("activity", "activity-alias", "service", "receiver", "provider")
+    private const val DISABLED = "enabled=false"
     private val allowedCapabilities = setOf("canRetrieveWindowContent", "canTakeScreenshot")
 
     /**
      * @param allowedPermissions permission names; `${applicationId}` is replaced by [applicationId].
-     * @param exportedAllowlist entries `component.Name` or `component.Name required.Permission`.
+     * @param exportedAllowlist entries `component.Name`, then optionally `required.Permission`, then
+     *   optionally `enabled=false` (the component must then be declared disabled).
      */
     fun checkManifest(
         manifestXml: String,
@@ -33,10 +35,9 @@ object ManifestRules {
             }
         }
 
-        val exported = exportedAllowlist.associate { entry ->
-            val parts = entry.split(Regex("\\s+"))
-            parts[0] to parts.getOrNull(1)
-        }
+        val entries = exportedAllowlist.map { it.split(Regex("\\s+")) }
+        val exported = entries.associate { parts -> parts[0] to parts.drop(1).firstOrNull { it != DISABLED } }
+        val disabled = entries.filter { DISABLED in it.drop(1) }.map { it[0] }.toSet()
         componentTags.forEach { tag ->
             root.elements(tag).forEach { component ->
                 val name = component.android("name")
@@ -49,6 +50,9 @@ object ManifestRules {
 
                     exported[name] != null && component.android("permission") != exported[name] ->
                         violations += "Exported component $name must require permission ${exported[name]}"
+
+                    name in disabled && component.android("enabled") != "false" ->
+                        violations += "Exported component $name must be declared disabled (android:enabled=\"false\")"
                 }
             }
         }

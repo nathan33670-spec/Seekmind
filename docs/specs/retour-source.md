@@ -18,7 +18,7 @@ propose le meilleur retour disponible et **le dit dans le libellé du bouton** (
 | `APP_LINK` | Un écran précis de l'application, déduit du contenu (profil, fiche) | « Ouvrir dans {application} » |
 | `APP_SEARCH` | Une recherche dans l'application, pré-remplie | « Rechercher dans {application} » |
 | `APP_ONLY` | L'application, sur son écran d'accueil | « Ouvrir {application} » |
-| `UNAVAILABLE` | Application désinstallée | Bouton désactivé : « Application désinstallée » |
+| `UNAVAILABLE` | Application désinstallée, ou invisible pour SeekMind (§5.1) | Bouton désactivé : « Application introuvable » |
 
 ## 2. Résolution tardive
 
@@ -98,6 +98,29 @@ Règles initiales, **chacune à valider sur appareil** au ticket M7-02 (une règ
 Messageries et courriel (WhatsApp, Messages, Gmail) : aucun lien vers une conversation n'est
 constructible à partir du contenu affiché ; niveau `APP_ONLY`.
 
+Mise en œuvre (M7-02) :
+
+- **Chargement.** `SourceRules.load` lit `assets/source_rules.json` du module, et `SourceRules.parse` en
+  fait des `TemplateRule`.
+  - Un fichier d'une autre `version`, ou mal formé, ne donne aucune règle.
+  - Une règle invalide est ignorée seule, et le nombre de règles ignorées est journalisé.
+- **Règles invalides.** Une règle est ignorée dans ces cas :
+  - niveau autre que `APP_LINK` ou `APP_SEARCH` ;
+  - schéma refusé (§5) ;
+  - variable inconnue ;
+  - **cible choisie par le contenu.** Le schéma, et l'hôte d'une URI hiérarchique, doivent précéder la
+    première variable. Ainsi `https://{title}/x` est refusé.
+- **Variables utilisées.** Une règle s'applique seulement si toutes les variables de son URI et de
+  `requires` ont une valeur non vide. Sinon, la chaîne continue.
+- **Encodage.** Chaque valeur est bornée à 100 caractères, sans couper une paire de substitution, puis
+  encodée par `Uri.encode`. `/`, `?`, `#` et `&` sont donc échappés : une valeur ne peut pas ajouter de
+  segment ni de paramètre.
+- **`{handle}`.** Le `@nom` ne doit être précédé ni suivi d'une lettre, d'un chiffre, de `.`, de `_` ou
+  de `@`. Une adresse électronique (`marie@example.fr`) n'est donc pas un identifiant. Le point final
+  d'une phrase est retiré.
+- **`SourceReturn`.** Le résolveur et le lanceur sont construits avec les mêmes règles, donc avec les
+  mêmes schémas admis.
+
 ## 5. Lancement
 
 - Drapeau `FLAG_ACTIVITY_NEW_TASK`.
@@ -107,10 +130,58 @@ constructible à partir du contenu affiché ; niveau `APP_ONLY`.
   `source_rules.json`. Jamais `file`, `content`, `javascript` ni `intent`.
 - Les liens extraits du texte (`linksIn`) ne sont ouverts que sur tap, et seulement en `http` ou `https`.
 
+### 5.1 Implémentation (M7-01)
+
+Paquet `fr.corsicajack.seekmind.engine.source` :
+
+| Élément | Rôle |
+|---|---|
+| `ChainSourceResolver` | Implémente `SourceResolver`. `create(apps, rules)` assemble la chaîne du §3. Si aucun maillon ne répond : `UNAVAILABLE`, avec le nom de l'application s'il est connu. |
+| `BrowserUrlResolver`, `AppRuleResolver`, `LaunchAppResolver` | Les trois maillons (`SourceStep`). Une URL dont le schéma n'est pas `http(s)` est ignorée et la chaîne continue. |
+| `AppRule` | Contrat d'une règle : paquet, niveau, schéma, `uriFor(capture)` (null si une variable manque). Le fichier `source_rules.json` et la substitution des variables viennent avec M7-02. |
+| `InstalledApps`, `PackageManagerApps` | Applications installées, nom affiché, activité de lancement. |
+| `SourceSchemes` | Schémas admis : `http`, `https`, `geo` et ceux des règles. `file`, `content`, `javascript`, `intent`, `android-app` et `data` sont toujours refusés, même si une règle les nomme. |
+| `SourceLauncher` | Lancement et repli. `LaunchResult` vaut `Launched`, `Fallback(niveau atteint)` ou `Failed`. |
+| `SourceLinks` | `linksIn` : liens `http(s)` du texte, sans leur ponctuation finale, sans doublon, cinq au plus. |
+
+Précisions :
+
+- **Intent d'une page** : `ACTION_VIEW`, catégorie `BROWSABLE`, `setPackage` sur le navigateur d'origine s'il est installé.
+- **Contrôle au lancement**, sur l'Intent relu depuis `intentUri` :
+  - une vue doit avoir un schéma admis et aucun composant explicite ;
+  - `APP_ONLY` doit être un `ACTION_MAIN` sans donnée ;
+  - le sélecteur, le `ClipData` et les drapeaux d'octroi de permission sont retirés ;
+  - `FLAG_ACTIVITY_NEW_TASK` est ajouté.
+- **Repli** :
+  - `EXACT_URL` qui échoue dans son navigateur → navigateur par défaut, résultat `Fallback(EXACT_URL)` ;
+  - `APP_LINK` ou `APP_SEARCH` qui échoue, ou dont l'Intent est refusé → l'application elle-même, résultat `Fallback(APP_ONLY)`.
+- **Application sans activité de lancement**, et sans URL ni règle : `UNAVAILABLE`. Le libellé de M7-03 devra en tenir compte, l'application n'étant alors pas désinstallée.
+- **Visibilité des paquets.** `PackageManagerApps` ne voit que les applications couvertes par les `<queries>` du manifeste : activité de lancement, ou vue `https` navigable. Une application installée hors de ces requêtes passe pour non installée, et donne `UNAVAILABLE`. Le libellé de M7-03 devra le dire sans affirmer une désinstallation.
+- **Aucune exception ne sort du lanceur** : toute `RuntimeException` au lancement (`SecurityException`, `IllegalArgumentException`…) ou à la lecture de l'Intent fait passer au niveau suivant.
+- **Journal** : seuls le niveau et le nom de classe de l'exception sont journalisés, jamais l'URL ni le paquet (INV-07).
+- `SourceLauncher` et `LaunchResult` restent dans `engine:source` : le lanceur a besoin d'un `Context` et n'est pas une interface entre modules (architecture §3.3).
+
 ## 6. Détail d'une capture
 
 Sous le bouton principal : « Copier le texte », « Partager », et la liste des liens détectés dans le
 texte (cinq au plus).
+
+### 6.1 Intégration (M7-03)
+
+- **Où s'affiche le bouton.** Sur la carte d'un résultat et dans le détail, avec le libellé du niveau
+  (`sourceLabel`). « Application introuvable » plutôt que « Application désinstallée » : une application
+  hors des `<queries>` ou sans activité de lancement donne aussi `UNAVAILABLE` (§5.1), et le libellé ne
+  doit rien affirmer de faux.
+- **Résolution.** `SearchViewModel` résout les résultats affichés hors du fil principal, en relisant la
+  capture (`CaptureStore.get`), une seule fois par capture et par recherche. Le détail résout sa capture
+  au chargement.
+- **Lancement.** `:app` lance avec `SourceReturn`, fourni par Hilt et créé à la première demande ; un
+  échec ne fait que journaliser le niveau. Les liens du texte passent par `SourceLinks.refFor`, qui
+  n'accepte que `http(s)` et vise le navigateur par défaut.
+- **E2E-14.** Le test tourne au niveau de `engine:source` (`SourceReturnDeviceTest`) : une capture de
+  l'application de test, munie d'une règle de test, ouvre `DeepLinkActivity` sur l'identifiant
+  attendu. La règle vit dans le test, pas dans le fichier livré. Le parcours complet (capture, recherche,
+  appui sur le bouton) attend la chaîne de capture (M2-06, M2-08).
 
 ## 7. Tests attendus
 

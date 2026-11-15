@@ -48,7 +48,10 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
    installées par famille, rappel des exclusions d'office ; choix enregistré avant toute redirection.
 5. Écran d'activation : étapes illustrées, ouverture des réglages d'accessibilité, détection au retour, confirmation.
 6. Parcours de refus : mode limité et bandeau permanent qui rouvre la divulgation.
-7. Reconsentement quand `DISCLOSURE_VERSION` dépasse la version enregistrée.
+7. Reconsentement quand `DISCLOSURE_VERSION` dépasse la version enregistrée. `CaptureStatusRepository`
+   compare alors la version (`consent.version == DISCLOSURE_VERSION`, et plus seulement `consent != null`) :
+   un consentement d'une version périmée donne `ConsentMissing`, jamais `ServiceDisabled`. Sinon, le
+   bandeau « Réactiver » (M6-09) ouvrirait les réglages du système sans nouvelle divulgation.
 8. Texte de divulgation de la variante `ads` (celui de la variante `offline` arrive avec M8-06).
 9. Emplacement pour la proposition du pack de langue en fin de parcours (branchée par M6-06).
 
@@ -70,7 +73,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-01, M5-06 | `feature:search` | [ui-ux §3.2](../specs/ui-ux.md) · EF-SRCH-05 à 09 |
+| Fait | M6-01, M5-06 | `feature:search` | [ui-ux §3.2](../specs/ui-ux.md) · EF-SRCH-05 à 09 |
 
 **À faire**
 
@@ -83,10 +86,10 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 **Critères d'acceptation**
 
-- [ ] Un test de ViewModel par état du tableau.
-- [ ] Les résultats par mots-clés s'affichent avant les résultats hybrides ; une nouvelle requête annule l'ancienne.
-- [ ] Supprimer une pastille de filtre relance la recherche sans ce filtre.
-- [ ] L'historique respecte le réglage « désactivé ».
+- [x] Un test de ViewModel par état du tableau.
+- [x] Les résultats par mots-clés s'affichent avant les résultats hybrides ; une nouvelle requête annule l'ancienne.
+- [x] Supprimer une pastille de filtre relance la recherche sans ce filtre.
+- [x] L'historique respecte le réglage « désactivé ».
 
 ---
 
@@ -94,7 +97,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-03 | `feature:search` | [ui-ux §3.3](../specs/ui-ux.md) · EF-JRN-02 |
+| Fait | M6-03 | `feature:search` | [ui-ux §3.3](../specs/ui-ux.md) · EF-JRN-02 |
 
 **À faire**
 
@@ -104,8 +107,8 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 **Critères d'acceptation**
 
-- [ ] Suppression → la capture disparaît de la recherche et du journal.
-- [ ] La copie pose le drapeau « contenu sensible ».
+- [x] Suppression → la capture disparaît de la recherche et du journal.
+- [x] La copie pose le drapeau « contenu sensible ».
 
 ---
 
@@ -113,7 +116,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-01, M1-04 | `feature:journal` | [ui-ux §3.4](../specs/ui-ux.md) · EF-JRN-01, EF-JRN-03 |
+| Fait | M6-01, M1-04 | `feature:journal` | [ui-ux §3.4](../specs/ui-ux.md) · EF-JRN-01, EF-JRN-03 |
 
 **À faire**
 
@@ -122,9 +125,9 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 **Critères d'acceptation**
 
-- [ ] Défilement sur une base synthétique de 100 000 captures sans chargement complet en mémoire.
-- [ ] Annuler une suppression restaure la ligne ; ne pas annuler supprime la capture en base.
-- [ ] Le journal est accessible avec un solde de crédits nul.
+- [x] Défilement sur une base synthétique de 100 000 captures sans chargement complet en mémoire.
+- [x] Annuler une suppression restaure la ligne ; ne pas annuler supprime la capture en base.
+- [x] Le journal est accessible avec un solde de crédits nul.
 
 ---
 
@@ -207,7 +210,7 @@ liste des défauts corrigés dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-03, M2-01 | `feature:search`, `feature:settings` | [ui-ux §3.2](../specs/ui-ux.md) · EF-CAP-05 · risque R-04 |
+| Fait | M6-03, M2-01 | `feature:search`, `feature:settings` | [ui-ux §3.2](../specs/ui-ux.md) · EF-CAP-05 · risque R-04 |
 
 **À faire**
 
@@ -219,5 +222,5 @@ liste des défauts corrigés dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] Chaque état de `CaptureStatus` produit le bon bandeau et la bonne action.
-- [ ] Service désactivé dans les réglages système → bandeau « Réactiver » au retour dans l'application.
+- [x] Chaque état de `CaptureStatus` produit le bon bandeau et la bonne action.
+- [x] Service désactivé dans les réglages système → bandeau « Réactiver » au retour dans l'application.

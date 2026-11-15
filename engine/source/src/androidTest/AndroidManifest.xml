@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- E2E-14: the fixture application has no launcher activity, so the test APK names it to see it. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <queries>
+        <package android:name="fr.corsicajack.seekmind.fixture" />
+    </queries>
+</manifest>

@@ -4,6 +4,8 @@ import android.os.Build
 import android.view.WindowManager
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -85,6 +87,17 @@ class NavigationTest {
         open(SETTINGS)
         back()
         assertShown(SEARCH)
+    }
+
+    /** The content given by [MainActivity] reaches each screen: none of them is left empty. */
+    @Test
+    fun eachDestinationShowsItsContent() {
+        for (destination in listOf(JOURNAL, SETTINGS, SEARCH)) {
+            open(destination)
+            compose.waitForIdle()
+            val content = compose.onAllNodes(hasAnyAncestor(hasTestTag(screenTag(destination)))).fetchSemanticsNodes()
+            assertThat(content).isNotEmpty()
+        }
     }
 
     @Test

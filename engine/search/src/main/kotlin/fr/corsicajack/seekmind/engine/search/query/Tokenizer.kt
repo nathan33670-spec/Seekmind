@@ -44,7 +44,8 @@ object Tokenizer {
         return Normalizer.normalize(out, Normalizer.Form.NFC)
     }
 
-    private fun isWordChar(codePoint: Int): Boolean = Character.isLetterOrDigit(codePoint) ||
+    /** Letters, digits and private-use characters: what FTS5 keeps in a word. */
+    internal fun isWordChar(codePoint: Int): Boolean = Character.isLetterOrDigit(codePoint) ||
         Character.getType(codePoint) == Character.PRIVATE_USE.toInt() ||
         Character.getType(codePoint) == Character.LETTER_NUMBER.toInt() ||
         Character.getType(codePoint) == Character.OTHER_NUMBER.toInt()

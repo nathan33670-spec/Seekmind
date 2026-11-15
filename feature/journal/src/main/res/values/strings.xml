@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="journal_all_apps">All apps</string>
+    <string name="journal_today">Today</string>
+    <string name="journal_yesterday">Yesterday</string>
+    <string name="journal_day_menu">Options for %1$s</string>
+    <string name="journal_delete_day">Delete this day</string>
+    <string name="journal_delete_day_title">Delete %1$s?</string>
+    <string name="journal_delete_day_text">Every screen remembered that day will be removed from your memory for good.</string>
+    <string name="journal_delete">Delete</string>
+    <string name="journal_cancel">Cancel</string>
+    <string name="journal_deleted">Screen deleted</string>
+    <string name="journal_undo">Undo</string>
+    <string name="journal_empty_title">No remembered screen yet</string>
+    <string name="journal_empty_message">The screens you look at while memorisation is on will appear here, day by day.</string>
+    <string name="journal_unavailable_title">Your memory cannot be opened</string>
+    <string name="journal_unavailable_message">SeekMind cannot read its data on this phone.</string>
+
+    <!-- Sample content of the Compose previews only. -->
+    <string name="journal_preview_app">Messages</string>
+    <string name="journal_preview_line">Dinner on Friday at the little restaurant</string>
+</resources>

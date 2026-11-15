@@ -18,8 +18,11 @@ dependencyResolutionManagement {
 rootProject.name = "SeekMind"
 
 // Modules: docs/03-architecture.md §3.1.
-// `:modelpack_multi` is created by ticket M4-06; `:engine:actions` belongs to v1.1.
+// `:engine:actions` belongs to v1.1.
 include(":app")
+
+// On-demand asset pack of the multilingual model (ticket M4-06).
+include(":modelpack_multi")
 
 include(":core:common")
 include(":core:model")

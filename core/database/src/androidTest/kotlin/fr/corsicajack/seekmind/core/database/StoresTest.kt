@@ -3,6 +3,7 @@ package fr.corsicajack.seekmind.core.database
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.database.schema.FtsSchema
+import fr.corsicajack.seekmind.core.database.store.JournalCursor
 import fr.corsicajack.seekmind.core.database.store.NewCapture
 import fr.corsicajack.seekmind.core.database.store.NewChunk
 import fr.corsicajack.seekmind.core.database.store.NewEmbedding
@@ -222,11 +223,32 @@ class StoresTest {
         assertThat(all.map { it.embeddingId }).isInStrictOrder()
         assertThat(handle.vectors.binaryCodesAfter(all.last().embeddingId, 2)).isEmpty()
         assertThat(all.first().vecBin).hasLength(48)
+        assertThat(all.first().vecI8).hasLength(384)
         assertThat(all.first().firstSeenAt).isEqualTo(1_000)
 
         val int8 = handle.vectors.int8Vectors(listOf(all[3].embeddingId, all[1].embeddingId))
         assertThat(int8.map { it.captureId }.toSet()).containsExactly(ids[3], ids[1])
         assertThat(int8.first().vecI8).hasLength(384)
+    }
+
+    /** A batch computed before the active model changed is dropped: its chunks stay pending (M4-07). */
+    @Test
+    fun vectorsOfAReplacedModelAreDropped() = runBlocking<Unit> {
+        val id = handle.captures.insert(capture("texte"), listOf(NewChunk(0, 0, 5)))
+        val chunk = handle.vectors.pendingChunks(1).single().chunkId
+        handle.vectors.resetForModel(2)
+        assertThat(handle.vectors.saveEmbeddings(listOf(embedding(chunk, id)))).isEqualTo(0)
+        assertThat(sql.long("SELECT count(*) FROM embedding")).isEqualTo(0)
+        assertThat(handle.vectors.pendingCount()).isEqualTo(1)
+        assertThat(handle.vectors.saveEmbeddings(listOf(embedding(chunk, id).copy(modelId = 2)))).isEqualTo(1)
+        assertThat(handle.vectors.pendingCount()).isEqualTo(0)
+    }
+
+    @Test
+    fun theInt8ScaleIsRecorded() = runBlocking<Unit> {
+        assertThat(handle.vectors.int8Scale()).isNull()
+        handle.vectors.setInt8Scale(600f)
+        assertThat(handle.vectors.int8Scale()).isEqualTo(600f)
     }
 
     @Test
@@ -241,6 +263,24 @@ class StoresTest {
         assertThat(handle.vectors.indexGeneration()).isEqualTo(generation + 1)
     }
 
+    /** Captures seen at the same millisecond on both sides of a page boundary: none is skipped. */
+    @Test
+    fun pagesNeverSkipCapturesSeenAtTheSameTime() = runBlocking<Unit> {
+        val ids = (0 until 7).map { handle.captures.insert(capture("même instant $it", at = 5_000), emptyList()) }
+        val older = handle.captures.insert(capture("avant", at = 4_000), emptyList())
+
+        val seen = mutableListOf<Long>()
+        var cursor: JournalCursor? = null
+        do {
+            val page = handle.captures.page(before = cursor, packageName = null, limit = 3)
+            seen += page.map { it.id }
+            cursor = page.lastOrNull()?.let(JournalCursor::after)
+        } while (page.size == 3)
+
+        assertThat(seen).containsExactlyElementsIn(ids.reversed() + older).inOrder()
+        assertThat(handle.captures.packages()).containsExactly("com.example.notes")
+    }
+
     @Test
     fun pageRecentHashesAndStats() = runBlocking<Unit> {
         val a = handle.captures.insert(capture("un", at = 1_000), emptyList())
@@ -249,7 +289,7 @@ class StoresTest {
         val first = handle.captures.page(before = null, packageName = null, limit = 2)
         assertThat(first.map { it.id }).containsExactly(c, b).inOrder()
         assertThat(
-            handle.captures.page(before = first.last().lastSeenAt, packageName = null, limit = 2).map {
+            handle.captures.page(before = JournalCursor.after(first.last()), packageName = null, limit = 2).map {
                 it.id
             },
         ).containsExactly(a)

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_help_title">Le service s\'arrête tout seul</string>
+    <string name="settings_help_intro">Pour économiser la batterie, certains téléphones arrêtent les applications qu\'ils jugent inactives, services d\'accessibilité compris. SeekMind ne mémorise alors plus rien, jusqu\'à ce que vous le réactiviez.</string>
+    <string name="settings_help_reactivate">Si l\'écran de recherche indique « Service désactivé », touchez « Réactiver » et réactivez SeekMind dans les réglages d\'accessibilité. Pour qu\'il ne s\'arrête plus, excluez SeekMind de l\'optimisation de la batterie, comme indiqué ci-dessous pour votre téléphone.</string>
+    <string name="settings_help_samsung">Samsung</string>
+    <string name="settings_help_samsung_steps">1. Paramètres › Applications › SeekMind › Batterie : choisissez « Non restreinte ».\n2. Paramètres › Batterie › Limites d\'utilisation en arrière-plan : vérifiez que SeekMind ne figure ni dans « Applications en veille » ni dans « Applications en veille prolongée ».</string>
+    <string name="settings_help_xiaomi">Xiaomi, Redmi, POCO</string>
+    <string name="settings_help_xiaomi_steps">1. Paramètres › Applications › Gérer les applications › SeekMind › Économiseur de batterie : choisissez « Aucune restriction ».\n2. Sur la même page, activez « Démarrage automatique ».</string>
+    <string name="settings_help_oppo">Oppo, Realme</string>
+    <string name="settings_help_oppo_steps">1. Paramètres › Applications › Gestion des applications › SeekMind › Utilisation de la batterie : autorisez l\'activité en arrière-plan.\n2. Sur la même page, autorisez le lancement automatique.</string>
+    <string name="settings_help_huawei">Huawei, Honor</string>
+    <string name="settings_help_huawei_steps">1. Paramètres › Batterie › Lancement d\'applications › SeekMind : désactivez « Gérer automatiquement ».\n2. Dans la fenêtre qui s\'ouvre, laissez activés « Lancement automatique », « Lancement secondaire » et « Exécution en arrière-plan ».</string>
+    <string name="settings_help_oneplus">OnePlus</string>
+    <string name="settings_help_oneplus_steps">1. Paramètres › Applications › SeekMind › Batterie : autorisez l\'activité en arrière-plan.\n2. Paramètres › Batterie › Optimisation de la batterie › SeekMind : choisissez « Ne pas optimiser ».</string>
+    <string name="settings_help_other">Autres téléphones</string>
+    <string name="settings_help_other_steps">Paramètres › Applications › SeekMind › Batterie : choisissez « Non restreinte » (ou « Non optimisée »).</string>
+    <string name="settings_help_versions">Les noms des menus varient selon la version d\'Android et de l\'interface du constructeur : cherchez l\'intitulé le plus proche.</string>
+</resources>

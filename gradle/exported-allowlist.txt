@@ -1,5 +1,6 @@
-# Components allowed to be exported (INV-12). Format: `component.Name [required.Permission]`.
-# When a permission is given, the component must be protected by exactly that permission.
+# Components allowed to be exported (INV-12). Format: `component.Name [required.Permission] [enabled=false]`.
+# When a permission is given, the component must be protected by exactly that permission; with
+# `enabled=false`, it must be declared disabled.
 fr.corsicajack.seekmind.MainActivity                                    # launcher
 fr.corsicajack.seekmind.link.LinkActivity                               # seekmind://activate (M8-05)
 fr.corsicajack.seekmind.engine.capture.SeekMindAccessibilityService android.permission.BIND_ACCESSIBILITY_SERVICE  # M2-01
@@ -8,3 +9,6 @@ fr.corsicajack.seekmind.engine.capture.PauseTileService android.permission.BIND_
 androidx.profileinstaller.ProfileInstallReceiver android.permission.DUMP
 androidx.work.impl.diagnostics.DiagnosticsReceiver android.permission.DUMP
 androidx.work.impl.background.systemjob.SystemJobService android.permission.BIND_JOB_SERVICE  # WorkManager (M1-06): bound by JobScheduler only
+# Play Asset Delivery, language packs (M4-07, ADR-0012): the Play Store's channel to the application.
+com.google.android.play.core.assetpacks.AssetPackExtractionService enabled=false  # no permission: ADR-0012
+com.google.android.play.core.assetpacks.SessionStateBroadcastReceiver android.permission.INSTALL_PACKAGES

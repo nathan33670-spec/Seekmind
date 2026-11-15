@@ -8,6 +8,11 @@ dependencies {
     // Bundled model only: the variant that downloads its model is forbidden (docs/specs/ocr.md §4).
     implementation(libs.mlkit.text.recognition)
 
+    testImplementation(project(":core:testing"))
+    testImplementation(libs.junit)
+    testImplementation(libs.truth)
+    testImplementation(libs.kotlinx.coroutines.test)
+
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.truth)

@@ -18,7 +18,7 @@ jobs:
   build:
     name: Build, static analysis and JVM tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -35,13 +35,16 @@ jobs:
       - name: Install Android SDK packages
         run: bash scripts/setup-android-sdk.sh
 
-      # The bundled `fr` model, from the cache or rebuilt and checked against model.lock.json
-      # (docs/specs/embeddings.md §2): the release builds below embed it and :engine:embedding:verifyModel
-      # checks it.
-      - name: Embedding model
+      # The model sets, from the cache or rebuilt and checked against model.lock.json
+      # (docs/specs/embeddings.md §2): the release builds below embed `fr` and
+      # :engine:embedding:verifyModel checks it; the release bundles carry `multi` in the
+      # :modelpack_multi asset pack, checked by :modelpack_multi:verifyModel; the tokenizer parity tests
+      # read the vocab.bin of both (§3.3). Same cache key as device-tests.
+      - name: Embedding models
         uses: ./.github/actions/model-artifacts
         with:
-          models: fr
+          models: fr multi
+          install-multi: "true"
 
       - name: Formatting, lint, JVM tests and build of both variants
         run: >
@@ -54,6 +57,7 @@ jobs:
           assembleAdsRelease assembleOfflineRelease
           :fixtureapp:assembleDebug
           verifyAdsReleaseManifest verifyOfflineReleaseManifest
+          verifyAdsReleaseBundle verifyOfflineReleaseBundle
           verifyDependencies
           verifyModuleGraph
 

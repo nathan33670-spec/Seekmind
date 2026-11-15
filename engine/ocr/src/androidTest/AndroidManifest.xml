@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ticket M3-01: an accessibility service that lives only in the test APK, so that the screenshot
+     source can be driven against the real system. It reads nothing on its own. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <service
+            android:name="fr.corsicajack.seekmind.engine.ocr.screenshot.ScreenshotProbeService"
+            android:exported="true"
+            android:label="@string/screenshot_probe_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/screenshot_probe_config" />
+        </service>
+
+        <!-- Ticket M3-03: ML Kit runs in this test APK too. Its telemetry is cut as in the application
+             (docs/specs/ocr.md §4.1, option B of prototype S2). -->
+        <service
+            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+            tools:ignore="MissingClass"
+            tools:node="remove" />
+        <service
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+            tools:ignore="MissingClass"
+            tools:node="remove" />
+        <receiver
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+            tools:ignore="MissingClass"
+            tools:node="remove" />
+    </application>
+</manifest>

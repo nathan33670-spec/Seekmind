@@ -35,7 +35,7 @@ L'application existe en deux variantes du même code : `ads` (publiée, avec pub
 | INV-09 | **Pas de sauvegarde système.** `allowBackup="false"`, règles d'extraction qui excluent tout. | Vérification du manifeste |
 | INV-10 | **Secrets hors dépôt.** Aucune clé privée, keystore, jeton ou mot de passe committé. Seules des clés de test explicitement marquées comme telles sont admises dans les sources de test. | Revue, `.gitignore` |
 | INV-11 | **Dépendances sous contrôle.** Toute nouvelle bibliothèque exige une mise à jour de la liste blanche de la variante concernée (`gradle/dependency-allowlist-*.txt`) et une justification dans la PR. | `:app:verifyDependencies` |
-| INV-12 | **Surface exportée minimale.** Composants exportés autorisés : activité de lancement, activité de réception des liens `seekmind://activate`, service d'accessibilité et tuile de réglages rapides (protégés par permission système). Toute entrée externe (Intent, lien, fichier importé) est validée. | Vérification du manifeste |
+| INV-12 | **Surface exportée minimale.** Composants exportés autorisés : activité de lancement, activité de réception des liens `seekmind://activate`, service d'accessibilité et tuile de réglages rapides (protégés par permission système) ; composants de bibliothèque protégés par permission système, et le service de Play Asset Delivery (exception de l'ADR-0012). Toute entrée externe (Intent, lien, fichier importé) est validée. | Vérification du manifeste |
 | INV-13 | **Parité des variantes.** Aucun code propre à une variante hors de `:app` et de `engine:ads`. Tout changement doit laisser les deux variantes compilables et vérifiées. | CI (les quatre variantes de build) |
 
 ## 3. Conventions
@@ -105,6 +105,12 @@ Un ticket est `Fait` lorsque **tout** ce qui suit est vrai :
 - [ ] Les chaînes sont en ressources FR + EN ; l'écran ajouté est utilisable avec TalkBack.
 - [ ] La documentation touchée est à jour (spec, ADR, `docs/plan/` : statut du ticket passé à `Fait`).
 - [ ] La PR décrit les écarts éventuels par rapport à la spec.
+
+Exception (décision du porteur, 15 novembre 2026) : les vérifications sur le téléphone de test sont faites
+le plus tard possible, à la campagne M10-01. Un ticket dont seule une telle vérification reste à faire
+porte le statut « `Fait` — validation manuelle reportée à M10-01 » et compte comme `Fait` pour ses
+dépendants (`docs/plan/README.md` §1.2). Les autres validations manuelles (actions du porteur dans la
+Play Console, relecture juridique, réglages du dépôt) ne sont pas reportées.
 
 ## 6. Interdits
 

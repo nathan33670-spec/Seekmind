@@ -290,7 +290,9 @@ data class RawCapture(
 - `PauseTileService` : un tap bascule entre active et en pause sans limite ; le sous-titre indique l'état
   (« Active », « En pause », « En pause jusqu'à 14:30 », « Non activée ») ; un appui long ouvre
   l'application (`MainActivity` déclare `QS_TILE_PREFERENCES`). Sans consentement ou service désactivé,
-  un tap ouvre l'application. La tuile suit `CaptureStatusRepository` tant qu'elle est visible ; le
+  un tap ouvre l'application. Depuis l'écran verrouillé, un tap qui **reprend** la mémorisation demande
+  d'abord le déverrouillage (`unlockAndRun`), pour qu'un tiers qui a le téléphone en main ne puisse pas
+  la relancer ; la mise en pause n'en demande pas. La tuile suit `CaptureStatusRepository` tant qu'elle est visible ; le
   système appelle `onStartListening` à chaque ouverture du panneau, une tuile active
   (`ACTIVE_TILE`) n'est donc pas nécessaire.
 - Début de pause ou retrait du consentement : `EventRouter` remet `CaptureLoop` à zéro, si bien qu'un
@@ -317,6 +319,9 @@ le consentement et la pause. L'interface l'observe (EF-CAP-05).
 
 Priorité, du premier état qui s'applique au dernier : `ConsentMissing` (sans consentement, l'interface
 rouvre la divulgation avant tout passage par les réglages système), `ServiceDisabled`, `Paused`, `Active`.
+Un consentement d'une version de la divulgation antérieure à `DISCLOSURE_VERSION` compte comme absent
+(`ConsentMissing`). Aujourd'hui, seule la présence du consentement est testée : la comparaison des
+versions arrive avec M6-02, qui crée la constante.
 `Paused.until` vaut `null` pour une pause sans limite (`pausedUntil = Long.MAX_VALUE`). `lastCaptureAt`
 est publié par le pipeline (`onCaptureStored`).
 

@@ -58,6 +58,13 @@ android {
         // Embedding models are memory-mapped from the APK: they must stay uncompressed.
         noCompress += "onnx"
     }
+    // The multilingual model, downloaded on demand from Google Play (docs/specs/embeddings.md §5.2).
+    assetPacks += ":modelpack_multi"
+}
+
+// A release bundle never ships a missing or altered pack (ticket M4-06).
+tasks.matching { it.name.matches(Regex("bundle.*Release|package.*ReleaseBundle")) }.configureEach {
+    dependsOn(":modelpack_multi:verifyModel")
 }
 
 dependencies {
@@ -85,8 +92,11 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.work.runtime)
 
+    androidTestImplementation(project(":core:testing"))
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.truth)

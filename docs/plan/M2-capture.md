@@ -103,7 +103,7 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En revue — validation manuelle en attente | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
+| `Fait` — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
 
 **À faire**
 
@@ -124,8 +124,8 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 
 **Validation manuelle** — marqueurs de navigation privée observés sur Chrome et Firefox ; table mise à jour.
 
-**Reste à faire** — la validation manuelle ci-dessus. `sensitive_apps.json` compte 308 identifiants pour
-les sept pays, tous vérifiés par `tools/privacy/verify_sensitive_apps.py` (spec §3.2).
+**Reste à faire** — la validation manuelle ci-dessus, reportée à M10-01. `sensitive_apps.json` compte 308
+identifiants pour les sept pays, tous vérifiés par `tools/privacy/verify_sensitive_apps.py` (spec §3.2).
 
 ---
 
@@ -184,6 +184,9 @@ les sept pays, tous vérifiés par `tools/privacy/verify_sensitive_apps.py` (spe
 1. Compléter l'application de test : `PasswordActivity`, `EditableActivity`, `ScrollActivity`,
    `SensitiveDataActivity`, `MessagingLikeActivity`.
 2. Écrire les scénarios E2E-01, 02, 04, 07 à 13, 18 et 19, synchronisés sur `CapturePipeline.events`.
+3. E2E-14, parcours complet : capturer un écran de l'application de test, le retrouver par la recherche,
+   puis toucher le bouton de retour à la source, qui ouvre `DeepLinkActivity` sur le bon identifiant.
+   Le maillon résolution et lancement est déjà couvert par M7-03 (`SourceReturnDeviceTest`).
 
 **Critères d'acceptation**
 

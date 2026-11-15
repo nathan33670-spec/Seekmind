@@ -13,6 +13,8 @@ dependencies {
     // compileOnly: the plugins themselves are put on the build classpath by the root build script,
     // so that every project resolves exactly one version of each.
     compileOnly(libs.android.gradlePlugin)
+    // Already on the build classpath through the Android Gradle plugin, which keeps it off its API.
+    compileOnly(libs.bundletool)
     compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.compose.gradlePlugin)
     compileOnly(libs.ksp.gradlePlugin)
@@ -52,6 +54,10 @@ gradlePlugin {
         register("modelAssets") {
             id = "seekmind.model.assets"
             implementationClass = "fr.corsicajack.seekmind.buildlogic.ModelAssetsConventionPlugin"
+        }
+        register("modelPack") {
+            id = "seekmind.model.pack"
+            implementationClass = "fr.corsicajack.seekmind.buildlogic.ModelPackConventionPlugin"
         }
         register("androidTest") {
             id = "seekmind.android.test"

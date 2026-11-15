@@ -132,7 +132,34 @@ Moments de la journée, combinables avec un jour (« mardi soir », « hier mati
 lettres de un à douze. Les mots de liaison adjacents (« vu », « le », « du », « on », « at ») partent
 avec l'expression. Une capture correspond à l'intervalle si `[first_seen_at, last_seen_at]` le recoupe.
 
-La table complète des cas, avec date de référence et intervalle attendu, est `testdata/temporal_cases.tsv`.
+La table complète des cas, avec date de référence et intervalle attendu, est `testdata/temporal_cases.tsv`,
+produite par `tools/testdata/gen_temporal_cases.py`, qui calcule les intervalles indépendamment de
+l'analyseur Kotlin (`TemporalParser`).
+
+Précisions (M5-02) :
+
+- Les bornes sont incluses. Un jour va de 00:00 à 23:59:59,999 ; « cette semaine », « ce mois-ci »
+  s'arrêtent au moment présent.
+- « Tout à l'heure » et « récemment » sont des durées absolues avant le moment présent (6 h, 14 × 24 h),
+  insensibles au changement d'heure ; les jours et les moments suivent l'heure locale, changement
+  d'heure compris.
+- « ce week-end » : le dernier samedi-dimanche commencé ; « le week-end dernier » : celui d'avant
+  pendant un week-end, le même que « ce week-end » en semaine (le seul week-end passé récent).
+- « cette nuit » dite avant midi désigne la nuit qui vient de finir (la veille, 22:00 – 06:00) ; après
+  midi, la nuit qui vient. « last night » : la nuit de la veille. Un moment seul, sans jour ni
+  « ce »/« this » (« le soir de la fête »), n'est pas extrait.
+- Un jour et un moment se combinent avec ou sans liaison : « hier soir », « mardi après-midi »,
+  « hier dans la soirée », « lundi dernier au soir », « il y a 3 jours le matin », « tuesday in the
+  afternoon », « yesterday at noon ».
+- « en mars », « in march » demandent la préposition ; « en mars 2025 » vise cette année-là. Seul, un
+  nom de mois est un mot de la requête (« mars attaque », « may I help »).
+- Dates numériques : jour/mois, sauf si l'analyseur est construit avec `monthFirst` (anglais des
+  États-Unis, d'après la langue du téléphone) ; année sur quatre chiffres ; une date impossible
+  (31/02) n'est pas extraite.
+- N vaut de 1 à 999 en chiffres, de un à douze en lettres (« une », « a », « an » comptent pour 1).
+- Mots de liaison retirés avec l'expression quand ils la précèdent, deux au plus : « vu », « vue »,
+  « vus », « vues », « le », « la », « du », « depuis », « on », « at », « from », « seen », « saw ».
+  Le libellé (`rangeLabel`) est l'expression telle que tapée, sans ces mots.
 
 ## 4. Filtre d'application
 
@@ -144,19 +171,54 @@ Motif reconnu : une préposition (`sur`, `dans`, `via`, `depuis`, `de l'appli`, 
 suivie d'un libellé ou d'un alias, la plus longue correspondance d'abord. Sans préposition, rien n'est
 extrait (« chrome » peut être un mot de la requête) ; les pastilles de l'interface couvrent ce cas.
 
+Précisions (M5-03) :
+
+- `AndroidAppCatalog` lit les applications lançables (`MAIN` + `LAUNCHER`, déclarées dans
+  `<queries>`) hors du thread principal, les garde en mémoire et les relit après une installation,
+  une mise à jour ou une désinstallation (diffusions `PACKAGE_*`). `AppMatcher`, Kotlin pur, fait
+  l'extraction.
+- Prépositions : `sur`, `dans`, `via`, `depuis`, `de l'appli`, `de l'application`, `on`, `in`, `from`.
+  La comparaison porte sur les mots du libellé (mêmes règles que FTS5 : minuscules, sans diacritiques) :
+  « dans meteo » trouve « Météo », « sur Google Maps » l'emporte sur « sur Google ».
+- Alias : `res/raw/search_app_aliases.json`, alias → paquets. Un alias ne vaut que pour les paquets
+  installés : une application absente du téléphone ne donne aucun filtre. Deux applications de même
+  libellé donnent un filtre sur les deux paquets.
+
 ## 5. Recherche par mots-clés
 
 `LexicalSearcher` construit l'expression FTS5 :
 
 - chaque jeton est mis entre guillemets doubles (guillemets internes doublés) : aucune syntaxe FTS5 ne
   peut être injectée par la requête ;
-- les jetons sont reliés par `OR` : le classement BM25 favorise les captures qui en contiennent le plus ;
+- **en deux temps** (décision du porteur du 15 novembre 2026, après les mesures de M5-08) :
+  1. tous les jetons, reliés par `AND`, entre parenthèses ;
+  2. si cette première recherche ne rend aucune capture (`lexicalAllOfMinHits` = 1), les jetons reliés
+     par `OR`. Ses résultats suivent ceux de la première, sans doublon, jusqu'à la limite. Le classement BM25
+     y favorise les captures qui contiennent le plus de jetons ;
 - le dernier jeton reçoit un `*` de préfixe s'il compte au moins 3 caractères ;
-- un jeton en forme de code est ajouté tel quel **et** en préfixe.
+- un jeton en forme de code est ajouté tel quel **et** en préfixe, en alternative (`OR`), dans les deux
+  temps : un code suffit à lui seul.
 
-Exemple : `resto italien pâtes truffe` → `"resto" OR "italien" OR "pates" OR "truffe"*`.
+Exemples : `resto italien pâtes truffe` → d'abord `("resto" AND "italien" AND "pates" AND "truffe"*)`,
+puis au besoin `"resto" OR "italien" OR "pates" OR "truffe"*` ; `code SUMMER20` → d'abord
+`("code" AND "summer20"*) OR "SUMMER20" OR "SUMMER20"*`. Une requête d'un seul mot ne fait qu'une recherche.
+
+Raison : FTS5 calcule le BM25 de **toutes** les captures qui correspondent avant d'en garder 100. Sur
+100 000 captures, deux mots en `OR` en touchent des dizaines de milliers dès que l'un est courant, soit
+1,3 à 4,4 s sur les émulateurs de la CI, contre environ 100 ms en `AND` ([mesures M5-08](../mesures/2026-11-15-ci-emulateurs-M5-08.md)).
+Le seuil de 1 vient de la mesure : avec 10, une requête comme « commande 12345 » trouvait en `AND` la
+capture du code, moins de 10 en tout, puis classait en `OR` toutes les captures de « commande » (4 à 5 s
+au p95). Quand les mots ne figurent pas tous ensemble, la recherche sémantique couvre l'essentiel de ce
+qu'apporterait le `OR`. Le second temps reste coûteux quand aucune capture ne réunit les mots et que
+l'un d'eux est courant.
 
 Requête SQL, pondération des colonnes et extrait : [stockage §5](stockage.md). Limite : 100 lignes.
+
+Précisions (M5-04) : les jetons sont ceux de `ParsedQuery.tokens`, déjà en forme de comparaison ; un
+terme répété n'est écrit qu'une fois ; une requête sans mot (ponctuation seule) ne lance aucune
+recherche. L'extrait renvoyé par FTS5 est débarrassé de ses marqueurs `char(2)` / `char(3)`, qui
+deviennent les intervalles à surligner de `Snippet` (bornes incluses) ; un marqueur laissé ouvert par
+la coupe de l'extrait se ferme à sa fin.
 
 ## 6. Recherche vectorielle
 
@@ -167,11 +229,16 @@ Requête SQL, pondération des colonnes et extrait : [stockage §5](stockage.md)
 | Tableau | Type | Par vecteur |
 |---|---|---|
 | Codes binaires | `LongArray` | 6 × 8 octets |
+| Vecteurs int8 (rescore en mémoire) | `ByteArray` | 384 octets |
 | Identifiant de vecteur, identifiant de capture | `LongArray` ×2 | 16 octets |
 | Première et dernière vue | `LongArray` ×2 | 16 octets |
 | Indice de paquet | `IntArray` | 4 octets |
 
-Soit 84 octets par vecteur : 8 Mo pour 100 000 vecteurs, 25 Mo pour 300 000.
+Soit 468 octets par vecteur : 47 Mo pour 100 000 vecteurs, 140 Mo pour 300 000. Les vecteurs int8 sont
+gardés en mémoire depuis le 13 novembre 2026 (décision du porteur) : lus en base à chaque recherche,
+les 400 candidats coûtaient de 29 à 54 ms à 20 000 vecteurs (§6.3), au-delà du budget d'ENF-PERF-04.
+L'index n'existe que pendant l'usage de l'écran de recherche (libéré 60 s après), pas dans le service
+de capture (ENF-MEM-01).
 
 - **Chargement** paresseux, au premier usage, hors thread principal, par pages de 5 000 lignes
   (`VectorStore.binaryCodesAfter`). Cible : ≤ 500 ms pour 100 000 vecteurs.
@@ -184,9 +251,9 @@ Soit 84 octets par vecteur : 8 Mo pour 100 000 vecteurs, 25 Mo pour 300 000.
 
 1. `q = EmbeddingEngine.embedQuery(parsed.text)` ; code binaire de `q`.
 2. **Présélection** : parcours linéaire ; pour chaque vecteur passant les filtres (dates, paquets),
-   distance de Hamming sur 6 mots (`Long.bitCount`) ; conservation des `binaryTopK` (200) plus proches
+   distance de Hamming sur 6 mots (`Long.bitCount`) ; conservation des `binaryTopK` (400) plus proches
    dans un tas borné.
-3. **Rescore** : lecture des vecteurs int8 des candidats (`VectorStore.int8Vectors`) ; similarité
+3. **Rescore** en mémoire, sur les vecteurs int8 de l'index (aucune lecture en base) ; similarité
    `(Σ q[i] × d[i]) / S`.
 4. Rejet des candidats sous `semanticFloor`.
 5. Regroupement par capture (meilleur fragment) ; conservation des `semanticTopK` (100) meilleures captures.
@@ -197,6 +264,71 @@ M5-07** sur le jeu d'évaluation (plus haute valeur qui ne dégrade pas le Rappe
 
 Si le moteur d'embeddings est indisponible ou qu'aucun vecteur n'existe encore, la recherche se limite
 aux mots-clés et `semanticAvailable = false`.
+
+### 6.3 Implémentation (M5-05)
+
+Paquet `fr.corsicajack.seekmind.engine.search.vector` :
+
+- `VectorIndex.search(query, filters)` prend le vecteur de la requête (calculé par la recherche hybride,
+  M5-06) et rend des `SemanticHit(captureId, embeddingId, similarity)` : meilleur fragment de chaque
+  capture, trié par similarité puis par dernière vue. `refresh()` met l'index à jour sans chercher (à
+  l'ouverture de l'écran), `release()` le libère, `isEmpty()` sert à `semanticAvailable`.
+- `BinaryCodes` tient les tableaux du §6.1, qui grandissent par doublement ; les noms de paquets sont
+  remplacés par un indice dans une table. Les filtres sont appliqués pendant le parcours : dates
+  (`last_seen_at ≥ from` et `first_seen_at ≤ to`, comme la requête lexicale) et paquets (masque sur la
+  table). Le tas borné des candidats est fait de deux `IntArray` alloués une fois : le parcours
+  n'alloue rien. À distance égale, le vecteur le plus récent est gardé.
+- Codes et rescore : `VectorCodec` de `engine:embedding`.
+
+Limite connue : les dates de première et dernière vue sont celles du chargement. Une capture revue
+(`touch`) n'a pas de nouveau vecteur et garde son ancienne dernière vue jusqu'au prochain rechargement
+complet. Un filtre de dates peut donc l'exclure de la branche sémantique ; la branche lexicale, elle, la
+trouve.
+
+Mesures (JVM, 20 000 vecteurs normalisés, 100 requêtes, rappel des 10 plus proches voisins exacts parmi
+les résultats, présélection puis rescore int8) :
+
+| Jeu de vecteurs | Rappel@10, 400 candidats | 200 candidats |
+|---|---|---|
+| 2 000 groupes de 10 vecteurs, requêtes tirées près d'un centre | 0,997 | 0,995 |
+| Mêmes groupes autour d'une direction commune (similarité moyenne 0,64, comme les vecteurs e5) | **0,924** | 0,878 |
+| Vecteurs isotropes (cas le plus défavorable pour un code de signes) | 0,806 | 0,677 |
+
+Le code de signes perd de l'information quand tous les vecteurs partagent une direction : avec 200
+candidats, le cas proche des vecteurs e5 restait sous la cible de 0,90. **`binaryTopK` vaut donc 400**
+(décision du porteur, 13 novembre 2026), au prix de 200 lectures int8 de plus par recherche. Le ticket
+M5-07 le recalibre sur les vrais vecteurs.
+
+Coût sur la base chiffrée (`VectorIndexDeviceTest`, 20 000 vecteurs, médiane de 15 recherches sans
+filtre, émulateurs x86_64 de la CI, APK de test debuggable, exécution `device-tests` 43518022426) :
+
+| | API 30 | API 34 | API 36 |
+|---|---|---|---|
+| Recherche, 400 candidats | 54 ms | 29 ms | 30 ms |
+| Recherche, 200 candidats | 22 ms | 17 ms | 14 ms |
+| Chargement de l'index (20 000 vecteurs) | 2,0 à 2,7 s | 1,2 à 1,4 s | 1,2 à 1,9 s |
+
+Ces mesures portent sur la version qui lisait les int8 en base à chaque recherche : avec 400 candidats,
+la branche sémantique atteignait déjà, à 20 000 vecteurs, le budget de 30 ms d'ENF-PERF-04 (recherche
+hors embedding de la requête), le temps venant surtout de cette lecture. Les int8 sont depuis gardés en
+mémoire (§6.1) ; les nouvelles mesures du même test sont consignées ci-dessous. **À suivre (M5-08)** : le
+chargement reste loin de la cible de l'ADR-0005 (≤ 500 ms pour 100 000 vecteurs) ; la jointure avec
+`capture` (dates, paquet) en est la piste principale. Mesures sur émulateur debuggable, à confirmer sur
+le téléphone. Le parcours de 20 000 vecteurs n'alloue rien (240 octets en tout pour
+10 parcours, mesurés par `ThreadMXBean`).
+
+Mesures après le passage des int8 en mémoire (même test, même protocole, exécution `device-tests`
+43527237491) :
+
+| | API 30 | API 34 | API 36 |
+|---|---|---|---|
+| Recherche, 400 candidats | 2,7 ms | 7,4 ms | 4,1 ms |
+| Recherche, 200 candidats | 2,1 ms | 4,5 ms | 2,8 ms |
+| Chargement de l'index (20 000 vecteurs) | 1,4 s | 1,6 à 1,7 s | 2,0 s |
+
+Le rescore en mémoire divise le temps de la branche sémantique par 4 à 20 : avec 400 candidats, elle
+tient largement dans les 30 ms d'ENF-PERF-04. Le chargement, qui lit maintenant aussi les int8, reste le
+point à traiter en M5-08.
 
 ## 7. Fusion
 
@@ -245,6 +377,31 @@ fusion(A, B) → assouplissement éventuel               → émettre SearchResu
 ```
 
 - L'annulation du `Flow` (nouvelle requête, écran quitté) interrompt les deux branches.
+
+**Implémentation (M5-06)**, paquet `fr.corsicajack.seekmind.engine.search.hybrid` : `HybridSearcher`
+(implémente `SearchEngine`), `Fusion` (§7, pure), `SearchCache`, et `SemanticSource`, la branche
+sémantique (`VectorSemanticSource` : moteur d'embeddings et `VectorIndex`) :
+
+- Le chargement de l'index et le calcul du vecteur de la requête se font **dans** la branche
+  sémantique, en parallèle de la recherche par mots-clés : la première émission n'attend jamais le
+  chargement de l'index (ENF-PERF-03).
+- Sans moteur d'embeddings, ou si la requête n'a plus de texte une fois les expressions retirées :
+  **une seule émission**, `stage = LEXICAL`, `semanticAvailable = false` ; l'assouplissement s'y applique.
+- Sans vecteur encore calculé, ou si la branche sémantique échoue — calcul du vecteur de la requête ou
+  recherche dans l'index, assouplissement compris (l'erreur est journalisée sans contenu) : l'émission
+  `HYBRID` reprend les résultats par mots-clés avec `semanticAvailable = false`, et n'est pas mise en cache.
+- La première émission n'est jamais assouplie ; l'assouplissement réutilise le vecteur de la requête
+  (calculé une fois). Si seuls des paquets sont filtrés, l'étape `TIME` est sautée.
+- Une requête trouvée dans `SearchCache` donne directement son résultat `HYBRID`, en une émission.
+  Seuls les résultats complets (`semanticAvailable = true`) sont mis en cache. Chaque entrée retient
+  `meta.index_generation` : après une suppression (journal, « Tout effacer »), l'entrée est ignorée et la
+  recherche refaite, si bien qu'une capture supprimée ne revient jamais du cache. Clé : texte normalisé
+  (mots vides compris, que la branche sémantique lit), mots utiles, jetons de code, intervalle, paquets
+  triés et `limit`.
+- Repli des quasi-doublons : à rang égal de la paire, c'est la place la mieux classée qui est gardée,
+  avec les données de la capture la plus récente ; `matchedBy` réunit les deux, et l'extrait surligné
+  (mots-clés) est préféré à l'extrait sémantique.
+- Extrait sémantique : le fragment du meilleur vecteur (`SearchStore.fragments`), 200 caractères.
 - `SearchCache` conserve les 5 derniers résultats hybrides pendant 10 min, indexés par
   `queryKey` (texte normalisé + filtres). La même clé sert à la gratuité des requêtes répétées
   ([monetisation §2](monetisation.md)).
@@ -254,7 +411,8 @@ fusion(A, B) → assouplissement éventuel               → émettre SearchResu
 ```kotlin
 data class SearchConfig(
     val lexicalLimit: Int = 100,
-    val binaryTopK: Int = 200,
+    val lexicalAllOfMinHits: Int = 1,    // §5 : en dessous, les jetons sont aussi cherchés en OR
+    val binaryTopK: Int = 400,
     val semanticTopK: Int = 100,
     val semanticFloor: Float = 0.78f,
     val rrfK: Int = 60,
@@ -264,19 +422,100 @@ data class SearchConfig(
     val indexPageSize: Int = 5_000,
     val cacheSize: Int = 5,
     val cacheTtlMs: Long = 600_000,
+    // Poids de la fusion par profil (§7).
+    val lexicalWeightDefault: Double = 1.0,
+    val semanticWeightDefault: Double = 1.0,
+    val lexicalWeightCode: Double = 2.0,
+    val semanticWeightCode: Double = 0.5,
+    val lexicalWeightNatural: Double = 0.8,
+    val semanticWeightNatural: Double = 1.2,
 )
 ```
 
 ## 11. Évaluation
 
-`./gradlew :engine:search:evalSearch` (JVM, modèle réel) charge `testdata/eval/corpus.jsonl` dans une
-base en mémoire, exécute `testdata/eval/queries.jsonl` et calcule Rappel@1, Rappel@5 et MRR, globalement
-et par type de requête, pour trois configurations : mots-clés seuls, sémantique seule, hybride.
-L'évaluation est faite **pour chaque modèle du catalogue**. La tâche échoue si le modèle `fr` est sous
-les seuils de EF-SRCH-01 à 03 sur les requêtes en français, ou si le modèle `multi` l'est sur l'ensemble
-des requêtes. Les résultats du modèle `fr` sur les requêtes en anglais et bilingues sont publiés à titre
-d'information (risque R-06). Rapport : `build/reports/search-eval.json`.
-Tout changement de `SearchConfig`, du tokenizer ou du modèle joint le rapport à la PR.
+`SearchEvalDeviceTest` (`engine:search`, test instrumenté du workflow `device-tests`,
+[ADR-0011](../adr/0011-evaluation-de-la-recherche-sur-emulateur.md)) insère `testdata/eval/corpus.jsonl`
+dans la vraie base chiffrée et le vectorise avec les vrais modèles. Il exécute ensuite
+`testdata/eval/queries.jsonl` et calcule Rappel@1, Rappel@5 et MRR, globalement, par type de requête et
+par langue, pour trois configurations : mots-clés seuls, sens seul, hybride.
+
+L'évaluation est faite **pour chaque modèle du catalogue**. Le test échoue si le modèle `fr` est sous les
+seuils d'EF-SRCH-01 à 03 sur les requêtes en français, ou si le modèle `multi` l'est sur l'ensemble des
+requêtes. Il échoue aussi si l'hybride fait moins bien, en Rappel@5 global, que l'une des deux méthodes
+seules. Les résultats du modèle `fr` sur les requêtes en anglais et bilingues sont publiés à titre
+d'information (risque R-06).
+
+Rapport : les lignes `m5_07_*` de logcat (`SeekMindBench`, dans l'artefact `device-tests`) et
+`search-eval.json` dans la sortie additionnelle des tests. Un balayage de calibration (`semanticFloor`,
+`binaryTopK`, poids des profils) y est joint. Tout changement de `SearchConfig`, du tokenizer ou du
+modèle joint le rapport à la PR.
+
+Le jeu est produit par `tools/eval/gen_corpus.py`, de façon déterministe :
+- 298 captures, dont 58 ancres écrites à la main et 240 captures de remplissage ;
+- 80 requêtes, qui désignent leurs captures attendues par une clé stable ;
+- des dates relatives à un mardi soir fixe.
+
+Le coût de la quantification seule est mesuré par `tools/model/eval_set.py`, appelé par `verify.py` :
+Rappel@5 par le sens, modèle original contre modèle quantifié, sur le même jeu.
+
+### 11.1 Résultats (M5-07)
+
+Mesures du 15 novembre 2026, exécution `device-tests` 43707625829 (API 34 ; le test passe aussi sur les
+API 30 et 36), modèles quantifiés par canal (§2 des [embeddings](embeddings.md)), recherche lexicale en
+deux temps (§5), `SearchConfig` par défaut. Entre parenthèses, la première mesure (exécution
+43585148277, modèles quantifiés par tenseur, mots reliés par `OR`).
+
+| Modèle · configuration | Rappel@1 | Rappel@5 | MRR |
+|---|---|---|---|
+| `fr` · hybride, requêtes en français (49) | 0,939 | **1,0** (0,959) | **0,963** (0,916) |
+| `fr` · hybride, tout le jeu (80) | 0,850 | 0,950 (0,913) | 0,890 (0,859) |
+| `fr` · mots-clés seuls, tout le jeu | 0,788 (0,750) | 0,838 | 0,807 (0,785) |
+| `fr` · sens seul, tout le jeu | 0,513 | 0,875 (0,825) | 0,674 (0,650) |
+| `multi` · hybride, tout le jeu (80) | 0,838 | **0,950** (0,925) | **0,891** (0,875) |
+| `multi` · mots-clés seuls, tout le jeu | 0,788 (0,750) | 0,838 | 0,807 (0,785) |
+| `multi` · sens seul, tout le jeu | 0,513 | 0,863 (0,825) | 0,675 (0,645) |
+
+- **Seuils d'EF-SRCH-01 à 03 tenus**, sur les groupes que le test contrôle :
+
+  | Modèle · groupe contrôlé | Effectif | Valeur | Seuil |
+  |---|---|---|---|
+  | `fr` · requêtes en français, hybride | 49 | Rappel@5 1,0 · MRR 0,963 | 0,85 · 0,70 |
+  | `fr` · codes en français | 9 | Rappel@1 1,0 | 0,90 |
+  | `fr` · paraphrases en français | 15 | Rappel@5 1,0 | 0,75 |
+  | `multi` · tout le jeu, hybride | 80 | Rappel@5 0,950 · MRR 0,891 | 0,85 · 0,70 |
+  | `multi` · codes | 12 | Rappel@1 1,0 | 0,90 |
+  | `multi` · paraphrases | 32 | Rappel@5 0,875 | 0,75 |
+
+  Les effectifs sont petits : sur 15 paraphrases, une requête pèse 6,7 points ; sur 9 codes, 11 points.
+  Un seuil se joue donc à une ou deux requêtes près. Les lignes `m5_07_*_hybrid_scope_*` du rapport
+  donnent ces valeurs à chaque exécution.
+  - L'hybride fait mieux que chaque méthode seule : 0,950 en Rappel@5 pour les deux modèles, contre 0,838 pour les mots-clés seuls et 0,863 à 0,875 pour le sens seul.
+- **Risque R-06 : ce que `fr` perd face à `multi`.**
+  - Requêtes en anglais, hybride : Rappel@5 0,905 contre 0,952, soit une requête sur 21.
+  - Requêtes bilingues : 0,8 pour les deux.
+  - Sens seul, requêtes en anglais : 0,857 pour `fr`, 0,810 pour `multi`.
+  - La perte est faible sur ce jeu, où les contenus anglais restent proches du vocabulaire courant.
+- **Recherche lexicale en deux temps** (§5) : le Rappel@5 ne change pas, la précision monte un peu
+  (mots-clés seuls : Rappel@1 0,750 → 0,788) ; chercher d'abord tous les mots classe mieux la capture
+  attendue.
+- **Requêtes manquées par l'hybride** (absentes des cinq premiers), toutes de type paraphrase ou bilingue :
+
+  | Requête | Type | Manquée par |
+  |---|---|---|
+  | q34 « code du réseau sans fil de la coloc » | paraphrase en français | `multi` seulement |
+  | q48 « someone to watch the kids… » | paraphrase en anglais | `fr` seulement |
+  | q49 « help carrying furniture… » | paraphrase en anglais | `fr` et `multi` |
+  | q72, q78 | bilingues | `fr` et `multi` |
+
+  q32 et q58, manquées avec les modèles par tenseur, sont retrouvées. q78 (« cours de yoga le lundi ») est pénalisée par l'analyseur temporel : « le lundi » devient un filtre de date, alors que la requête parle d'un rendez-vous récurrent.
+- **Calibration** (balayage sur l'hybride) :
+  - `semanticFloor` de 0,70 à 0,82 ne change pas le Rappel@5 de `fr` (1,0). Pour `multi`, 0,80 gagne trois requêtes (0,988), 0,82 en reperd deux, et 0,70 à 0,76 en perdent une. C'est dans le bruit d'un jeu de 80 requêtes, mais c'est la piste à suivre avec des captures réelles.
+  - `binaryTopK` = 200 donne le même Rappel@5.
+  - Les poids du profil naturel (1,0/1,0 ou 0,6/1,4) ne changent rien. Un poids sémantique de 1,3 pour le profil par défaut fait perdre une requête à chaque modèle.
+
+  **Les réglages par défaut sont conservés.** Une recalibration demande un jeu plus grand ou des captures réelles (M10-03).
+- **Quantification.** Sur la JVM, sans les filtres, la quantification par tenseur faisait passer le Rappel@5 par le sens de 0,863 à 0,762 pour `fr` et à 0,800 pour `multi`. Les modèles sont maintenant quantifiés par canal, avec des poids non signés (0,838 pour `fr`, 0,863 pour `multi`, [embeddings §2](embeddings.md)) : décision du porteur, qui admet au plus deux requêtes perdues à la quantification.
 
 ## 12. Tests attendus
 

@@ -90,17 +90,84 @@ titre ou hôte de l'URL ; extrait de trois lignes au plus, termes surlignés ; m
 l'image » le cas échéant ; « + 3 similaires » si des doublons sont repliés ; bouton de retour à la
 source au libellé exact ([retour-source §1](retour-source.md)). Un tap sur la carte ouvre le détail.
 
+**Implémentation (M6-03).** `SearchViewModel` et `SearchScreen` (`feature:search`) ; `SearchStack`
+(`:app`) assemble la recherche (`HybridSearcher`) au premier usage, hors du thread principal, retient la
+session d'embeddings tant que l'application est au premier plan et libère l'index vectoriel 60 s après
+qu'elle l'a quitté. En attendant les tickets suivants :
+
+- la pastille « Personnalisée » (choix de dates) n'est pas encore là : Aujourd'hui, Hier, 7 jours, 30 jours ;
+- « Sans crédit » affiche un état vide : la feuille de crédits arrive en M8 ; d'ici là, `EntitlementGate`
+  est lié à une implémentation « tout autorisé » ;
+- la clé passée à `EntitlementGate` est la requête saisie (minuscules, espaces réduits) et les filtres
+  des pastilles ; M8 l'alignera sur `queryKey` de [recherche §9](recherche.md) si besoin ;
+- supprimer une pastille d'un filtre compris dans la requête relance la recherche sur le texte sans ses
+  expressions, les autres filtres compris étant conservés comme filtres explicites ;
+- « Réinitialiser SeekMind » efface tout (base, clé, réglages) après confirmation, puis ferme l'application.
+- « Base indisponible » (et son bouton « Réinitialiser SeekMind ») est réservé à une base qui ne s'ouvre
+  pas. Une recherche qui échoue pour une autre raison affiche « La recherche a échoué — Réessayer »,
+  ou garde les résultats déjà affichés avec un bandeau « Réessayer » : jamais d'action destructrice.
+
+**Bandeau d'état (M6-09).** `CaptureStatusBanner` suit `CaptureStatusRepository` (capture §8). Un état
+inconnu ou `Active` n'affiche rien.
+
+| État | Bandeau | Action |
+|---|---|---|
+| `Paused(until)` | « Mémorisation en pause », ou « … jusqu'à 14:30 » (date et heure si ce n'est pas le jour même) | « Reprendre » : fin de la pause |
+| `ServiceDisabled` | « Service désactivé » | « Réactiver » : réglages d'accessibilité du système ; lien « Le service s'arrête tout seul ? » vers la page d'aide |
+| `ConsentMissing` | « La mémorisation n'est pas activée » | « Activer la mémorisation » : divulgation (M6-02). Tant qu'elle n'existe pas, le bandeau n'a pas de bouton |
+
+- **Ordre des contrôles.** Le consentement est vérifié en premier (capture §8). « Réactiver » n'ouvre
+  donc les réglages du système qu'après la divulgation (conformité §4.1).
+- **« Dernière mémorisation il y a … ».** La ligne apparaît dans l'état vide quand la mémorisation est
+  active et qu'un écran a été mémorisé depuis le démarrage du processus : « à l'instant », puis en
+  minutes, heures et jours. Sinon, rien n'est affiché, plutôt qu'une durée fausse.
+- **Page d'aide « Le service s'arrête tout seul »** (`feature:settings`, `ServiceHelpScreen`). Elle
+  explique l'arrêt du service et donne les étapes pour Samsung, Xiaomi, Oppo, Huawei, OnePlus et les
+  autres téléphones. C'est du texte seulement : aucune permission n'est demandée, et la page n'ouvre
+  aucun écran du système.
+
 ### 3.3 Détail d'une capture
 
 Application, dates de première et dernière vue, nombre de vues, titre, URL ; texte complet sélectionnable
 avec les termes de la recherche surlignés ; actions : retour à la source, copier, partager, supprimer
 (avec confirmation) ; liens détectés.
 
+Mise en œuvre (M6-04) :
+
+- **Ouverture.** On ouvre le détail depuis un résultat de recherche ou une ligne du journal. La route ne
+  porte que l'identifiant de la capture. Les termes à surligner sont ceux de la dernière recherche. Ils
+  restent en mémoire et ne passent ni par la route ni par l'état sauvegardé (INV-06). Depuis le journal,
+  rien n'est surligné.
+- **Surlignage.** Les termes sont reconnus en début de mot, sans tenir compte de la casse ni des
+  accents : ce sont les mots utiles et les codes de la requête analysée.
+- **Liens détectés.** Ce sont les adresses `http(s)://` du texte, sans leur ponctuation finale et sans
+  doublon, cinq au plus. Un lien ne s'ouvre que si l'utilisateur le touche.
+- **Copie.** Le bouton « Copier » et la sélection du texte posent le drapeau
+  `ClipDescription.EXTRA_IS_SENSITIVE` sur le presse-papiers. Pour la sélection, le presse-papiers de
+  l'écran est enveloppé. Le partage passe par le sélecteur du système.
+- **Suppression.** Une confirmation est demandée. La capture disparaît ensuite des résultats affichés et
+  du journal : un événement de suppression est partagé entre les écrans. Si la capture n'existe plus,
+  l'écran l'indique.
+- **Retour à la source** (M7-03). Sur la carte d'un résultat comme dans le détail, le bouton porte le
+  libellé du niveau résolu ([retour-source §1](retour-source.md)). « Application introuvable » est
+  désactivé, et le résultat n'offre alors pas d'action d'accessibilité. La résolution d'un résultat se
+  fait hors du fil principal, une fois par capture et par recherche. Tant qu'elle n'est pas faite, le
+  bouton est désactivé et ne promet que l'application (« Ouvrir {application} »). Les liens détectés
+  (cinq au plus) viennent de `SourceResolver.linksIn` et s'ouvrent dans le navigateur par défaut,
+  `http(s)` seulement.
+
 ### 3.4 Journal (`feature:journal`)
 
-Liste regroupée par jour (en-têtes collants), une ligne par capture (application, heure, titre ou début
-du texte). Filtre par application. Suppression par balayage avec annulation. Menu : « Supprimer cette
-journée ». Chargement par pages de 50 (curseur sur la date). Jamais soumis aux crédits.
+Liste regroupée par jour de dernière vue (en-têtes collants : « Aujourd'hui », « Hier », puis le jour
+en toutes lettres), une ligne par capture (application, heure, titre de la fenêtre ou première ligne du
+texte). Filtre par application (pastilles des applications présentes dans le journal). Suppression par
+balayage, ou par l'action d'accessibilité « Supprimer », avec « Annuler » dans une barre
+d'information : la ligne est masquée, puis supprimée de la base quand la barre disparaît, quand une
+autre ligne est supprimée ou quand l'écran est quitté. Menu de l'en-tête : « Supprimer cette
+journée », avec confirmation, qui efface toute capture vue ce jour-là (`deleteByRange`). Chargement par
+pages de 50 (curseur `(last_seen_at, id)`), la page suivante étant demandée à 15 lignes de la fin ;
+seules les pages atteintes sont en mémoire. Jamais soumis aux crédits : `feature:journal` ne dépend
+pas de `engine:monetization`.
 
 ### 3.5 Réglages (`feature:settings`)
 

@@ -1,0 +1,81 @@
+{"meta": {"now": 1794340800000, "zone": "Europe/Paris", "apps": [{"package": "com.amazon.mShop.android.shopping", "label": "Amazon"}, {"package": "com.android.chrome", "label": "Chrome"}, {"package": "com.google.android.apps.maps", "label": "Maps"}, {"package": "com.google.android.calendar", "label": "Agenda"}, {"package": "com.google.android.gm", "label": "Gmail"}, {"package": "com.google.android.keep", "label": "Keep"}, {"package": "com.google.android.youtube", "label": "YouTube"}, {"package": "com.instagram.android", "label": "Instagram"}, {"package": "com.linkedin.android", "label": "LinkedIn"}, {"package": "com.reddit.frontpage", "label": "Reddit"}, {"package": "com.sncf.ouisncf", "label": "SNCF Connect"}, {"package": "com.spotify.music", "label": "Spotify"}, {"package": "com.twitter.android", "label": "X"}, {"package": "com.whatsapp", "label": "WhatsApp"}, {"package": "fr.leboncoin", "label": "leboncoin"}]}}
+{"id": "q01", "text": "tarte tatin", "type": "exact", "lang": "fr", "expected": ["recipe-tatin"]}
+{"id": "q02", "text": "risotto champignons", "type": "exact", "lang": "fr", "expected": ["recipe-risotto"]}
+{"id": "q03", "text": "chickpea curry", "type": "exact", "lang": "en", "expected": ["recipe-curry"]}
+{"id": "q04", "text": "Le Petit Zinc", "type": "exact", "lang": "fr", "expected": ["restaurant-zinc"]}
+{"id": "q05", "text": "Kumo Sushi", "type": "exact", "lang": "en", "expected": ["restaurant-sushi"]}
+{"id": "q06", "text": "Monte Cinto", "type": "exact", "lang": "fr", "expected": ["map-hike"]}
+{"id": "q07", "text": "vélo de ville", "type": "exact", "lang": "fr", "expected": ["bike-sale"]}
+{"id": "q08", "text": "corner sofa", "type": "exact", "lang": "en", "expected": ["sofa-sale"]}
+{"id": "q09", "text": "phares côte corse", "type": "exact", "lang": "fr", "expected": ["article-lighthouses"]}
+{"id": "q10", "text": "pompe à chaleur", "type": "exact", "lang": "fr", "expected": ["article-heat-pump"]}
+{"id": "q11", "text": "levain pain de campagne", "type": "exact", "lang": "fr", "expected": ["article-bread"]}
+{"id": "q12", "text": "Palombaggia", "type": "exact", "lang": "fr", "expected": ["insta-beach"]}
+{"id": "q13", "text": "lemon cake", "type": "exact", "lang": "en", "expected": ["insta-cake"]}
+{"id": "q14", "text": "Late Night Jazz", "type": "exact", "lang": "en", "expected": ["spotify-jazz"]}
+{"id": "q15", "text": "Radeau de la Méduse", "type": "exact", "lang": "fr", "expected": ["spotify-podcast"]}
+{"id": "q16", "text": "pharmacie de garde", "type": "exact", "lang": "fr", "expected": ["pharmacy"]}
+{"id": "q17", "text": "réunion parents-professeurs", "type": "exact", "lang": "fr", "expected": ["event-parents"]}
+{"id": "q18", "text": "yoga class", "type": "exact", "lang": "en", "expected": ["event-yoga"]}
+{"id": "q19", "text": "QXH7TP", "type": "code", "lang": "fr", "expected": ["train-lyon"]}
+{"id": "q20", "text": "K7M2QZ", "type": "code", "lang": "fr", "expected": ["flight-lisbon"]}
+{"id": "q21", "text": "402-7781934-5521063", "type": "code", "lang": "fr", "expected": ["order-headphones"]}
+{"id": "q22", "text": "113-5528740-9912646", "type": "code", "lang": "en", "expected": ["order-books"]}
+{"id": "q23", "text": "6A19284755031", "type": "code", "lang": "fr", "expected": ["parcel-relay"]}
+{"id": "q24", "text": "HIVER25", "type": "code", "lang": "fr", "expected": ["promo-code"]}
+{"id": "q25", "text": "FE-2026-104558", "type": "code", "lang": "fr", "expected": ["invoice-power"]}
+{"id": "q26", "text": "CS-58201", "type": "code", "lang": "en", "expected": ["ticket-support"]}
+{"id": "q27", "text": "5521-889-034", "type": "code", "lang": "en", "expected": ["hotel-bruges"]}
+{"id": "q28", "text": "LV-30419", "type": "code", "lang": "fr", "expected": ["rental-car"]}
+{"id": "q29", "text": "TP 4421", "type": "code", "lang": "fr", "expected": ["flight-lisbon"]}
+{"id": "q30", "text": "192.168.1.1", "type": "code", "lang": "fr", "expected": ["wifi-router"]}
+{"id": "q31", "text": "à quelle heure part mon train pour Lyon", "type": "paraphrase", "lang": "fr", "expected": ["train-lyon"]}
+{"id": "q32", "text": "billet d'avion pour le Portugal", "type": "paraphrase", "lang": "fr", "expected": ["flight-lisbon"]}
+{"id": "q33", "text": "où sont les clés de l'appart", "type": "paraphrase", "lang": "fr", "expected": ["msg-keys"]}
+{"id": "q34", "text": "code du réseau sans fil de la coloc", "type": "paraphrase", "lang": "fr", "expected": ["msg-wifi"]}
+{"id": "q35", "text": "dessert aux pommes caramélisées", "type": "paraphrase", "lang": "fr", "expected": ["recipe-tatin"]}
+{"id": "q36", "text": "comment déboucher ou réparer un tuyau qui goutte", "type": "paraphrase", "lang": "fr", "expected": ["video-plumbing"]}
+{"id": "q37", "text": "tempête et vent fort sur la côte", "type": "paraphrase", "lang": "fr", "expected": ["weather-storm"]}
+{"id": "q38", "text": "chauffage économique pour la maison", "type": "paraphrase", "lang": "fr", "expected": ["article-heat-pump"]}
+{"id": "q39", "text": "cadeaux de Noël pour la famille", "type": "paraphrase", "lang": "fr", "expected": ["note-gift-ideas"]}
+{"id": "q40", "text": "liste pour le supermarché", "type": "paraphrase", "lang": "fr", "expected": ["note-groceries"]}
+{"id": "q41", "text": "rendez-vous chez le dentiste", "type": "paraphrase", "lang": "fr", "expected": ["event-dentist"]}
+{"id": "q42", "text": "vaccin du chat", "type": "paraphrase", "lang": "fr", "expected": ["vet"]}
+{"id": "q43", "text": "poste de développeur mobile", "type": "paraphrase", "lang": "fr", "expected": ["linkedin-job"]}
+{"id": "q44", "text": "mouvement social dans les transports", "type": "paraphrase", "lang": "fr", "expected": ["x-strike"]}
+{"id": "q45", "text": "anniversaire de la grand-mère", "type": "paraphrase", "lang": "fr", "expected": ["msg-birthday"]}
+{"id": "q46", "text": "how long does an electric car battery last", "type": "paraphrase", "lang": "en", "expected": ["article-ev-battery"]}
+{"id": "q47", "text": "tips to sleep better when days are short", "type": "paraphrase", "lang": "en", "expected": ["article-sleep"]}
+{"id": "q48", "text": "someone to watch the kids on Friday night", "type": "paraphrase", "lang": "en", "expected": ["msg-babysitter"]}
+{"id": "q49", "text": "help carrying furniture this weekend", "type": "paraphrase", "lang": "en", "expected": ["msg-moving"]}
+{"id": "q50", "text": "beginner guitar lesson", "type": "paraphrase", "lang": "en", "expected": ["video-guitar"]}
+{"id": "q51", "text": "photo of galaxies from a telescope", "type": "paraphrase", "lang": "en", "expected": ["x-launch"]}
+{"id": "q52", "text": "hotel room in Belgium", "type": "paraphrase", "lang": "en", "expected": ["hotel-bruges"]}
+{"id": "q53", "text": "message de Camille ce soir", "type": "temporal", "lang": "fr", "expected": ["msg-dinner-tuesday"]}
+{"id": "q54", "text": "colis hier", "type": "temporal", "lang": "fr", "expected": ["parcel-relay"]}
+{"id": "q55", "text": "alerte météo hier soir", "type": "temporal", "lang": "fr", "expected": ["weather-storm"]}
+{"id": "q56", "text": "concert dimanche", "type": "temporal", "lang": "fr", "expected": ["insta-concert"]}
+{"id": "q57", "text": "commande il y a 4 jours", "type": "temporal", "lang": "fr", "expected": ["order-headphones"]}
+{"id": "q58", "text": "recette la semaine dernière", "type": "temporal", "lang": "fr", "expected": ["recipe-tatin"]}
+{"id": "q59", "text": "code de vérification aujourd'hui", "type": "temporal", "lang": "fr", "expected": ["otp-bank"]}
+{"id": "q60", "text": "jazz playlist last week", "type": "temporal", "lang": "en", "expected": ["spotify-jazz"]}
+{"id": "q61", "text": "gym yesterday", "type": "temporal", "lang": "en", "expected": ["gym"]}
+{"id": "q62", "text": "tracking 3 days ago", "type": "temporal", "lang": "en", "expected": ["tracking-dhl"]}
+{"id": "q63", "text": "plage sur Instagram", "type": "application", "lang": "fr", "expected": ["insta-beach"]}
+{"id": "q64", "text": "grève sur X", "type": "application", "lang": "fr", "expected": ["x-strike"]}
+{"id": "q65", "text": "risotto sur YouTube", "type": "application", "lang": "fr", "expected": ["recipe-risotto"]}
+{"id": "q66", "text": "billet sur SNCF Connect", "type": "application", "lang": "fr", "expected": ["train-lyon"]}
+{"id": "q67", "text": "vélo sur leboncoin", "type": "application", "lang": "fr", "expected": ["bike-sale"]}
+{"id": "q68", "text": "facture dans Gmail", "type": "application", "lang": "fr", "expected": ["invoice-power"]}
+{"id": "q69", "text": "batteries on Reddit", "type": "application", "lang": "en", "expected": ["article-ev-battery"]}
+{"id": "q70", "text": "sushi on Maps", "type": "application", "lang": "en", "expected": ["restaurant-sushi"]}
+{"id": "q71", "text": "chickpea and coconut stew", "type": "paraphrase", "lang": "bilingual", "expected": ["recipe-curry"]}
+{"id": "q72", "text": "pancake batter recipe", "type": "paraphrase", "lang": "bilingual", "expected": ["recipe-crepes"]}
+{"id": "q73", "text": "train ticket to Lyon", "type": "paraphrase", "lang": "bilingual", "expected": ["train-lyon"]}
+{"id": "q74", "text": "noise cancelling headphones order", "type": "paraphrase", "lang": "bilingual", "expected": ["order-headphones"]}
+{"id": "q75", "text": "lighthouses of Corsica", "type": "paraphrase", "lang": "bilingual", "expected": ["article-lighthouses"]}
+{"id": "q76", "text": "réservation d'hôtel à Bruges", "type": "paraphrase", "lang": "bilingual", "expected": ["hotel-bruges"]}
+{"id": "q77", "text": "gâteau au citron", "type": "paraphrase", "lang": "bilingual", "expected": ["insta-cake"]}
+{"id": "q78", "text": "cours de yoga le lundi", "type": "paraphrase", "lang": "bilingual", "expected": ["event-yoga"]}
+{"id": "q79", "text": "réunion de lancement du projet", "type": "paraphrase", "lang": "bilingual", "expected": ["note-meeting"]}
+{"id": "q80", "text": "prévisions de neige en montagne", "type": "paraphrase", "lang": "bilingual", "expected": ["weather-snow"]}

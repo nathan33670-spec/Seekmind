@@ -17,5 +17,7 @@ media-projection	all	\bMediaProjection	INV-03: screenshots only through the acce
 image-compress	all	\.compress\(\s*Bitmap\.CompressFormat|\bBitmap\.CompressFormat\b	INV-03: no image is ever encoded or written
 image-mediastore	all	\bMediaStore\b	INV-03: no image is ever written
 image-files	only:engine/ocr,engine/capture	\bFileOutputStream\b|\bImageWriter\b	INV-03: screen captures stay in memory
+image-encode	only:engine/ocr,engine/capture	\.compress\(	INV-03: no image is ever encoded
+image-disk	only:engine/ocr,engine/capture	\bopenFileOutput\b|\b(getCacheDir|cacheDir|externalCacheDir|getExternalCacheDir|codeCacheDir)\b|\bRandomAccessFile\b|\bFileWriter\b|\bFiles\.(write|newOutputStream|copy)\b|\.(writeBytes|outputStream|bufferedWriter|printWriter)\(	INV-03: screen captures never reach the disk
 android-log	except:core/common	\bandroid\.util\.Log\b|(^|[^A-Za-z0-9_.])Log\.(v|d|i|w|e|wtf)\(	INV-07: log through SmLog (core:common)
 db-key-exposure	only:core/database/src/main/kotlin/fr/corsicajack/seekmind/core/database/key	\bSmLog\b|\bprintln\(|printStackTrace\(|\bBase64\b|toHexString|joinToString|\bString\(|toString\(\)	INV-06/INV-07: the database key is never logged, printed or turned into text

@@ -10,6 +10,7 @@ class ManifestRulesTest {
     private val exported = listOf(
         "app.MainActivity",
         "app.A11yService android.permission.BIND_ACCESSIBILITY_SERVICE",
+        "lib.DisabledService enabled=false",
     )
 
     private fun manifest(body: String, backup: String = "false") = """
@@ -79,6 +80,17 @@ class ManifestRulesTest {
             "android:name=\"app.A11yService\" android:permission=\"android.permission.BIND_ACCESSIBILITY_SERVICE\"",
         )
         assertEquals(emptyList(), check(protected))
+    }
+
+    @Test
+    fun `requires a component allowed as disabled to stay disabled`() {
+        fun service(enabled: String) = manifest("").replace(
+            "</application>",
+            """<service android:name="lib.DisabledService" android:exported="true" $enabled /></application>""",
+        )
+        assertEquals(emptyList(), check(service("android:enabled=\"false\"")))
+        assertTrue(check(service("android:enabled=\"true\"")).single().contains("must be declared disabled"))
+        assertTrue(check(service("")).single().contains("must be declared disabled"))
     }
 
     private fun a11y(attributes: String) =
