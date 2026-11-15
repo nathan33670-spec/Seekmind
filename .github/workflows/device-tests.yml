@@ -18,7 +18,8 @@ jobs:
   emulator:
     name: Emulator API ${{ matrix.api-level }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # 100,000-capture measurements of M5-08 included.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
