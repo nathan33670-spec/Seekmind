@@ -52,7 +52,7 @@ class CaptureOcrE2ETest {
     private var accessibility: String? = null
 
     @Before
-    fun setUp() = runBlocking {
+    fun setUp() = runBlocking<Unit> {
         services = setting("enabled_accessibility_services")
         accessibility = setting("accessibility_enabled")
         // The receiver is subscribed before anything can be captured.
@@ -63,7 +63,7 @@ class CaptureOcrE2ETest {
     }
 
     @After
-    fun tearDown() = runBlocking {
+    fun tearDown() = runBlocking<Unit> {
         shell("am force-stop $FIXTURE")
         restore("enabled_accessibility_services", services)
         restore("accessibility_enabled", accessibility)
@@ -72,7 +72,7 @@ class CaptureOcrE2ETest {
     }
 
     @Test
-    fun e2e03_aSecureWindowIsDropped() = runBlocking {
+    fun e2e03_aSecureWindowIsDropped() = runBlocking<Unit> {
         open("SecureActivity")
         awaitEvent("SECURE_WINDOW") { it == PipelineEvent.Dropped(DropReason.SECURE_WINDOW) }
         // The marker of the secure screen is nowhere in the database.
@@ -80,7 +80,7 @@ class CaptureOcrE2ETest {
     }
 
     @Test
-    fun e2e05and06_theTextOfAnImageIsStoredFromTheOcrAndNothingElseIsWritten() = runBlocking {
+    fun e2e05and06_theTextOfAnImageIsStoredFromTheOcrAndNothingElseIsWritten() = runBlocking<Unit> {
         // Opened once, so that the database exists before the snapshot of the files.
         open("PlainTextActivity")
         awaitEvent("a stored plain screen") { it is PipelineEvent.Stored || it is PipelineEvent.Deduplicated }
