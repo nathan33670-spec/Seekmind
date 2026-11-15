@@ -52,6 +52,13 @@ class LexicalSearcherFallbackTest {
     }
 
     @Test
+    fun theDuplicatesOfTheFirstPassDoNotShortenTheList() = runTest {
+        // The two captures with every word head the second pass too: the list still reaches the limit of 5.
+        val store = Store(mapOf(all to listOf(1L, 2L), any to listOf(1L, 2L, 3L, 4L, 5L, 6L, 7L)))
+        assertThat(search(store).map { it.captureId }).containsExactly(1L, 2L, 3L, 4L, 5L).inOrder()
+    }
+
+    @Test
     fun aSingleWordSearchesOnce() = runTest {
         val store = Store(emptyMap())
         assertThat(search(store, "facture")).isEmpty()

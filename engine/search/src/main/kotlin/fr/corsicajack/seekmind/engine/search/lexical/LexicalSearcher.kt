@@ -27,6 +27,7 @@ class LexicalSearcher(
         val any = FtsExpression.of(query)
         if (any == null || any == all || first.size >= minOf(minAllOfHits, limit)) return first
         val seen = first.mapTo(HashSet()) { it.captureId }
+        // At most first.size of the `limit` rows of the second pass are duplicates: the total still reaches the limit.
         return first + run(any, filters, limit).filter { it.captureId !in seen }.take(limit - first.size)
     }
 
