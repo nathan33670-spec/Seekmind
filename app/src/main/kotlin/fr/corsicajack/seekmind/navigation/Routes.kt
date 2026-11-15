@@ -18,6 +18,17 @@ data object JournalRoute
 @Serializable
 data object SettingsRoute
 
+/**
+ * Detail of a capture (docs/specs/ui-ux.md §3.3), opened from the search or the journal. Only the id
+ * travels in the back stack, which the system saves: the search terms to highlight stay in memory.
+ */
+@Serializable
+data class CaptureRoute(val captureId: Long)
+
+/** « Le service s'arrête tout seul » (ticket M6-09): the troubleshooting page, opened from the search banner. */
+@Serializable
+data object ServiceHelpRoute
+
 /** The three destinations of the bottom bar (docs/specs/ui-ux.md §2), in display order. */
 enum class TopLevelDestination(val route: Any, @param:StringRes val label: Int, @param:DrawableRes val icon: Int) {
     SEARCH(SearchRoute, R.string.app_nav_search, SeekMindIcons.Search),

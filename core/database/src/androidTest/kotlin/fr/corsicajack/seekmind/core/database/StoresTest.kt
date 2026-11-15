@@ -223,11 +223,32 @@ class StoresTest {
         assertThat(all.map { it.embeddingId }).isInStrictOrder()
         assertThat(handle.vectors.binaryCodesAfter(all.last().embeddingId, 2)).isEmpty()
         assertThat(all.first().vecBin).hasLength(48)
+        assertThat(all.first().vecI8).hasLength(384)
         assertThat(all.first().firstSeenAt).isEqualTo(1_000)
 
         val int8 = handle.vectors.int8Vectors(listOf(all[3].embeddingId, all[1].embeddingId))
         assertThat(int8.map { it.captureId }.toSet()).containsExactly(ids[3], ids[1])
         assertThat(int8.first().vecI8).hasLength(384)
+    }
+
+    /** A batch computed before the active model changed is dropped: its chunks stay pending (M4-07). */
+    @Test
+    fun vectorsOfAReplacedModelAreDropped() = runBlocking<Unit> {
+        val id = handle.captures.insert(capture("texte"), listOf(NewChunk(0, 0, 5)))
+        val chunk = handle.vectors.pendingChunks(1).single().chunkId
+        handle.vectors.resetForModel(2)
+        assertThat(handle.vectors.saveEmbeddings(listOf(embedding(chunk, id)))).isEqualTo(0)
+        assertThat(sql.long("SELECT count(*) FROM embedding")).isEqualTo(0)
+        assertThat(handle.vectors.pendingCount()).isEqualTo(1)
+        assertThat(handle.vectors.saveEmbeddings(listOf(embedding(chunk, id).copy(modelId = 2)))).isEqualTo(1)
+        assertThat(handle.vectors.pendingCount()).isEqualTo(0)
+    }
+
+    @Test
+    fun theInt8ScaleIsRecorded() = runBlocking<Unit> {
+        assertThat(handle.vectors.int8Scale()).isNull()
+        handle.vectors.setInt8Scale(600f)
+        assertThat(handle.vectors.int8Scale()).isEqualTo(600f)
     }
 
     @Test

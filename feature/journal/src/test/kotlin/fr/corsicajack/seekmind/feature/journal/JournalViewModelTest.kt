@@ -7,6 +7,7 @@ import java.time.ZoneId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -28,12 +29,17 @@ class JournalViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
+    private val deletions = MutableSharedFlow<Long>(extraBufferCapacity = 8)
+    private val told = mutableListOf<Long>()
+
     private fun viewModel(store: FakeCaptureStore?) = JournalViewModel(
         store = { store },
         labels = { pkg -> pkg.substringAfterLast('.').replaceFirstChar { it.uppercase() } },
         zone = { zone },
         io = dispatcher,
         commitScope = CoroutineScope(dispatcher),
+        deletions = deletions,
+        onDeleted = { told += it },
     )
 
     private fun JournalViewModel.ids() = state.value.days.flatMap { day -> day.entries.map { it.captureId } }
@@ -131,6 +137,27 @@ class JournalViewModelTest {
         model.commitPending()
         assertThat(model.ids()).containsExactly(2L)
         assertThat(store.rows.map { it.id }).containsExactly(2L)
+    }
+
+    @Test
+    fun `a deletion here is told to the other screens`() = runTest(dispatcher) {
+        val store = FakeCaptureStore(listOf(summary(1, noon), summary(2, noon - 1)))
+        val model = viewModel(store)
+
+        model.requestDelete(1)
+        assertThat(told).isEmpty()
+        model.commitPending()
+        assertThat(told).containsExactly(1L)
+    }
+
+    @Test
+    fun `a capture deleted from its detail leaves the journal`() = runTest(dispatcher) {
+        val store = FakeCaptureStore(listOf(summary(1, noon), summary(2, noon - 1)))
+        val model = viewModel(store)
+
+        deletions.emit(1)
+        assertThat(model.ids()).containsExactly(2L)
+        assertThat(told).isEmpty()
     }
 
     @Test

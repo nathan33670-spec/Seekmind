@@ -13,6 +13,7 @@ import fr.corsicajack.seekmind.core.database.schema.EmbeddingEntity
 
 internal const val INDEX_GENERATION = "index_generation"
 internal const val MODEL_ID = "model_id"
+internal const val INT8_SCALE = "int8_scale"
 
 /** Row types read by the DAOs. */
 internal data class SummaryRow(
@@ -50,9 +51,12 @@ internal class BinaryResult(
     val last_seen_at: Long,
     val package_name: String,
     val vec_bin: ByteArray,
+    val vec_i8: ByteArray,
 )
 
 internal class Int8Result(val id: Long, val capture_id: Long, val vec_i8: ByteArray)
+
+internal class FragmentResult(val id: Long, val capture_id: Long, val start_offset: Int, val end_offset: Int)
 
 @Dao
 internal abstract class CaptureDao {
@@ -90,6 +94,15 @@ internal abstract class CaptureDao {
 
     @Query("SELECT * FROM capture WHERE id IN (:ids)")
     abstract suspend fun getAll(ids: List<Long>): List<CaptureEntity>
+
+    @Query(
+        """
+        SELECT e.id, e.capture_id, k.start_offset, k.end_offset
+        FROM embedding e JOIN chunk k ON k.id = e.chunk_id
+        WHERE e.id IN (:embeddingIds)
+        """,
+    )
+    abstract suspend fun fragments(embeddingIds: List<Long>): List<FragmentResult>
 
     @Query(
         """
@@ -176,10 +189,19 @@ internal abstract class VectorDao {
     @Query("UPDATE chunk SET state = 1 WHERE id IN (:chunkIds)")
     abstract suspend fun markEmbedded(chunkIds: List<Long>)
 
+    /**
+     * Saves the rows of the model of meta.model_id only (all of them before the first reset): a batch
+     * computed with a model that was replaced meanwhile is dropped, its chunks stay pending. The number
+     * of rows saved.
+     */
     @Transaction
-    open suspend fun save(rows: List<EmbeddingEntity>) {
-        insertEmbeddings(rows)
-        markEmbedded(rows.map { it.chunkId })
+    open suspend fun save(rows: List<EmbeddingEntity>): Int {
+        val current = modelId()
+        val kept = if (current == null) rows else rows.filter { it.modelId == current }
+        if (kept.isEmpty()) return 0
+        insertEmbeddings(kept)
+        markEmbedded(kept.map { it.chunkId })
+        return kept.size
     }
 
     @Query(
@@ -189,7 +211,7 @@ internal abstract class VectorDao {
 
     @Query(
         """
-        SELECT e.id, e.capture_id, c.first_seen_at, c.last_seen_at, c.package_name, e.vec_bin
+        SELECT e.id, e.capture_id, c.first_seen_at, c.last_seen_at, c.package_name, e.vec_bin, e.vec_i8
         FROM embedding e JOIN capture c ON c.id = e.capture_id
         WHERE e.id > :after
         ORDER BY e.id
@@ -214,6 +236,17 @@ internal abstract class VectorDao {
         "INSERT INTO meta(key, value) VALUES ('$MODEL_ID', :modelId) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
     )
     abstract suspend fun setModelId(modelId: String)
+
+    @Query("SELECT CAST(value AS INTEGER) FROM meta WHERE key = '$MODEL_ID'")
+    abstract suspend fun modelId(): Int?
+
+    @Query("SELECT value FROM meta WHERE key = '$INT8_SCALE'")
+    abstract suspend fun int8Scale(): String?
+
+    @Query(
+        "INSERT INTO meta(key, value) VALUES ('$INT8_SCALE', :scale) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    )
+    abstract suspend fun setInt8Scale(scale: String)
 
     @Query(
         "INSERT INTO meta(key, value) VALUES ('$INDEX_GENERATION', '1') " +

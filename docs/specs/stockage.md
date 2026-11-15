@@ -137,7 +137,7 @@ CREATE TABLE metric_daily (
 
 CREATE TABLE meta (
   key   TEXT PRIMARY KEY NOT NULL,
-  value TEXT NOT NULL                      -- schema_version, model_id (modèle actif), index_generation
+  value TEXT NOT NULL                      -- schema_version, model_id (modèle actif), int8_scale, index_generation
 );
 ```
 
@@ -198,17 +198,21 @@ interface CaptureStore {
 
 interface SearchStore {
     suspend fun lexical(match: String, filters: SearchFilters, limit: Int): List<LexicalRow>
-    suspend fun captures(ids: List<Long>): List<Capture>
+    suspend fun captures(ids: List<Long>): List<Capture>                       // Capture porte aussi simhash (repli des quasi-doublons)
+    suspend fun fragments(embeddingIds: List<Long>): List<FragmentSpan>        // position du fragment de chaque vecteur (extraits sémantiques)
 }
 
 interface VectorStore {
     suspend fun pendingChunks(limit: Int): List<PendingChunk>                 // les plus récents d'abord
-    suspend fun saveEmbeddings(rows: List<NewEmbedding>)                      // + chunk.state = 1, une transaction
+    suspend fun saveEmbeddings(rows: List<NewEmbedding>): Int                 // une transaction ; écarte les lignes d'un autre modèle que meta.model_id (leurs fragments restent en attente), rend le nombre enregistré (M4-07)
     suspend fun markFailed(chunkId: Long)
-    suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow>
+    suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow>  // codes binaire et int8, dates, paquet
     suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row>
     suspend fun pendingCount(): Int
     suspend fun resetForModel(modelId: Int)                                   // vide embedding, remet chunk.state à 0, écrit meta.model_id
+    suspend fun modelId(): Int?                                               // meta.model_id, null avant le premier resetForModel (M4-05)
+    suspend fun int8Scale(): Float?                                           // meta.int8_scale : échelle des codes int8 stockés (M4-05)
+    suspend fun setInt8Scale(scale: Float)
     suspend fun indexGeneration(): Long                                       // meta.index_generation, 0 au départ
 }
 

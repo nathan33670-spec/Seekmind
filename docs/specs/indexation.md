@@ -147,12 +147,25 @@ libérer le moteur
 - Le travail rend `Result.success()` même s'il reste des fragments : la prochaine période reprend.
 - Compteurs de diagnostic : fragments vectorisés, durée médiane par fragment, arrêts par motif.
 
+Implémentation (M4-05), paquet `fr.corsicajack.seekmind.engine.index.embedding` :
+
+| Élément | Rôle |
+|---|---|
+| `EmbeddingBatchRunner` | La boucle ci-dessus, en logique pure, testée sur la JVM. Le modèle est chargé d'abord : s'il ne peut pas l'être, rien n'est compté contre les fragments (`MODEL_UNAVAILABLE`). Le modèle des vecteurs stockés (`VectorStore.modelId`) est ensuite comparé à celui du moteur (§7.3). Le moteur est pris **par lot**, et non pour tout le travail, pour qu'une recherche puisse calculer le vecteur de sa requête entre deux lots. Un lot en échec est repris fragment par fragment : seuls les fragments fautifs voient leur nombre d'essais augmenter, et seulement si le moteur se charge encore ; sinon (moteur fermé entre deux lots, puis impossible à recharger), le travail s'arrête en `MODEL_UNAVAILABLE` sans rien compter contre les fragments. Chaque ligne porte le `modelId` du moteur qui l'a calculée ; si un autre modèle a été activé pendant le travail (lignes écartées par `saveEmbeddings`, ou moteur d'un autre modèle), le travail s'arrête en `MODEL_CHANGED` : aucun vecteur de l'ancien modèle ne reste, et le passage suivant compare de nouveau les modèles (M4-07). |
+| `EmbeddingWorker` | Le travail WorkManager, construit par la fabrique de `:app`. `Result.retry()` (temporisation exponentielle) si le modèle ne se charge pas ; sinon `Result.success()`. Le travail en charge ne se replanifie (`APPEND_OR_REPLACE`) que si son échéance l'a arrêté avec des fragments restants : pas quand le gouverneur suspend les embeddings (un successeur repartirait aussitôt, en boucle, tant que le téléphone chauffe en charge ; le travail périodique reprend plus tard), ni quand WorkManager l'arrête (il le relance lui-même). Compteurs dans le journal (`SmLog`, sans contenu). |
+| `EmbeddingScheduler` | Les deux travaux du §7.1, sans contrainte réseau, planifiés au démarrage de l'application. |
+
+Le gouverneur (`ThermalGovernor`, [ocr §6](ocr.md)) est un singleton de `:app`, partagé avec la
+recherche : il fixe aussi le nombre de fils du moteur.
+
 ### 7.3 Changement de modèle
 
 Le modèle actif change dans deux cas : une mise à jour de l'application qui remplace le modèle
 embarqué, ou l'activation d'un pack de langue par l'utilisateur ([embeddings §5.3](embeddings.md)).
-`EmbeddingEngine.modelId` est comparé à `meta.model_id` au démarrage et à chaque activation. S'ils diffèrent :
-`VectorStore.resetForModel(modelId)` vide la table des vecteurs et remet tous les fragments en attente.
+`EmbeddingEngine.modelId` est comparé à `meta.model_id` au démarrage et à chaque activation, et l'échelle
+du codec (`EmbeddingConfig.int8Scale`) à `meta.int8_scale` ([embeddings §6](embeddings.md)). Si l'un des
+deux diffère : `VectorStore.resetForModel(modelId)` vide la table des vecteurs et remet tous les
+fragments en attente, puis l'échelle est enregistrée.
 La recherche par mots-clés n'est pas affectée ; la recherche sémantique revient à mesure que les lots passent.
 
 ## 8. Configuration

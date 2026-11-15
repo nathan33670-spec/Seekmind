@@ -16,29 +16,57 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import fr.corsicajack.seekmind.R
 import fr.corsicajack.seekmind.core.designsystem.component.EmptyState
 import fr.corsicajack.seekmind.core.designsystem.theme.Spacing
+
+/** Test tag of the detail of a capture. */
+const val CAPTURE_SCREEN_TAG = "screen_capture"
+
+/** Test tag of the troubleshooting page. */
+const val SERVICE_HELP_SCREEN_TAG = "screen_service_help"
 
 /** Test tag of the screen shown for [destination]. */
 fun screenTag(destination: TopLevelDestination): String = "screen_${destination.name.lowercase()}"
 
 /**
- * Navigation graph of [fr.corsicajack.seekmind.MainActivity]. Search is an empty placeholder until its
- * ticket (M6-03) replaces it; [journalContent] is the journal (M6-05) and [settingsContent] holds the
- * settings sections.
+ * Navigation graph of [fr.corsicajack.seekmind.MainActivity]. Settings holds only [settingsContent] until its
+ * ticket (M6-06) replaces it, apart from [settingsContent], its Security section (M6-07); [searchContent] is the search (M6-03), [journalContent] the journal (M6-05),
+ * [captureContent] the detail of a capture (M6-04), [helpContent] the troubleshooting page (M6-09). The
+ * first two receive the action that opens a detail; the search also receives the one that opens the help.
  */
 @Composable
 fun SeekMindNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    journalContent: @Composable () -> Unit = {},
+    searchContent: @Composable (openCapture: (Long) -> Unit, openHelp: () -> Unit) -> Unit = { _, _ -> },
+    journalContent: @Composable (openCapture: (Long) -> Unit) -> Unit = {},
+    captureContent: @Composable (captureId: Long, close: () -> Unit) -> Unit = { _, _ -> },
+    helpContent: @Composable () -> Unit = {},
     settingsContent: @Composable () -> Unit = {},
 ) {
+    val openCapture: (Long) -> Unit = { id -> navController.navigate(CaptureRoute(id)) }
+    val openHelp: () -> Unit = { navController.navigate(ServiceHelpRoute) }
     NavHost(navController = navController, startDestination = SearchRoute, modifier = modifier) {
-        composable<SearchRoute> { Placeholder(TopLevelDestination.SEARCH) }
+        composable<SearchRoute> {
+            ContentWidth(modifier = Modifier.testTag(screenTag(TopLevelDestination.SEARCH))) {
+                searchContent(openCapture, openHelp)
+            }
+        }
         composable<JournalRoute> {
-            ContentWidth(modifier = Modifier.testTag(screenTag(TopLevelDestination.JOURNAL))) { journalContent() }
+            ContentWidth(modifier = Modifier.testTag(screenTag(TopLevelDestination.JOURNAL))) {
+                journalContent(openCapture)
+            }
+        }
+        composable<CaptureRoute> { entry ->
+            val route = entry.toRoute<CaptureRoute>()
+            ContentWidth(modifier = Modifier.testTag(CAPTURE_SCREEN_TAG)) {
+                captureContent(route.captureId) { navController.popBackStack() }
+            }
+        }
+        composable<ServiceHelpRoute> {
+            ContentWidth(modifier = Modifier.testTag(SERVICE_HELP_SCREEN_TAG)) { helpContent() }
         }
         composable<SettingsRoute> {
             // The sections arrive with their tickets: Security (M6-07), the others with M6-06.

@@ -73,7 +73,8 @@ data class EmbeddingConfig(
     val maxPassageTokens: Int = 256,
     val maxQueryTokens: Int = 64,
     val subBatchSize: Int = 8,
-    val int8Scale: Float = 400f,
+    /** Calibrated on the 1,000 reference sentences (M4-05): no component clipped, max |v| = 0.18 < 127/600. */
+    val int8Scale: Float = 600f,
     val idleCloseMs: Long = 60_000,
     val threadsDefault: Int = 2,
     val threadsCharging: Int = 4,
@@ -83,7 +84,13 @@ data class EmbeddingConfig(
 /** docs/specs/recherche.md §10. */
 data class SearchConfig(
     val lexicalLimit: Int = 100,
-    val binaryTopK: Int = 200,
+    /**
+     * Fewer captures than this with every word: the keyword search also takes those with any word. 1: only
+     * when no capture holds every word (a frequent word and a rare one would otherwise rank every capture
+     * of the frequent one, docs/mesures M5-08).
+     */
+    val lexicalAllOfMinHits: Int = 1,
+    val binaryTopK: Int = 400,
     val semanticTopK: Int = 100,
     val semanticFloor: Float = 0.78f,
     val rrfK: Int = 60,
@@ -93,6 +100,13 @@ data class SearchConfig(
     val indexPageSize: Int = 5_000,
     val cacheSize: Int = 5,
     val cacheTtlMs: Long = 600_000,
+    /** Fusion weights `w_lex`, `w_sem` per query profile (§7). */
+    val lexicalWeightDefault: Double = 1.0,
+    val semanticWeightDefault: Double = 1.0,
+    val lexicalWeightCode: Double = 2.0,
+    val semanticWeightCode: Double = 0.5,
+    val lexicalWeightNatural: Double = 0.8,
+    val semanticWeightNatural: Double = 1.2,
 )
 
 /** docs/specs/monetisation.md §7. The `offline` variant injects `dailyFreeCredits = 5`. */
