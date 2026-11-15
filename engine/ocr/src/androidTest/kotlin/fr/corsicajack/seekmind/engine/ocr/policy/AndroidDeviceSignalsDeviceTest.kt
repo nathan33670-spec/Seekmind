@@ -51,8 +51,13 @@ class AndroidDeviceSignalsDeviceTest {
 
     @Test
     fun powerSaving() {
-        // Android refuses the battery saver on a power source.
+        // Android refuses the battery saver on a power source: wait until the device has seen the unplug.
+        // Above 90 %, Android turns a sticky battery saver off again once unplugged
+        // (`low_power_sticky_auto_disable_level`): the level is set below it, above the low-battery one.
         shell("dumpsys battery unplug")
+        shell("dumpsys battery set status 3") // BATTERY_STATUS_DISCHARGING
+        shell("dumpsys battery set level 50")
+        awaitSignals("unplugged at 50 %") { !it.charging && it.batteryPercent == 50 }
         // `cmd power set-mode` has no effect on some images (API 36): the global setting is what the
         // power manager follows, and it sends ACTION_POWER_SAVE_MODE_CHANGED.
         shell("cmd power set-mode 1")
@@ -97,6 +102,14 @@ class AndroidDeviceSignalsDeviceTest {
         assertWithMessage(message).that(state.reason).isEqualTo(expected)
         assertWithMessage(message).that(state.allowsOcr).isEqualTo(expected == null)
         assertWithMessage(message).that(state.allowsEmbedding).isEqualTo(expected == null)
+    }
+
+    private fun awaitSignals(what: String, condition: (DeviceSignals) -> Boolean) {
+        val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS
+        while (!condition(signals.state.value) && SystemClock.elapsedRealtime() < deadline) {
+            SystemClock.sleep(POLL_MS)
+        }
+        assertWithMessage("$what: signals ${signals.state.value}").that(condition(signals.state.value)).isTrue()
     }
 
     /** Runs [command] and waits for its end (its output is read and dropped). */
