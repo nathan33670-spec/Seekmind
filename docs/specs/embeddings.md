@@ -101,9 +101,15 @@ et 0,800.
   `engine/embedding/src/main/assets/model/fr/` et conforme à `model.lock.json` ; sinon message indiquant
   la commande à lancer (`python tools/model/build_model.py --model fr --install`).
 - Le jeu `multi` n'est requis que pour construire le lot d'application (`bundle`) : il alimente le
-  module de pack d'assets `:modelpack_multi`.
-- La propriété `-PskipModel` désactive la vérification pour les tâches qui n'ont pas besoin du modèle
-  (tests JVM, lint). Les tests JVM utilisent `FakeEmbeddingEngine`.
+  module de pack d'assets `:modelpack_multi` (`python tools/model/build_model.py --model multi --install`
+  l'y copie). `:modelpack_multi:verifyModel` le vérifie contre `model.lock.json` avant tout lot `release`.
+- La propriété `-PskipModel` désactive la vérification pour les tâches de `debug` qui n'ont pas besoin du
+  modèle (tests JVM, lint). Elle est sans effet sur un build `release`, qui échoue toujours sans un
+  modèle `fr` conforme. Les tests JVM utilisent `FakeEmbeddingEngine`.
+- `:app:verify<Variante>ReleaseBundle` contrôle le lot `release` (à partir des APK qu'en tire
+  bundletool) : `model.onnx` de `fr` non compressé dans la base, `multi` seulement dans le pack à la
+  demande, taille de téléchargement de la base (`get-size total`, maximum sur les configurations
+  d'appareil) ≤ 100 Mo (ENF-STO-02). Mesure du 14/11/2026 : 51,6 Mo.
 - En CI, les artefacts sont mis en cache avec `model.lock.json` comme clé.
 
 ## 3. Tokenizer
@@ -208,6 +214,13 @@ Implémentation `OrtEmbeddingEngine` :
   d'un tampon projeté, si bien que la projection (`FileChannel.map` → `createSession(ByteBuffer)`) coûte
   deux fois la taille du modèle en mémoire (61 à 70 Mo contre 27 à 35 Mo) ; elle ne sert que de repli si
   la copie est impossible. Un modèle de pack est ouvert par son chemin de fichier.
+- **Intégrité** (M4-06) : chaque copie, c'est-à-dire le premier chargement après une installation ou une
+  mise à jour, vérifie les fichiers de l'asset (`model.onnx`, `vocab.bin`) contre les empreintes SHA-256
+  et les tailles de son `MODEL_MANIFEST.json` ; le repli par projection fait la même vérification à
+  chaque chargement. Les chargements suivants ne contrôlent que la taille de la copie (une copie
+  tronquée est refaite). Un modèle absent ou altéré lève `CorruptModelException` et ne laisse aucune
+  copie : la recherche se déclare sans le sens (`semanticAvailable = false`), la recherche par mots-clés
+  n'est pas touchée. Les fichiers d'un pack sont vérifiés par son installateur (§5.2).
 - **Options de session** : optimisation maximale, un thread inter-opérateurs, threads intra-opérateurs
   donnés par le gouverneur (2, ou 4 en charge), fournisseur d'exécution processeur.
 - **Lots** : textes triés par longueur, sous-lots de 8, remplissage à la longueur du plus long du sous-lot
