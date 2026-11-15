@@ -85,3 +85,23 @@ Décision du porteur du 15 novembre 2026 (« Suis tes recommandations ») :
 Pistes restantes, non décidées : agrandir le cache de pages des connexions (`PRAGMA cache_size`) et
 mesurer l'effet sur la bimodalité ; borner le classement aux captures récentes ; charger l'index
 vectoriel à l'ouverture de l'écran de recherche ; vocabulaire de Zipf pour `SyntheticCorpus`.
+
+## 5. Après le correctif « ET puis OU » (#51)
+
+Exécution `device-tests` 43703917899 (commit `70b6e17`, repli en `OR` sous 10 captures), même banc.
+
+| p50 / p95 | API 30 | API 34 | API 36 | Cible |
+|---|---|---|---|---|
+| Lexicale seule | 84 / 333 ms | 106 / 422 ms | 82 / 331 ms | |
+| Hybride, première émission (ENF-PERF-03) | 88 / **344 ms** | 119 / **427 ms** | 23 / 98 ms | ≤ 100 ms (p95) |
+| Hybride fusionnée, hors embedding (ENF-PERF-04) | 127 / **383 ms** | 180 / **484 ms** | 67 / **144 ms** | ≤ 30 ms (p95) |
+| Cas typique (mot fréquent et nombre rare), première émission | 674 / 4 004 ms | 843 / 4 995 ms | 677 / 4 019 ms | ≤ 100 ms (p95) |
+
+- Le gain est net sur les requêtes de mots fréquents : facteur 15 en médiane, 7 à 10 au p95.
+- Le cas typique ne gagne rien avec un repli sous 10 captures : le `AND` trouve la capture du code, le
+  `OR` classe ensuite toutes celles du mot fréquent. D'où le seuil ramené à 1 (repli seulement si le
+  `AND` ne trouve rien, recherche §5) ; ses chiffres sont publiés sur #51.
+- **ENF-PERF-03 et 04 ne sont toujours pas tenues au p95 sur les émulateurs API 30 et 34**, même avec
+  le correctif : l'ordre de grandeur passe de plusieurs secondes à quelques centaines de millisecondes.
+  Écart consigné, à reprendre avec les pistes du §4 non encore décidées (`PRAGMA cache_size`, classement
+  limité aux captures récentes) et à mesurer sur le téléphone de test (M10-01).
