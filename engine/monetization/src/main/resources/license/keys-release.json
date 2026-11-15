@@ -1,0 +1,5 @@
+{
+  "keys": [
+    { "kid": "l1", "purpose": "license", "spki": "" }
+  ]
+}
