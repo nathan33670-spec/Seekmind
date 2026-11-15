@@ -18,6 +18,7 @@ import fr.corsicajack.seekmind.core.model.port.OcrEngine
 import fr.corsicajack.seekmind.engine.ocr.screenshot.A11yScreenshotSource
 import fr.corsicajack.seekmind.engine.ocr.screenshot.ScreenshotProbeService
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,6 +56,12 @@ class SecureWindowProbeDeviceTest {
         waitUntil("service connected") { ScreenshotProbeService.instance != null }
     }
 
+    /** The secure screen must not stay in front of the next test class's screenshots. */
+    @After
+    fun closeFixture() {
+        shell("am force-stop $FIXTURE_PACKAGE")
+    }
+
     @Test
     fun theSecureScreenIsSecure() {
         assertThat(probeScreen("SecureActivity")).isEqualTo(ProbeResult.Secure)
@@ -73,7 +80,8 @@ class SecureWindowProbeDeviceTest {
     }
 
     private fun probeScreen(activity: String, needImage: Boolean = false): ProbeResult {
-        shell("am start -W -n $FIXTURE_PACKAGE/$FIXTURE_PACKAGE.$activity")
+        // -S: the fixture restarts, so that no window of the previous screen (a secure one) is left.
+        shell("am start -W -S -n $FIXTURE_PACKAGE/$FIXTURE_PACKAGE.$activity")
         var meta: ScreenMeta? = null
         var bounds: IntRect? = null
         waitUntil("$activity on screen") {

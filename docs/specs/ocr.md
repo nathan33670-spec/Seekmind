@@ -98,7 +98,7 @@ Aucune API ne signale une fenêtre sécurisée ; le système en noircit le conte
   de `BrowserProfiles` et messageries à contenu éphémère) ; sinon une fois par couple
   `(paquet, activité)` et par 24 h, résultat mémorisé dans la table `secure_probe`.
 - **Heuristique d'image noire :** échantillonner une grille de 24 × 24 pixels dans la fenêtre ; si au
-  moins 98 % des échantillons ont une luminance inférieure à 8 sur 255 → `Secure`.
+  moins 98 % des échantillons ont une luminance d'au plus 8 sur 255 → `Secure`.
 - Un résultat `Secure` est mémorisé 10 min pour le couple `(paquet, activité)`.
 
 Un écran réellement noir est pris pour sécurisé : c'est l'erreur sans conséquence. Le cas inverse (fenêtre
