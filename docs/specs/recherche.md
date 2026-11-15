@@ -461,28 +461,29 @@ Rappel@5 par le sens, modèle original contre modèle quantifié, sur le même j
 
 ### 11.1 Résultats (M5-07)
 
-Mesures du 14 novembre 2026, exécution `device-tests` 43610735658 (API 34 ; le test passe aussi sur les
-API 30 et 36), modèles quantifiés par canal (§2 des [embeddings](embeddings.md)), `SearchConfig` par défaut.
-Entre parenthèses, la première mesure (exécution 43585148277, modèles quantifiés par tenseur).
+Mesures du 15 novembre 2026, exécution `device-tests` 43707625829 (API 34 ; le test passe aussi sur les
+API 30 et 36), modèles quantifiés par canal (§2 des [embeddings](embeddings.md)), recherche lexicale en
+deux temps (§5), `SearchConfig` par défaut. Entre parenthèses, la première mesure (exécution
+43585148277, modèles quantifiés par tenseur, mots reliés par `OR`).
 
 | Modèle · configuration | Rappel@1 | Rappel@5 | MRR |
 |---|---|---|---|
-| `fr` · hybride, requêtes en français (49) | 0,918 | **1,0** (0,959) | **0,953** (0,916) |
-| `fr` · hybride, tout le jeu (80) | 0,838 | 0,950 (0,913) | 0,884 (0,859) |
-| `fr` · mots-clés seuls, tout le jeu | 0,750 | 0,838 | 0,785 |
+| `fr` · hybride, requêtes en français (49) | 0,939 | **1,0** (0,959) | **0,963** (0,916) |
+| `fr` · hybride, tout le jeu (80) | 0,850 | 0,950 (0,913) | 0,890 (0,859) |
+| `fr` · mots-clés seuls, tout le jeu | 0,788 (0,750) | 0,838 | 0,807 (0,785) |
 | `fr` · sens seul, tout le jeu | 0,513 | 0,875 (0,825) | 0,674 (0,650) |
-| `multi` · hybride, tout le jeu (80) | 0,825 | **0,950** (0,925) | **0,885** (0,875) |
-| `multi` · mots-clés seuls, tout le jeu | 0,750 | 0,838 | 0,785 |
+| `multi` · hybride, tout le jeu (80) | 0,838 | **0,950** (0,925) | **0,891** (0,875) |
+| `multi` · mots-clés seuls, tout le jeu | 0,788 (0,750) | 0,838 | 0,807 (0,785) |
 | `multi` · sens seul, tout le jeu | 0,513 | 0,863 (0,825) | 0,675 (0,645) |
 
 - **Seuils d'EF-SRCH-01 à 03 tenus**, sur les groupes que le test contrôle :
 
   | Modèle · groupe contrôlé | Effectif | Valeur | Seuil |
   |---|---|---|---|
-  | `fr` · requêtes en français, hybride | 49 | Rappel@5 1,0 · MRR 0,953 | 0,85 · 0,70 |
+  | `fr` · requêtes en français, hybride | 49 | Rappel@5 1,0 · MRR 0,963 | 0,85 · 0,70 |
   | `fr` · codes en français | 9 | Rappel@1 1,0 | 0,90 |
   | `fr` · paraphrases en français | 15 | Rappel@5 1,0 | 0,75 |
-  | `multi` · tout le jeu, hybride | 80 | Rappel@5 0,950 · MRR 0,885 | 0,85 · 0,70 |
+  | `multi` · tout le jeu, hybride | 80 | Rappel@5 0,950 · MRR 0,891 | 0,85 · 0,70 |
   | `multi` · codes | 12 | Rappel@1 1,0 | 0,90 |
   | `multi` · paraphrases | 32 | Rappel@5 0,875 | 0,75 |
 
@@ -495,6 +496,9 @@ Entre parenthèses, la première mesure (exécution 43585148277, modèles quanti
   - Requêtes bilingues : 0,8 pour les deux.
   - Sens seul, requêtes en anglais : 0,857 pour `fr`, 0,810 pour `multi`.
   - La perte est faible sur ce jeu, où les contenus anglais restent proches du vocabulaire courant.
+- **Recherche lexicale en deux temps** (§5) : le Rappel@5 ne change pas, la précision monte un peu
+  (mots-clés seuls : Rappel@1 0,750 → 0,788) ; chercher d'abord tous les mots classe mieux la capture
+  attendue.
 - **Requêtes manquées par l'hybride** (absentes des cinq premiers), toutes de type paraphrase ou bilingue :
 
   | Requête | Type | Manquée par |
