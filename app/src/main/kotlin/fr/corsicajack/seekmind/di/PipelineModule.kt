@@ -7,6 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import fr.corsicajack.seekmind.capture.ConnectedScreenshots
 import fr.corsicajack.seekmind.core.common.Clock
 import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
@@ -15,9 +16,11 @@ import fr.corsicajack.seekmind.core.model.PipelineEvent
 import fr.corsicajack.seekmind.core.model.RawCapture
 import fr.corsicajack.seekmind.core.model.config.CaptureConfig
 import fr.corsicajack.seekmind.core.model.config.IndexConfig
+import fr.corsicajack.seekmind.core.model.config.OcrConfig
 import fr.corsicajack.seekmind.core.model.config.PrivacyConfig
 import fr.corsicajack.seekmind.core.model.port.CaptureSink
 import fr.corsicajack.seekmind.core.model.port.PrivacyGate
+import fr.corsicajack.seekmind.core.model.port.ThermalGovernor
 import fr.corsicajack.seekmind.engine.capture.StableScreenHandler
 import fr.corsicajack.seekmind.engine.capture.meta.ActivityTracker
 import fr.corsicajack.seekmind.engine.capture.meta.ScreenMetaReader
@@ -25,7 +28,8 @@ import fr.corsicajack.seekmind.engine.capture.pipeline.A11yScreenSource
 import fr.corsicajack.seekmind.engine.capture.pipeline.CaptureGate
 import fr.corsicajack.seekmind.engine.capture.pipeline.CapturePipeline
 import fr.corsicajack.seekmind.engine.capture.pipeline.ConnectedService
-import fr.corsicajack.seekmind.engine.capture.pipeline.LineMerger
+import fr.corsicajack.seekmind.engine.capture.pipeline.MergedLines
+import fr.corsicajack.seekmind.engine.capture.pipeline.ProbeScreenshotStep
 import fr.corsicajack.seekmind.engine.capture.pipeline.ScreenshotStep
 import fr.corsicajack.seekmind.engine.capture.routing.EventRouter
 import fr.corsicajack.seekmind.engine.capture.status.CaptureStatusRepository
@@ -37,6 +41,10 @@ import fr.corsicajack.seekmind.engine.index.EmbeddingScheduler as IngestSchedule
 import fr.corsicajack.seekmind.engine.index.IngestService
 import fr.corsicajack.seekmind.engine.index.SimHash
 import fr.corsicajack.seekmind.engine.index.embedding.EmbeddingScheduler
+import fr.corsicajack.seekmind.engine.ocr.policy.OcrPolicy
+import fr.corsicajack.seekmind.engine.ocr.probe.ScreenshotSecureWindowProbe
+import fr.corsicajack.seekmind.engine.ocr.recognition.MlKitOcrEngine
+import fr.corsicajack.seekmind.engine.ocr.recognition.OcrMerge
 import fr.corsicajack.seekmind.engine.privacy.DefaultPrivacyGate
 import fr.corsicajack.seekmind.engine.privacy.UserChoicesCache
 import fr.corsicajack.seekmind.engine.privacy.apps.AndroidPackageFacts
@@ -54,7 +62,7 @@ import kotlinx.coroutines.flow.flow
 
 /**
  * The capture pipeline (docs/specs/capture.md §6, ticket M2-06), bound as the stable-screen handler of
- * the capture loop. Step 6 probes nothing and runs no OCR until M3-05.
+ * the capture loop, step 6 included (secure-window probe and OCR, ticket M3-05).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -134,6 +142,7 @@ object PipelineModule {
         sink: CaptureSink,
         database: Provider<DatabaseState>,
         status: CaptureStatusRepository,
+        screenshot: ScreenshotStep,
     ): CapturePipeline {
         val urls = UrlExtractor(browsers)
         val tracker = UrlTracker(config, clock)
@@ -147,8 +156,8 @@ object PipelineModule {
             metas = ScreenMetaReader(activities, clock),
             privacy = privacy,
             extractor = TreeExtractor(config, clock, browsers.pageTitleClasses),
-            screenshot = ScreenshotStep.NotProbed,
-            merger = LineMerger.Append,
+            screenshot = screenshot,
+            merger = { tree, ocr -> OcrMerge.merge(tree, ocr).let { MergedLines(it.lines, it.textSource) } },
             url = { packageName, root, pageTitle ->
                 tracker.urlOf(packageName, urls.read(packageName, root), pageTitle)
             },
@@ -162,6 +171,29 @@ object PipelineModule {
                 CapturePipeline.metricKey(event),
             )
         }
+    }
+
+    /**
+     * Step 6: the OCR policy, then one screenshot for the secure-window probe and the OCR (ocr §3, §5).
+     * The probe's cache lives in the database once it is open.
+     */
+    @Provides
+    @Singleton
+    fun screenshotStep(
+        connected: ConnectedService,
+        ocr: OcrConfig,
+        clock: Clock,
+        governor: ThermalGovernor,
+        database: Provider<DatabaseState>,
+    ): ScreenshotStep {
+        val probe = ScreenshotSecureWindowProbe(
+            shots = ConnectedScreenshots(connected, ocr, clock),
+            ocr = MlKitOcrEngine(ocr),
+            store = { (database.get() as? DatabaseState.Ready)?.database?.secureProbes },
+            config = ocr,
+            clock = clock,
+        )
+        return ProbeScreenshotStep(probe, OcrPolicy(ocr, governor, clock))
     }
 
     @Provides
