@@ -107,15 +107,21 @@ class CaptureOcrE2ETest {
         shell("am start -W -S -n $FIXTURE/$FIXTURE.$activity")
     }
 
-    /** The first event matching [condition], within [TIMEOUT_MS]; the others are skipped. */
-    private suspend fun awaitEvent(what: String, condition: suspend (PipelineEvent) -> Boolean): PipelineEvent = try {
-        withTimeout(TIMEOUT_MS) {
-            var event = events.receive()
-            while (!condition(event)) event = events.receive()
-            event
+    /** The first event matching [condition], within [TIMEOUT_MS]; the others are skipped, and reported on failure. */
+    private suspend fun awaitEvent(what: String, condition: suspend (PipelineEvent) -> Boolean): PipelineEvent {
+        val skipped = mutableListOf<PipelineEvent>()
+        return try {
+            withTimeout(TIMEOUT_MS) {
+                var event = events.receive()
+                while (!condition(event)) {
+                    skipped += event
+                    event = events.receive()
+                }
+                event
+            }
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            throw AssertionError("timed out waiting for $what; events seen: $skipped", e)
         }
-    } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-        throw AssertionError("timed out waiting for $what", e)
     }
 
     /** Every file of the application's data directory but the databases (Room, SQLCipher, WorkManager). */
