@@ -164,7 +164,7 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M4-05, M4-06 | `engine:embedding`, `fixtureapp` | [embeddings §5](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) · EF-LANG-01 à 04 |
+| En cours — adaptateur Play Asset Delivery en attente de la décision du porteur sur INV-12 | M4-05, M4-06 | `engine:embedding`, `fixtureapp` | [embeddings §5](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) · EF-LANG-01 à 04 |
 
 **À faire**
 
@@ -179,13 +179,14 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 **Critères d'acceptation**
 
-- [ ] Avec un installateur factice : états `NotInstalled → Downloading → Installed`, échec, suppression
-      du pack actif (retour à `fr`).
-- [ ] Archive valide importée ; empreinte incorrecte ou archive incomplète refusée, rien n'est copié.
-- [ ] E2E-21 : après activation du pack de test, les vecteurs portent le nouvel identifiant de modèle ;
-      la recherche par mots-clés répond pendant le recalcul.
-- [ ] Aucun téléchargement n'est lancé sans action de l'utilisateur (test : aucun appel à l'installateur au démarrage).
-- [ ] Les listes blanches de permissions des deux variantes admettent `FOREGROUND_SERVICE_DATA_SYNC` et rien d'autre de nouveau.
+- [x] Avec un installateur factice : états `NotInstalled → Downloading → Installed`, échec, suppression
+      du pack actif (retour à `fr`) (`DefaultModelCatalogTest`).
+- [x] Archive valide importée ; empreinte incorrecte ou archive incomplète refusée, rien n'est copié
+      (`FileModelPackInstallerTest`).
+- [x] E2E-21 : après activation du pack de test, les vecteurs portent le nouvel identifiant de modèle ;
+      la recherche par mots-clés répond pendant le recalcul (`ModelPackE2ETest`, `:app`).
+- [x] Aucun téléchargement n'est lancé sans action de l'utilisateur (test : aucun appel à l'installateur au démarrage).
+- [x] Les listes blanches de permissions des deux variantes admettent `FOREGROUND_SERVICE_DATA_SYNC` et rien d'autre de nouveau.
 
 **Validation manuelle** — sur la piste de test interne de Google Play : téléchargement du pack
 multilingue, activation, recherche dans une autre langue, suppression.

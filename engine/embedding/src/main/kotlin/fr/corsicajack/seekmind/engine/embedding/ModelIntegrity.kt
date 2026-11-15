@@ -24,16 +24,28 @@ object ModelIntegrity {
      */
     fun copyChecked(name: String, input: InputStream, output: OutputStream?, expected: ExpectedFile?) {
         if (expected == null) throw CorruptModelException("$name is not listed in the manifest")
+        copy(name, input, output, expected.size, expected)
+    }
+
+    /** Copies a file without a digest to check, refused past [maxSize] bytes. */
+    fun copyBounded(name: String, input: InputStream, output: OutputStream?, maxSize: Long) =
+        copy(name, input, output, maxSize, expected = null)
+
+    private fun copy(name: String, input: InputStream, output: OutputStream?, maxSize: Long, expected: ExpectedFile?) {
         val digest = MessageDigest.getInstance("SHA-256")
         val buffer = ByteArray(BUFFER_BYTES)
         var size = 0L
         while (true) {
             val read = input.read(buffer)
             if (read < 0) break
+            size += read
+            // A file larger than expected is refused before it is written further (an imported archive
+            // must not fill the storage).
+            if (size > maxSize) throw CorruptModelException("$name: larger than $maxSize bytes")
             digest.update(buffer, 0, read)
             output?.write(buffer, 0, read)
-            size += read
         }
+        if (expected == null) return
         if (size != expected.size) throw CorruptModelException("$name: $size bytes, ${expected.size} expected")
         val actual = digest.digest().joinToString("") { "%02x".format(it) }
         if (actual != expected.sha256.lowercase()) throw CorruptModelException("$name: digest mismatch")

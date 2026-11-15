@@ -13,8 +13,8 @@ import fr.corsicajack.seekmind.core.model.config.EmbeddingConfig
 import fr.corsicajack.seekmind.core.model.config.SearchConfig
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import fr.corsicajack.seekmind.core.model.port.ThermalGovernor
+import fr.corsicajack.seekmind.engine.embedding.catalog.DefaultModelCatalog
 import fr.corsicajack.seekmind.engine.embedding.codec.VectorCodec
-import fr.corsicajack.seekmind.engine.embedding.engine.BuiltInModels
 import fr.corsicajack.seekmind.engine.embedding.engine.MemoryPressureRelease
 import fr.corsicajack.seekmind.engine.embedding.engine.OrtEmbeddingEngineFactory
 import fr.corsicajack.seekmind.engine.embedding.engine.SharedEmbeddingEngineProvider
@@ -29,6 +29,7 @@ import fr.corsicajack.seekmind.search.SearchStack
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 
 /** The search and the embedding engine it shares with the embedding batches (recherche, embeddings §4). */
 @Module
@@ -47,8 +48,8 @@ object SearchModule {
     fun codec(config: EmbeddingConfig): VectorCodec = VectorCodec(config.int8Scale)
 
     /**
-     * The bundled `fr` model until the catalogue (M4-07); the threads given by the governor (2, or 4 on
-     * charge, docs/specs/ocr.md §6). Closed under memory pressure.
+     * The active model of the catalogue (M4-07, `fr` by default); the threads given by the governor (2, or
+     * 4 on charge, docs/specs/ocr.md §6). Closed under memory pressure.
      */
     @Provides
     @Singleton
@@ -56,12 +57,13 @@ object SearchModule {
         @ApplicationContext context: Context,
         config: EmbeddingConfig,
         governor: ThermalGovernor,
+        catalog: Provider<Deferred<DefaultModelCatalog>>,
         @ApplicationScope scope: CoroutineScope,
     ): SharedEmbeddingEngineProvider {
         val dispatchers = DefaultDispatcherProvider
         val provider = SharedEmbeddingEngineProvider(
             factory = OrtEmbeddingEngineFactory(context, config, dispatchers.io, dispatchers.default),
-            activeModel = { BuiltInModels.bundledFr },
+            activeModel = { catalog.get().await().loadable() },
             threads = { governor.state.value.embeddingThreads },
             config = config,
             scope = scope,
