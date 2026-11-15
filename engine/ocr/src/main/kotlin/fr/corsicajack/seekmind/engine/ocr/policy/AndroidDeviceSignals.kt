@@ -73,11 +73,10 @@ class AndroidDeviceSignals(private val context: Context, private val executor: E
             Intent.ACTION_BATTERY_CHANGED -> {
                 val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
                 val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-                val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN)
-                val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
+                // On a power source, whether or not the battery is filling: EXTRA_STATUS can say "charging"
+                // after the source is gone (an emulator's battery stays so once unplugged).
+                val charging = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
                 val percent = if (level >= 0 && scale > 0) level * 100 / scale else 100
-                val charging = plugged != 0 || status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                    status == BatteryManager.BATTERY_STATUS_FULL
                 signals.update { it.copy(batteryPercent = percent, charging = charging) }
             }
         }

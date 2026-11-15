@@ -51,6 +51,8 @@ class AndroidDeviceSignalsDeviceTest {
 
     @Test
     fun powerSaving() {
+        // Android refuses the battery saver on a power source.
+        shell("dumpsys battery unplug")
         shell("cmd power set-mode 1")
         awaitReason(ThrottleReason.POWER_SAVE)
         shell("cmd power set-mode 0")
@@ -60,6 +62,7 @@ class AndroidDeviceSignalsDeviceTest {
     @Test
     fun lowBattery() {
         shell("dumpsys battery unplug")
+        shell("dumpsys battery set status 3") // BATTERY_STATUS_DISCHARGING
         shell("dumpsys battery set level 10")
         awaitReason(ThrottleReason.LOW_BATTERY)
         shell("dumpsys battery set level 80")

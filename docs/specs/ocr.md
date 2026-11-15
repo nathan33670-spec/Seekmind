@@ -223,7 +223,7 @@ Implémentation (M3-04), paquet `fr.corsicajack.seekmind.engine.ocr.policy` :
 | Élément | Rôle |
 |---|---|
 | `GovernorRules` | État pour des signaux donnés. Raison retenue quand plusieurs signaux tiennent : chaleur, puis économie d'énergie, puis batterie. Fils des embeddings : `EmbeddingConfig.threadsCharging` en charge, sinon `threadsDefault`. |
-| `AndroidDeviceSignals` | Signaux de l'appareil : écouteur d'état thermique de `PowerManager`, un récepteur non exporté pour `ACTION_POWER_SAVE_MODE_CHANGED` et `ACTION_BATTERY_CHANGED` (diffusion persistante : l'état initial est lu à l'enregistrement). |
+| `AndroidDeviceSignals` | Signaux de l'appareil : écouteur d'état thermique de `PowerManager`, un récepteur non exporté pour `ACTION_POWER_SAVE_MODE_CHANGED` et `ACTION_BATTERY_CHANGED` (diffusion persistante : l'état initial est lu à l'enregistrement). « En charge » signifie branché (`EXTRA_PLUGGED` non nul), que la batterie se remplisse ou non. |
 | `SignalThermalGovernor` | `ThermalGovernor` sur un flux de signaux, réels ou simulés dans les tests. |
 
 ## 7. Fusion avec le texte de l'arbre
