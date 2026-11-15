@@ -25,7 +25,17 @@ KID = re.compile(r"^[A-Za-z0-9-]{1,16}$")
 PURPOSES = {"license"}
 
 
+REPOSITORY = Path(__file__).resolve().parent.parent.parent
+
+
+def _inside_repository(path: Path) -> bool:
+    resolved = path.resolve()
+    return resolved == REPOSITORY or REPOSITORY in resolved.parents
+
+
 def keygen(purpose: str, kid: str, out: Path) -> tuple[Path, Path]:
+    if _inside_repository(out):
+        raise ValueError(f"{out} is inside the repository: write the private key elsewhere")
     if purpose not in PURPOSES:
         raise ValueError(f"unknown purpose: {purpose}")
     if not KID.match(kid):
@@ -50,7 +60,8 @@ def main(argv: list[str] | None = None) -> int:
     gen = sub.add_parser("keygen", help="create an ES256 key pair")
     gen.add_argument("--purpose", required=True, choices=sorted(PURPOSES))
     gen.add_argument("--kid", required=True)
-    gen.add_argument("--out", type=Path, default=Path("."))
+    # Required, and never inside the repository: a production key must not lie in a working copy.
+    gen.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     private_path, public_path = keygen(args.purpose, args.kid, args.out)
     print(f"private key: {private_path} (keep it offline)")

@@ -234,7 +234,7 @@ Outil en ligne de commande Python, exécuté par l'éditeur sur une machine de c
 
 | Commande | Effet |
 |---|---|
-| `seekmind_keys.py keygen --purpose license --kid l1` | Crée une paire ES256 ; écrit la clé privée (PEM) et la clé publique (`spki` en base64) |
+| `seekmind_keys.py keygen --purpose license --kid l1 --out <répertoire hors du dépôt>` | Crée une paire ES256 ; écrit la clé privée (PEM, droits 0600, jamais écrasée) et la clé publique (`spki` en base64). Un répertoire du dépôt est refusé. |
 | `seekmind_license.py issue --key l1.pem --kid l1 --plan lifetime --count 50 --out codes.csv` | Émet des licences : identifiant, code, lien d'activation |
 | `seekmind_license.py verify --pub l1.spki <code>` | Vérifie un code |
 | `gen_test_vectors.py` | Régénère `testdata/tokens/` avec les clés de test |

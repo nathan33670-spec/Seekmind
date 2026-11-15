@@ -36,7 +36,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
    - **M2-05** : marqueurs de navigation privée observés sur Chrome et Firefox ; table mise à jour ;
    - **M3-02** : onglet privé de Chrome et de Firefox (Android 14+) : aucune capture ;
    - **M5-08** : bancs de la recherche à 100 000 captures ;
-   - **M6-07** : déverrouillage par empreinte et par code ; aperçu masqué dans les applications récentes ;
+   - **M6-07** : déverrouillage par empreinte et par code ; aperçu masqué dans les applications récentes,
+     y compris pendant la confirmation de Play d'un pack de langue (`PlayCoreDialogWrapperActivity`) ;
    - **M7-02** : les sept règles par application (tableau de la PR #40) ; une règle qui échoue est
      retirée de `source_rules.json`.
 
