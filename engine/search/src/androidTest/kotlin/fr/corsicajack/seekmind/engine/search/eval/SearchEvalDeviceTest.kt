@@ -196,7 +196,7 @@ class SearchEvalDeviceTest {
         val searcher = HybridSearcher(
             parser = QueryParser(StopWords.load(context.resources), TemporalParser()),
             apps = { AppMatcher(apps) },
-            lexical = LexicalSearcher(handle.search),
+            lexical = LexicalSearcher(handle.search, config.lexicalAllOfMinHits),
             semantic = VectorSemanticSource(provider.takeIf { mode != Mode.KEYWORDS }, index),
             store = handle.search,
             cache = SearchCache(config, SystemClockJvm),

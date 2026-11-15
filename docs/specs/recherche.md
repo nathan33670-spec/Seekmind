@@ -190,11 +190,23 @@ Précisions (M5-03) :
 
 - chaque jeton est mis entre guillemets doubles (guillemets internes doublés) : aucune syntaxe FTS5 ne
   peut être injectée par la requête ;
-- les jetons sont reliés par `OR` : le classement BM25 favorise les captures qui en contiennent le plus ;
+- **en deux temps** (décision du porteur du 15 novembre 2026, après les mesures de M5-08) :
+  1. tous les jetons, reliés par `AND`, entre parenthèses ;
+  2. si cette première recherche rend moins de `lexicalAllOfMinHits` captures (10), les jetons reliés par
+     `OR`. Ses résultats suivent ceux de la première, sans doublon, jusqu'à la limite. Le classement BM25
+     y favorise les captures qui contiennent le plus de jetons ;
 - le dernier jeton reçoit un `*` de préfixe s'il compte au moins 3 caractères ;
-- un jeton en forme de code est ajouté tel quel **et** en préfixe.
+- un jeton en forme de code est ajouté tel quel **et** en préfixe, en alternative (`OR`), dans les deux
+  temps : un code suffit à lui seul.
 
-Exemple : `resto italien pâtes truffe` → `"resto" OR "italien" OR "pates" OR "truffe"*`.
+Exemples : `resto italien pâtes truffe` → d'abord `("resto" AND "italien" AND "pates" AND "truffe"*)`,
+puis au besoin `"resto" OR "italien" OR "pates" OR "truffe"*` ; `code SUMMER20` → d'abord
+`("code" AND "summer20"*) OR "SUMMER20" OR "SUMMER20"*`. Une requête d'un seul mot ne fait qu'une recherche.
+
+Raison : FTS5 calcule le BM25 de **toutes** les captures qui correspondent avant d'en garder 100. Sur
+100 000 captures, deux mots en `OR` en touchent des dizaines de milliers dès que l'un est courant, soit
+1,3 à 4,4 s sur les émulateurs de la CI, contre environ 100 ms en `AND` ([mesures M5-08](../mesures/2026-11-15-ci-emulateurs-M5-08.md)).
+Le second temps reste coûteux quand les mots, courants, ne figurent presque jamais ensemble.
 
 Requête SQL, pondération des colonnes et extrait : [stockage §5](stockage.md). Limite : 100 lignes.
 
@@ -395,6 +407,7 @@ sémantique (`VectorSemanticSource` : moteur d'embeddings et `VectorIndex`) :
 ```kotlin
 data class SearchConfig(
     val lexicalLimit: Int = 100,
+    val lexicalAllOfMinHits: Int = 10,   // §5 : en dessous, les jetons sont aussi cherchés en OR
     val binaryTopK: Int = 400,
     val semanticTopK: Int = 100,
     val semanticFloor: Float = 0.78f,
