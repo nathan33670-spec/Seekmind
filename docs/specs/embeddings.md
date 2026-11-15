@@ -260,7 +260,7 @@ data class ModelSpec(
 interface ModelCatalog {
     val models: List<ModelSpec>
     val active: StateFlow<ModelSpec>
-    fun state(id: String): Flow<PackState>     // NotInstalled, Downloading(progress), Installed, Failed
+    fun state(id: String): Flow<PackState>     // NotInstalled, Downloading(progress), AwaitingConfirmation, Installed, Failed
     suspend fun activate(id: String)           // change le modèle actif ; déclenche le recalcul des vecteurs
 }
 
@@ -286,7 +286,7 @@ d'artefacts `multi`.
 Règles :
 
 - Le téléchargement n'est **jamais** lancé sans une action de l'utilisateur.
-- Au-delà du seuil de données mobiles fixé par Google Play, la confirmation système est affichée.
+- Au-delà du seuil de données mobiles fixé par Google Play, le pack passe en `AwaitingConfirmation` et l'écran affiche la confirmation de Play.
 - Les fichiers d'un pack sont vérifiés (empreintes) avant toute activation.
 - Un pack installé peut être supprimé ; s'il était actif, le modèle `fr` redevient actif.
 
@@ -297,7 +297,7 @@ Implémentation (M4-07), paquet `fr.corsicajack.seekmind.engine.embedding.catalo
 | `PackLock` | Empreintes attendues des packs, copie de `model.lock.json` (`PackLockTest` échoue si elles divergent). |
 | `ModelPackInstaller` | Interface du §5.1, plus `state(spec)` : l'état d'un pack, lu sans rien télécharger. |
 | `FileModelPackInstaller` | Import d'un `.smpack` : exactement `model.onnx`, `vocab.bin` et `MODEL_MANIFEST.json` (tout autre nom, chemin compris, est refusé). Les deux fichiers du modèle sont vérifiés (taille et SHA-256) pendant l'écriture dans un répertoire temporaire, avec un arrêt dès que la taille attendue est dépassée. Ce répertoire ne devient `noBackupFilesDir/packs/<id>` qu'une fois tout vérifié ; sinon, rien ne reste. |
-| `PlayModelPackInstaller` | Le pack Play derrière `AssetPackGateway` (statuts de `AssetPackStatus` → `PackState` ; `WAITING_FOR_WIFI` et `REQUIRES_USER_CONFIRMATION` restent `Downloading`, Play affichant lui-même sa confirmation). L'adaptateur sur la bibliothèque Play Asset Delivery n'est pas encore livré : la bibliothèque exporte `AssetPackExtractionService` sans permission, ce que INV-12 interdit ; la décision revient au porteur (PR de M4-07). D'ici là, `:app` utilise l'import de fichier dans tous les builds. |
+| `PlayModelPackInstaller` | Le pack Play derrière `AssetPackGateway` ; `PlayAssetPackGateway` est l'adaptateur sur `AssetPackManager`. Statuts de `AssetPackStatus` → `PackState` : `WAITING_FOR_WIFI` et `REQUIRES_USER_CONFIRMATION` donnent `AwaitingConfirmation`, et l'écran propose alors `requestConfirmation(activity)` (boîte de dialogue de Play, `showConfirmationDialog`) ; une erreur de Play donne `Failed(code)`. Composants exportés de la bibliothèque : [ADR-0012](../adr/0012-composants-exportes-de-play-asset-delivery.md). `:app` ne l'utilise que si Google Play a installé l'application (`InstallSourceInfo`), sinon `FileModelPackInstaller`. |
 | `DefaultModelCatalog` | Implémente `ModelCatalog`. Le modèle actif est lu dans le réglage ; s'il désigne un pack absent, `fr` le remplace. `install` (action de l'utilisateur seulement) ; `activate` vérifie les empreintes, enregistre le réglage, puis ferme la session et remet les vecteurs à zéro (§5.3, câblé par `:app`) ; `remove` du pack actif réactive `fr` d'abord ; les deux sont sérialisés, et les empreintes sont calculées sur le dispatcher d'E/S. `loadable()` donne le modèle à charger au fournisseur du moteur. Un lot d'embeddings en cours pendant l'activation ne laisse aucun vecteur de l'ancien modèle : la base écarte ses lignes ([indexation §7.2](indexation.md)). |
 
 ### 5.3 Changer de modèle

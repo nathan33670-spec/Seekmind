@@ -35,7 +35,7 @@ L'application existe en deux variantes du même code : `ads` (publiée, avec pub
 | INV-09 | **Pas de sauvegarde système.** `allowBackup="false"`, règles d'extraction qui excluent tout. | Vérification du manifeste |
 | INV-10 | **Secrets hors dépôt.** Aucune clé privée, keystore, jeton ou mot de passe committé. Seules des clés de test explicitement marquées comme telles sont admises dans les sources de test. | Revue, `.gitignore` |
 | INV-11 | **Dépendances sous contrôle.** Toute nouvelle bibliothèque exige une mise à jour de la liste blanche de la variante concernée (`gradle/dependency-allowlist-*.txt`) et une justification dans la PR. | `:app:verifyDependencies` |
-| INV-12 | **Surface exportée minimale.** Composants exportés autorisés : activité de lancement, activité de réception des liens `seekmind://activate`, service d'accessibilité et tuile de réglages rapides (protégés par permission système). Toute entrée externe (Intent, lien, fichier importé) est validée. | Vérification du manifeste |
+| INV-12 | **Surface exportée minimale.** Composants exportés autorisés : activité de lancement, activité de réception des liens `seekmind://activate`, service d'accessibilité et tuile de réglages rapides (protégés par permission système) ; composants de bibliothèque protégés par permission système, et le service de Play Asset Delivery (exception de l'ADR-0012). Toute entrée externe (Intent, lien, fichier importé) est validée. | Vérification du manifeste |
 | INV-13 | **Parité des variantes.** Aucun code propre à une variante hors de `:app` et de `engine:ads`. Tout changement doit laisser les deux variantes compilables et vérifiées. | CI (les quatre variantes de build) |
 
 ## 3. Conventions

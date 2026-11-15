@@ -39,6 +39,7 @@ dependencies {
     // EmbeddingEngine, ModelSpec and EmbeddingConfig are part of the module's API (docs/03-architecture.md §4).
     api(project(":core:model"))
     implementation(libs.onnxruntime.android)
+    implementation(libs.play.asset.delivery)
 
     testImplementation(project(":core:testing"))
     testImplementation(libs.junit)

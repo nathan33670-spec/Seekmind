@@ -1,5 +1,6 @@
 package fr.corsicajack.seekmind.engine.embedding.catalog
 
+import android.app.Activity
 import fr.corsicajack.seekmind.core.model.ModelSpec
 import fr.corsicajack.seekmind.core.model.PackState
 import fr.corsicajack.seekmind.engine.embedding.engine.ModelFiles
@@ -24,14 +25,20 @@ data class PackProgress(val status: PackStatus, val bytesDownloaded: Long, val t
 
 /**
  * The asset packs of Google Play, as [PlayModelPackInstaller] uses them: `AssetPackManager` of the
- * Play Asset Delivery library behind an interface, so that the installer is tested without Play.
- * The adapter on the library comes with the decision on its exported components (INV-12, PR of M4-07).
+ * Play Asset Delivery library behind an interface, so that the installer is tested without Play
+ * ([PlayAssetPackGateway] is the adapter on the library).
  */
 interface AssetPackGateway {
     fun progress(pack: String): Flow<PackProgress>
 
-    /** Asks Play to download the pack; Play shows its own confirmation for mobile data when needed. */
+    /** Asks Play to download the pack. */
     suspend fun fetch(pack: String)
+
+    /**
+     * Shows the confirmation of Play for a pack waiting for Wi-Fi or for the user's consent; true when the
+     * user accepted.
+     */
+    suspend fun confirm(activity: Activity): Boolean
 
     suspend fun remove(pack: String)
 
@@ -54,6 +61,9 @@ class PlayModelPackInstaller(private val gateway: AssetPackGateway) : ModelPackI
 
     override suspend fun remove(spec: ModelSpec) = gateway.remove(pack(spec))
 
+    /** For a pack in [PackState.AwaitingConfirmation], on an action of the user only. */
+    suspend fun requestConfirmation(activity: Activity): Boolean = gateway.confirm(activity)
+
     override fun location(spec: ModelSpec): ModelFiles? {
         val directory = gateway.assetsPath(pack(spec))?.let { File(it, "model/${spec.id}") } ?: return null
         val model = File(directory, PackLock.MODEL_FILE)
@@ -71,17 +81,17 @@ class PlayModelPackInstaller(private val gateway: AssetPackGateway) : ModelPackI
 
             PackStatus.FAILED, PackStatus.CANCELED -> PackState.Failed(progress.errorCode)
 
-            PackStatus.PENDING, PackStatus.DOWNLOADING, PackStatus.TRANSFERRING, PackStatus.WAITING_FOR_WIFI,
-            PackStatus.REQUIRES_USER_CONFIRMATION,
-            -> PackState.Downloading(
-                if (progress.totalBytes >
-                    0
-                ) {
-                    (progress.bytesDownloaded.toFloat() / progress.totalBytes).coerceIn(0f, 1f)
-                } else {
-                    0f
-                },
+            PackStatus.WAITING_FOR_WIFI, PackStatus.REQUIRES_USER_CONFIRMATION -> PackState.AwaitingConfirmation
+
+            PackStatus.PENDING, PackStatus.DOWNLOADING, PackStatus.TRANSFERRING -> PackState.Downloading(
+                fraction(progress),
             )
+        }
+
+        private fun fraction(progress: PackProgress) = if (progress.totalBytes > 0) {
+            (progress.bytesDownloaded.toFloat() / progress.totalBytes).coerceIn(0f, 1f)
+        } else {
+            0f
         }
     }
 }
