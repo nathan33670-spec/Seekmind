@@ -164,7 +164,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| `Fait` — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M6-01 | `app`, `feature:settings` | [ui-ux §3.6](../specs/ui-ux.md) · EF-PRIV-10, EF-PRIV-11 · EF-ONB-06 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M6-01 | `app`, `feature:settings` | [ui-ux §3.6](../specs/ui-ux.md) · EF-PRIV-10, EF-PRIV-11 · EF-ONB-06 |
 
 **À faire**
 

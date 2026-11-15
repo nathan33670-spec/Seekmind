@@ -11,7 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -49,9 +48,13 @@ class SecuritySettingsViewModelTest {
     @After
     fun tearDown() {
         // The state stays subscribed for a few seconds after the last collector: stop it, and the
-        // DataStore, before the file goes, or their failure would surface in the next test.
-        models.forEach { it.viewModelScope.cancel() }
-        runBlocking { dataStoreScope.coroutineContext.job.cancelAndJoin() }
+        // DataStore, before the file goes, or their failure would surface in the next test. Joined, not
+        // only cancelled: a coroutine still completing on an IO thread resumes on Dispatchers.Main, which
+        // fails once resetMain has run.
+        runBlocking {
+            models.forEach { it.viewModelScope.coroutineContext.job.cancelAndJoin() }
+            dataStoreScope.coroutineContext.job.cancelAndJoin()
+        }
         Dispatchers.resetMain()
         dir.deleteRecursively()
     }
