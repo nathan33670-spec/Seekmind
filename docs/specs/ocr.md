@@ -131,9 +131,13 @@ data class OcrLine(val text: String, val bounds: IntRect, val confidence: Float?
   dépendance supplémentaire).
 - Filtrage : lignes d'au moins 3 caractères alphanumériques ; confiance ≥ 0,45 lorsqu'elle est fournie.
 - Implémentation (M3-03), paquet `fr.corsicajack.seekmind.engine.ocr.recognition` : `MlKitOcrEngine`
-  (reconnaisseur unique, `Task` adaptée, annulation de la coroutine propagée) et `OcrLineFilter`
+  (reconnaisseur unique, `Task` adaptée) et `OcrLineFilter`
   (`OcrConfig.minLineConfidence`). Les tests sur appareil d'`engine:ocr` exécutent ML Kit : leur
   manifeste retire les mêmes composants de transport que l'application (§4.1).
+- Une `Task` de ML Kit ne s'annule pas et lit le bitmap jusqu'à sa fin, alors que l'appelant le recycle
+  dès le retour de `recognize` (INV-03). `recognize` attend donc toujours la fin de sa `Task`, même si sa
+  coroutine est annulée, et ne relance l'annulation qu'ensuite. `close()` ne libère le reconnaisseur
+  qu'une fois les reconnaissances en cours terminées ; un appel ultérieur à `recognize` est refusé.
 
 ### 4.1 Télémétrie de ML Kit
 
@@ -209,15 +213,16 @@ Les récepteurs sont enregistrés dynamiquement, non exportés. Le gouverneur es
 ## 7. Fusion avec le texte de l'arbre
 
 1. Forme de comparaison d'une ligne : minuscules, sans diacritiques, espaces réduits.
-2. Une ligne d'OCR est écartée si sa forme de comparaison est contenue dans le texte de l'arbre, ou si
-   son recouvrement de mots (Jaccard) avec une ligne de l'arbre atteint 0,8.
-3. Les lignes d'OCR restantes sont ajoutées après celles de l'arbre, de haut en bas.
+2. Une ligne d'OCR est écartée si sa forme de comparaison est contenue dans une ligne de l'arbre, mot pour
+   mot (« jeu » n'est pas dans « jeudi »), ou si son recouvrement de mots (Jaccard) avec une ligne de
+   l'arbre atteint 0,8.
+3. Les lignes d'OCR restantes sont ajoutées après celles de l'arbre, dans l'ordre de lecture : par rangées
+   (lignes dont les hauteurs se recouvrent de plus de la moitié), chaque rangée de gauche à droite.
 4. `textSource` porte le bit OCR si au moins une ligne d'OCR est conservée.
 
 Implémentation (M3-03) : `OcrMerge.merge(tree, ocr)` rend les lignes fusionnées, les bits de
 `textSource` (arbre si l'arbre a des lignes, OCR si une ligne d'OCR est conservée) et le nombre de lignes
-d'OCR conservées. Le recouvrement de mots se calcule sur les mots de la forme de comparaison (suites de
-lettres et de chiffres). L'intégration au pipeline relève de M3-05.
+d'OCR conservées. Les mots sont les suites de lettres et de chiffres de la forme de comparaison. L'intégration au pipeline relève de M3-05.
 
 ## 8. Configuration
 
