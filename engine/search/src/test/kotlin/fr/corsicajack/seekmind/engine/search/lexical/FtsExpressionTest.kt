@@ -65,6 +65,32 @@ class FtsExpressionTest {
     }
 
     @Test
+    fun `every word first`() {
+        assertThat(FtsExpression.allOf(parse("resto italien pâtes truffe")))
+            .isEqualTo("(\"resto\" AND \"italien\" AND \"pates\" AND \"truffe\"*)")
+        assertThat(FtsExpression.allOf(parse("été"))).isEqualTo(FtsExpression.of(parse("été")))
+        assertThat(FtsExpression.allOf(parse(""))).isNull()
+    }
+
+    @Test
+    fun `with every word, a code is still enough on its own`() {
+        assertThat(FtsExpression.allOf(parse("code SUMMER20"))).isEqualTo(
+            "(\"code\" AND \"summer20\"*) OR \"SUMMER20\" OR \"SUMMER20\"*",
+        )
+    }
+
+    /** Hostile input: only the parentheses, AND and OR written by FtsExpression, around quoted terms. */
+    @Test
+    fun `no FTS5 syntax comes from the query when every word is required`() {
+        val term = "\"(?:[^\"]|\"\")*\"\\*?"
+        val shape = Regex("(?:\\($term(?: AND $term)+\\)|$term)(?: OR $term)*")
+        listOf("a AND b", "(a b) c", "\" OR 1=1 -- x", "NEAR(a b) c", "x\"* OR \"y z", "a) OR (b").forEach { query ->
+            val expression = FtsExpression.allOf(parse(query)) ?: return@forEach
+            assertThat(expression).matches(shape.pattern)
+        }
+    }
+
+    @Test
     fun `quotes inside a term are doubled`() {
         assertThat(FtsExpression.quote("a\"b")).isEqualTo("\"a\"\"b\"")
     }

@@ -55,7 +55,7 @@ class SearchStack(
         val engine = HybridSearcher(
             parser = parser.get(),
             apps = { apps.matcher() },
-            lexical = LexicalSearcher(handle.search),
+            lexical = LexicalSearcher(handle.search, config.lexicalAllOfMinHits),
             semantic = VectorSemanticSource(embeddings, index),
             store = handle.search,
             cache = cache,

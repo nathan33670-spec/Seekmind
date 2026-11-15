@@ -190,11 +190,27 @@ Précisions (M5-03) :
 
 - chaque jeton est mis entre guillemets doubles (guillemets internes doublés) : aucune syntaxe FTS5 ne
   peut être injectée par la requête ;
-- les jetons sont reliés par `OR` : le classement BM25 favorise les captures qui en contiennent le plus ;
+- **en deux temps** (décision du porteur du 15 novembre 2026, après les mesures de M5-08) :
+  1. tous les jetons, reliés par `AND`, entre parenthèses ;
+  2. si cette première recherche ne rend aucune capture (`lexicalAllOfMinHits` = 1), les jetons reliés
+     par `OR`. Ses résultats suivent ceux de la première, sans doublon, jusqu'à la limite. Le classement BM25
+     y favorise les captures qui contiennent le plus de jetons ;
 - le dernier jeton reçoit un `*` de préfixe s'il compte au moins 3 caractères ;
-- un jeton en forme de code est ajouté tel quel **et** en préfixe.
+- un jeton en forme de code est ajouté tel quel **et** en préfixe, en alternative (`OR`), dans les deux
+  temps : un code suffit à lui seul.
 
-Exemple : `resto italien pâtes truffe` → `"resto" OR "italien" OR "pates" OR "truffe"*`.
+Exemples : `resto italien pâtes truffe` → d'abord `("resto" AND "italien" AND "pates" AND "truffe"*)`,
+puis au besoin `"resto" OR "italien" OR "pates" OR "truffe"*` ; `code SUMMER20` → d'abord
+`("code" AND "summer20"*) OR "SUMMER20" OR "SUMMER20"*`. Une requête d'un seul mot ne fait qu'une recherche.
+
+Raison : FTS5 calcule le BM25 de **toutes** les captures qui correspondent avant d'en garder 100. Sur
+100 000 captures, deux mots en `OR` en touchent des dizaines de milliers dès que l'un est courant, soit
+1,3 à 4,4 s sur les émulateurs de la CI, contre environ 100 ms en `AND` ([mesures M5-08](../mesures/2026-11-15-ci-emulateurs-M5-08.md)).
+Le seuil de 1 vient de la mesure : avec 10, une requête comme « commande 12345 » trouvait en `AND` la
+capture du code, moins de 10 en tout, puis classait en `OR` toutes les captures de « commande » (4 à 5 s
+au p95). Quand les mots ne figurent pas tous ensemble, la recherche sémantique couvre l'essentiel de ce
+qu'apporterait le `OR`. Le second temps reste coûteux quand aucune capture ne réunit les mots et que
+l'un d'eux est courant.
 
 Requête SQL, pondération des colonnes et extrait : [stockage §5](stockage.md). Limite : 100 lignes.
 
@@ -395,6 +411,7 @@ sémantique (`VectorSemanticSource` : moteur d'embeddings et `VectorIndex`) :
 ```kotlin
 data class SearchConfig(
     val lexicalLimit: Int = 100,
+    val lexicalAllOfMinHits: Int = 1,    // §5 : en dessous, les jetons sont aussi cherchés en OR
     val binaryTopK: Int = 400,
     val semanticTopK: Int = 100,
     val semanticFloor: Float = 0.78f,
@@ -444,28 +461,29 @@ Rappel@5 par le sens, modèle original contre modèle quantifié, sur le même j
 
 ### 11.1 Résultats (M5-07)
 
-Mesures du 14 novembre 2026, exécution `device-tests` 43610735658 (API 34 ; le test passe aussi sur les
-API 30 et 36), modèles quantifiés par canal (§2 des [embeddings](embeddings.md)), `SearchConfig` par défaut.
-Entre parenthèses, la première mesure (exécution 43585148277, modèles quantifiés par tenseur).
+Mesures du 15 novembre 2026, exécution `device-tests` 43707625829 (API 34 ; le test passe aussi sur les
+API 30 et 36), modèles quantifiés par canal (§2 des [embeddings](embeddings.md)), recherche lexicale en
+deux temps (§5), `SearchConfig` par défaut. Entre parenthèses, la première mesure (exécution
+43585148277, modèles quantifiés par tenseur, mots reliés par `OR`).
 
 | Modèle · configuration | Rappel@1 | Rappel@5 | MRR |
 |---|---|---|---|
-| `fr` · hybride, requêtes en français (49) | 0,918 | **1,0** (0,959) | **0,953** (0,916) |
-| `fr` · hybride, tout le jeu (80) | 0,838 | 0,950 (0,913) | 0,884 (0,859) |
-| `fr` · mots-clés seuls, tout le jeu | 0,750 | 0,838 | 0,785 |
+| `fr` · hybride, requêtes en français (49) | 0,939 | **1,0** (0,959) | **0,963** (0,916) |
+| `fr` · hybride, tout le jeu (80) | 0,850 | 0,950 (0,913) | 0,890 (0,859) |
+| `fr` · mots-clés seuls, tout le jeu | 0,788 (0,750) | 0,838 | 0,807 (0,785) |
 | `fr` · sens seul, tout le jeu | 0,513 | 0,875 (0,825) | 0,674 (0,650) |
-| `multi` · hybride, tout le jeu (80) | 0,825 | **0,950** (0,925) | **0,885** (0,875) |
-| `multi` · mots-clés seuls, tout le jeu | 0,750 | 0,838 | 0,785 |
+| `multi` · hybride, tout le jeu (80) | 0,838 | **0,950** (0,925) | **0,891** (0,875) |
+| `multi` · mots-clés seuls, tout le jeu | 0,788 (0,750) | 0,838 | 0,807 (0,785) |
 | `multi` · sens seul, tout le jeu | 0,513 | 0,863 (0,825) | 0,675 (0,645) |
 
 - **Seuils d'EF-SRCH-01 à 03 tenus**, sur les groupes que le test contrôle :
 
   | Modèle · groupe contrôlé | Effectif | Valeur | Seuil |
   |---|---|---|---|
-  | `fr` · requêtes en français, hybride | 49 | Rappel@5 1,0 · MRR 0,953 | 0,85 · 0,70 |
+  | `fr` · requêtes en français, hybride | 49 | Rappel@5 1,0 · MRR 0,963 | 0,85 · 0,70 |
   | `fr` · codes en français | 9 | Rappel@1 1,0 | 0,90 |
   | `fr` · paraphrases en français | 15 | Rappel@5 1,0 | 0,75 |
-  | `multi` · tout le jeu, hybride | 80 | Rappel@5 0,950 · MRR 0,885 | 0,85 · 0,70 |
+  | `multi` · tout le jeu, hybride | 80 | Rappel@5 0,950 · MRR 0,891 | 0,85 · 0,70 |
   | `multi` · codes | 12 | Rappel@1 1,0 | 0,90 |
   | `multi` · paraphrases | 32 | Rappel@5 0,875 | 0,75 |
 
@@ -478,6 +496,9 @@ Entre parenthèses, la première mesure (exécution 43585148277, modèles quanti
   - Requêtes bilingues : 0,8 pour les deux.
   - Sens seul, requêtes en anglais : 0,857 pour `fr`, 0,810 pour `multi`.
   - La perte est faible sur ce jeu, où les contenus anglais restent proches du vocabulaire courant.
+- **Recherche lexicale en deux temps** (§5) : le Rappel@5 ne change pas, la précision monte un peu
+  (mots-clés seuls : Rappel@1 0,750 → 0,788) ; chercher d'abord tous les mots classe mieux la capture
+  attendue.
 - **Requêtes manquées par l'hybride** (absentes des cinq premiers), toutes de type paraphrase ou bilingue :
 
   | Requête | Type | Manquée par |

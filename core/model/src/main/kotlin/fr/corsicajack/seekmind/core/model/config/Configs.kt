@@ -83,6 +83,12 @@ data class EmbeddingConfig(
 /** docs/specs/recherche.md §10. */
 data class SearchConfig(
     val lexicalLimit: Int = 100,
+    /**
+     * Fewer captures than this with every word: the keyword search also takes those with any word. 1: only
+     * when no capture holds every word (a frequent word and a rare one would otherwise rank every capture
+     * of the frequent one, docs/mesures M5-08).
+     */
+    val lexicalAllOfMinHits: Int = 1,
     val binaryTopK: Int = 400,
     val semanticTopK: Int = 100,
     val semanticFloor: Float = 0.78f,
