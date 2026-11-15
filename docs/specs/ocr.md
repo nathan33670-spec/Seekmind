@@ -196,6 +196,7 @@ relu aussitôt. La minute et le jour sont des fenêtres glissantes sur l'horloge
 ```kotlin
 interface ThermalGovernor {
     val state: StateFlow<GovernorState>
+    fun current(): GovernorState      // relu sur l'appareil, pour une décision
 }
 
 data class GovernorState(
@@ -217,6 +218,11 @@ Les récepteurs sont enregistrés dynamiquement, non exportés. Le gouverneur es
 `engine:index` (lots d'embeddings) : l'interface `ThermalGovernor`, `GovernorState` et `ThrottleReason`
 sont des ports de `core:model` (`port/DevicePorts.kt`), comme `OcrEngine`, pour qu'aucun des deux
 moteurs ne dépende de l'autre.
+
+Les décisions (`OcrPolicy.shouldOcr`, début d'un lot d'embeddings) lisent `current()`, pas `state`. Sur
+API 34+, les diffusions destinées à un processus en cache attendent qu'il en sorte : un processus réveillé
+pour un travail verrait encore l'appareil tel qu'il était. `current()` relit la diffusion persistante de
+la batterie, l'économie d'énergie et l'état thermique (`AndroidDeviceSignals.refresh`).
 
 Implémentation (M3-04), paquet `fr.corsicajack.seekmind.engine.ocr.policy` :
 

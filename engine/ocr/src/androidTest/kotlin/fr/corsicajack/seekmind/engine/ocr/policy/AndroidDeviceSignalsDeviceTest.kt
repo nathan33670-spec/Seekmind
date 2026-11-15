@@ -21,7 +21,8 @@ import org.junit.runner.RunWith
 
 /**
  * The governor on the real signals of the device (docs/specs/ocr.md §6), driven by shell commands: each
- * of heat, power saving and a low battery suspends OCR and embeddings, and its end restores them.
+ * of heat, power saving and a low battery suspends OCR and embeddings, and its end restores them. Read
+ * with [SignalThermalGovernor.current], as the decisions are.
  */
 @RunWith(AndroidJUnit4::class)
 class AndroidDeviceSignalsDeviceTest {
@@ -34,7 +35,7 @@ class AndroidDeviceSignalsDeviceTest {
     fun setUp() {
         reset()
         signals.start()
-        governor = SignalThermalGovernor(signals.state, GovernorRules(), scope)
+        governor = SignalThermalGovernor(signals.state, GovernorRules(), scope, signals::refresh)
         awaitReason(null)
     }
 
@@ -98,10 +99,12 @@ class AndroidDeviceSignalsDeviceTest {
 
     private fun awaitReason(expected: ThrottleReason?) {
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS
-        while (governor.state.value.reason != expected && SystemClock.elapsedRealtime() < deadline) {
+        // current(), as the OCR policy and the embedding batches decide: the broadcasts of the test
+        // process can be queued while it counts as cached (API 34+).
+        while (governor.current().reason != expected && SystemClock.elapsedRealtime() < deadline) {
             SystemClock.sleep(POLL_MS)
         }
-        val state = governor.state.value
+        val state = governor.current()
         val message = if (state.reason == expected) "" else diagnosis()
         assertWithMessage(message).that(state.reason).isEqualTo(expected)
         assertWithMessage(message).that(state.allowsOcr).isEqualTo(expected == null)
@@ -112,6 +115,7 @@ class AndroidDeviceSignalsDeviceTest {
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS
         while (!condition(signals.state.value) && SystemClock.elapsedRealtime() < deadline) {
             SystemClock.sleep(POLL_MS)
+            signals.refresh()
         }
         assertWithMessage("$what: ${diagnosis()}").that(condition(signals.state.value)).isTrue()
     }

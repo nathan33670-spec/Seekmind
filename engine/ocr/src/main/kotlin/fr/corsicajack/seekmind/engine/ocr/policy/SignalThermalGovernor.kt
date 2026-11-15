@@ -9,8 +9,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /** [ThermalGovernor] on a flow of [DeviceSignals]: the Android one ([AndroidDeviceSignals]), or simulated in tests. */
-class SignalThermalGovernor(signals: StateFlow<DeviceSignals>, rules: GovernorRules, scope: CoroutineScope) :
-    ThermalGovernor {
+class SignalThermalGovernor(
+    private val signals: StateFlow<DeviceSignals>,
+    private val rules: GovernorRules,
+    scope: CoroutineScope,
+    /** Reads the device again ([AndroidDeviceSignals.refresh]); nothing for simulated signals. */
+    private val refresh: () -> Unit = {},
+) : ThermalGovernor {
     override val state: StateFlow<GovernorState> =
         signals.map(rules::state).stateIn(scope, SharingStarted.Eagerly, rules.state(signals.value))
+
+    override fun current(): GovernorState {
+        refresh()
+        return rules.state(signals.value)
+    }
 }

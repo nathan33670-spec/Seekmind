@@ -56,6 +56,17 @@ class AndroidDeviceSignals(private val context: Context, private val executor: E
         power.addThermalStatusListener(executor, thermal)
     }
 
+    /**
+     * Reads the device again, without waiting for a broadcast: the battery (sticky broadcast), the
+     * battery saver and the heat. On API 34+, the broadcasts of a cached process are queued until it
+     * leaves that state, so a process woken for work may see them only afterwards.
+     */
+    fun refresh() {
+        context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))?.let(::read)
+        val thermalNow = power.currentThermalStatus >= PowerManager.THERMAL_STATUS_MODERATE
+        signals.update { it.copy(thermalThrottled = thermalNow, powerSave = power.isPowerSaveMode) }
+    }
+
     @Synchronized
     fun stop() {
         if (!started) return
