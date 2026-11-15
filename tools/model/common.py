@@ -22,6 +22,7 @@ OUT = TOOLS / "out"
 CACHE = OUT / ".cache"
 TESTDATA = REPO / "testdata"
 LOCK = REPO / "engine" / "embedding" / "model.lock.json"
+PACK_ASSETS = REPO / "modelpack_multi" / "src" / "main" / "assets" / "model"
 ASSETS = REPO / "engine" / "embedding" / "src" / "main" / "assets" / "model"
 
 MODEL_FILE = "model.onnx"
@@ -178,8 +179,9 @@ def record_testdata(path: Path) -> None:
 
 
 def install(source: ModelSource) -> Path:
-    """Copies the set into the assets of :engine:embedding (ignored by git)."""
-    target = ASSETS / source.id
+    """Copies the set where the build takes it (ignored by git): the assets of :engine:embedding for the
+    bundled model, those of the :modelpack_multi asset pack for the pack (ticket M4-06)."""
+    target = (PACK_ASSETS if source.id == "multi" else ASSETS) / source.id
     target.mkdir(parents=True, exist_ok=True)
     for name in SET_FILES:
         shutil.copyfile(source.out_dir / name, target / name)

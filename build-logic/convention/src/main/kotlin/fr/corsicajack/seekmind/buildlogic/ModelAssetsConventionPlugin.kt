@@ -6,8 +6,8 @@ import org.gradle.api.Project
 
 /**
  * Bundled embedding model of :engine:embedding (docs/specs/embeddings.md §2): `verifyModel` checks the
- * set in src/main/assets/model/fr against model.lock.json, and runs before every build of the module
- * unless the `skipModel` property is set (`-PskipModel`).
+ * set in src/main/assets/model/fr against model.lock.json, and runs before every build of the module.
+ * `-PskipModel` skips it for debug builds only: a release build always needs the model (ticket M4-06).
  */
 class ModelAssetsConventionPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
@@ -18,8 +18,8 @@ class ModelAssetsConventionPlugin : Plugin<Project> {
             model.set("fr")
             modelDirectory.set(layout.projectDirectory.dir("src/main/assets/model/fr"))
         }
-        if (!providers.gradleProperty("skipModel").isPresent) {
-            tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(verifyModel) }
-        }
+        val skip = providers.gradleProperty("skipModel").isPresent
+        tasks.matching { (it.name == "preBuild" && !skip) || it.name == "preReleaseBuild" }
+            .configureEach { dependsOn(verifyModel) }
     }
 }

@@ -32,7 +32,7 @@ exactement ce qui va se passer.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En revue — validation manuelle reportée à M10-01 (décision du porteur, 14 novembre 2026) | M7-01 | `engine:source` | [retour-source §4](../specs/retour-source.md) · risque R-10 |
+| Fait — validation manuelle reportée à M10-01 (décisions du porteur, 14 et 15 novembre 2026) | M7-01 | `engine:source` | [retour-source §4](../specs/retour-source.md) · risque R-10 |
 
 **À faire**
 
