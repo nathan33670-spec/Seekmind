@@ -192,8 +192,8 @@ Précisions (M5-03) :
   peut être injectée par la requête ;
 - **en deux temps** (décision du porteur du 15 novembre 2026, après les mesures de M5-08) :
   1. tous les jetons, reliés par `AND`, entre parenthèses ;
-  2. si cette première recherche rend moins de `lexicalAllOfMinHits` captures (10), les jetons reliés par
-     `OR`. Ses résultats suivent ceux de la première, sans doublon, jusqu'à la limite. Le classement BM25
+  2. si cette première recherche ne rend aucune capture (`lexicalAllOfMinHits` = 1), les jetons reliés
+     par `OR`. Ses résultats suivent ceux de la première, sans doublon, jusqu'à la limite. Le classement BM25
      y favorise les captures qui contiennent le plus de jetons ;
 - le dernier jeton reçoit un `*` de préfixe s'il compte au moins 3 caractères ;
 - un jeton en forme de code est ajouté tel quel **et** en préfixe, en alternative (`OR`), dans les deux
@@ -206,7 +206,11 @@ puis au besoin `"resto" OR "italien" OR "pates" OR "truffe"*` ; `code SUMMER20` 
 Raison : FTS5 calcule le BM25 de **toutes** les captures qui correspondent avant d'en garder 100. Sur
 100 000 captures, deux mots en `OR` en touchent des dizaines de milliers dès que l'un est courant, soit
 1,3 à 4,4 s sur les émulateurs de la CI, contre environ 100 ms en `AND` ([mesures M5-08](../mesures/2026-11-15-ci-emulateurs-M5-08.md)).
-Le second temps reste coûteux quand les mots, courants, ne figurent presque jamais ensemble.
+Le seuil de 1 vient de la mesure : avec 10, une requête comme « commande 12345 » trouvait en `AND` la
+capture du code, moins de 10 en tout, puis classait en `OR` toutes les captures de « commande » (4 à 5 s
+au p95). Quand les mots ne figurent pas tous ensemble, la recherche sémantique couvre l'essentiel de ce
+qu'apporterait le `OR`. Le second temps reste coûteux quand aucune capture ne réunit les mots et que
+l'un d'eux est courant.
 
 Requête SQL, pondération des colonnes et extrait : [stockage §5](stockage.md). Limite : 100 lignes.
 
@@ -407,7 +411,7 @@ sémantique (`VectorSemanticSource` : moteur d'embeddings et `VectorIndex`) :
 ```kotlin
 data class SearchConfig(
     val lexicalLimit: Int = 100,
-    val lexicalAllOfMinHits: Int = 10,   // §5 : en dessous, les jetons sont aussi cherchés en OR
+    val lexicalAllOfMinHits: Int = 1,    // §5 : en dessous, les jetons sont aussi cherchés en OR
     val binaryTopK: Int = 400,
     val semanticTopK: Int = 100,
     val semanticFloor: Float = 0.78f,
