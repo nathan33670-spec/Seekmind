@@ -73,4 +73,10 @@ internal class FakeVectorStore(private val codec: VectorCodec) : VectorStore {
     override suspend fun pendingCount(): Int = error("unused")
 
     override suspend fun resetForModel(modelId: Int) = error("unused")
+
+    override suspend fun modelId(): Int? = error("unused")
+
+    override suspend fun int8Scale(): Float? = error("unused")
+
+    override suspend fun setInt8Scale(scale: Float) = error("unused")
 }

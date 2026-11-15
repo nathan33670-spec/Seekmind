@@ -113,7 +113,7 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M4-04, M4-02, M3-04 | `engine:index` | [indexation §7](../specs/indexation.md) · [embeddings §6](../specs/embeddings.md) · EF-IDX-02 · ENF-BAT-01 |
+| Fait | M4-04, M4-02, M3-04 | `engine:index` | [indexation §7](../specs/indexation.md) · [embeddings §6](../specs/embeddings.md) · EF-IDX-02 · ENF-BAT-01 |
 
 **À faire**
 
@@ -125,11 +125,13 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 **Critères d'acceptation**
 
-- [ ] Avec le pilote de test de WorkManager et `FakeEmbeddingEngine` : la file se vide ; les plus récents d'abord.
-- [ ] Gouverneur en état « suspendu » → le travail s'arrête sans erreur et reprend à la période suivante.
-- [ ] Trois échecs sur un fragment → état « en échec », le reste du lot continue.
-- [ ] Changement de `modelId` → vecteurs vidés, fragments remis en attente, recherche lexicale intacte.
-- [ ] E2E-17 vert avec le vrai modèle.
+- [x] Avec le pilote de test de WorkManager et `FakeEmbeddingEngine` : la file se vide ; les plus récents d'abord
+      (`EmbeddingWorkerDeviceTest`, `EmbeddingBatchRunnerTest`).
+- [x] Gouverneur en état « suspendu » → le travail s'arrête sans erreur et reprend à la période suivante.
+- [x] Trois échecs sur un fragment → état « en échec », le reste du lot continue.
+- [x] Changement de `modelId` → vecteurs vidés, fragments remis en attente, recherche lexicale intacte.
+- [x] E2E-17 vert avec le vrai modèle (`EmbeddingBatchesE2ETest`, `:app`, sans le pipeline de capture,
+      qui arrive avec M2-06 et M3-05).
 
 ---
 

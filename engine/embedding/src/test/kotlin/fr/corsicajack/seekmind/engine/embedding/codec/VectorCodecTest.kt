@@ -7,7 +7,8 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class VectorCodecTest {
-    private val codec = VectorCodec(EmbeddingConfig().int8Scale)
+    // The arithmetic below is written for S = 400; the production scale is EmbeddingConfig().int8Scale.
+    private val codec = VectorCodec(400f)
 
     @Test
     fun int8RoundTripStaysWithinHalfAStep() {
@@ -76,10 +77,11 @@ class VectorCodecTest {
 
     @Test
     fun matchesTheEncodingOfTheTestVectors() {
+        val production = VectorCodec(EmbeddingConfig().int8Scale)
         for (seed in 1L..50L) {
             val vector = TestVectors.unit(seed)
-            assertThat(codec.binary(vector)).isEqualTo(TestVectors.binary(vector))
-            assertThat(codec.int8(vector)).isEqualTo(TestVectors.int8(vector))
+            assertThat(production.binary(vector)).isEqualTo(TestVectors.binary(vector))
+            assertThat(production.int8(vector)).isEqualTo(TestVectors.int8(vector))
         }
     }
 

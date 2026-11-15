@@ -12,6 +12,7 @@ import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.model.config.EmbeddingConfig
 import fr.corsicajack.seekmind.core.model.config.SearchConfig
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
+import fr.corsicajack.seekmind.core.model.port.ThermalGovernor
 import fr.corsicajack.seekmind.engine.embedding.codec.VectorCodec
 import fr.corsicajack.seekmind.engine.embedding.engine.BuiltInModels
 import fr.corsicajack.seekmind.engine.embedding.engine.MemoryPressureRelease
@@ -46,21 +47,22 @@ object SearchModule {
     fun codec(config: EmbeddingConfig): VectorCodec = VectorCodec(config.int8Scale)
 
     /**
-     * The bundled `fr` model until the catalogue (M4-07); two threads until the governor (M3-04).
-     * Closed under memory pressure.
+     * The bundled `fr` model until the catalogue (M4-07); the threads given by the governor (2, or 4 on
+     * charge, docs/specs/ocr.md §6). Closed under memory pressure.
      */
     @Provides
     @Singleton
     fun embeddings(
         @ApplicationContext context: Context,
         config: EmbeddingConfig,
+        governor: ThermalGovernor,
         @ApplicationScope scope: CoroutineScope,
     ): SharedEmbeddingEngineProvider {
         val dispatchers = DefaultDispatcherProvider
         val provider = SharedEmbeddingEngineProvider(
             factory = OrtEmbeddingEngineFactory(context, config, dispatchers.io, dispatchers.default),
             activeModel = { BuiltInModels.bundledFr },
-            threads = { config.threadsDefault },
+            threads = { governor.state.value.embeddingThreads },
             config = config,
             scope = scope,
         )
