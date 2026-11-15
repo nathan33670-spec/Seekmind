@@ -30,6 +30,19 @@ class ThermalGovernorTest {
     }
 
     @Test
+    fun `current reads the device again before deciding`() = runTest(UnconfinedTestDispatcher()) {
+        var refreshes = 0
+        // A broadcast that has not arrived: only the refresh sees the low battery.
+        val governor = SignalThermalGovernor(signals, GovernorRules(), backgroundScope) {
+            refreshes++
+            signals.value = DeviceSignals.NORMAL.copy(batteryPercent = 10)
+        }
+        assertThat(governor.state.value.reason).isNull()
+        assertThat(governor.current().reason).isEqualTo(ThrottleReason.LOW_BATTERY)
+        assertThat(refreshes).isEqualTo(1)
+    }
+
+    @Test
     fun heat() = check(DeviceSignals.NORMAL.copy(thermalThrottled = true), ThrottleReason.THERMAL)
 
     @Test

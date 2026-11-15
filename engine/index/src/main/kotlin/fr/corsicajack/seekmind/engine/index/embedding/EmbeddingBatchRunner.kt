@@ -80,7 +80,7 @@ class EmbeddingBatchRunner(
             perChunk.sorted().let { if (it.isEmpty()) 0 else it[it.size / 2] },
         )
 
-        if (!governor.state.value.allowsEmbedding) return report(StopReason.THROTTLED)
+        if (!governor.current().allowsEmbedding) return report(StopReason.THROTTLED)
         val modelId = try {
             engines.use { it.modelId }
         } catch (cancelled: CancellationException) {
@@ -96,7 +96,7 @@ class EmbeddingBatchRunner(
         while (true) {
             if (isStopped()) return report(StopReason.STOPPED)
             if (clock.elapsedRealtime() >= deadline) return report(StopReason.DEADLINE)
-            if (!governor.state.value.allowsEmbedding) return report(StopReason.THROTTLED)
+            if (!governor.current().allowsEmbedding) return report(StopReason.THROTTLED)
             val batch = vectors.pendingChunks(config.embedBatchSize)
             if (batch.isEmpty()) return report(StopReason.QUEUE_EMPTY)
 
