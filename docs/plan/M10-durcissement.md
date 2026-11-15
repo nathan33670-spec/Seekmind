@@ -33,6 +33,7 @@ protocole et l'outillage, puis corrige d'après les résultats.
    - **M0-08** : lecture de l'arbre de trois applications courantes et sonde sur un onglet privé de
      Chrome (prototype S3) ;
    - **M0-09** : mesures du prototype d'embeddings (S4) ;
+   - **M2-05** : marqueurs de navigation privée observés sur Chrome et Firefox ; table mise à jour ;
    - **M5-08** : bancs de la recherche à 100 000 captures ;
    - **M7-02** : les sept règles par application (tableau de la PR #40) ; une règle qui échoue est
      retirée de `source_rules.json`.
