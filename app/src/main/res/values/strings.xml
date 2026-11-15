@@ -5,4 +5,7 @@
     <string name="app_nav_journal">Journal</string>
     <string name="app_nav_settings">Settings</string>
     <string name="app_placeholder_message">This screen is coming soon.</string>
+    <string name="app_lock_prompt_title">Unlock SeekMind</string>
+    <string name="app_lock_message">SeekMind is locked.</string>
+    <string name="app_lock_unlock">Unlock</string>
 </resources>

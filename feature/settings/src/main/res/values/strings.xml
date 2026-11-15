@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="settings_security_title">Security</string>
+    <string name="settings_lock_title">Lock SeekMind</string>
+    <string name="settings_lock_summary">Ask for your fingerprint, face or screen lock code to open SeekMind.</string>
+    <string name="settings_lock_unavailable">Unavailable: set a screen lock on this phone (PIN, pattern or password) to use it.</string>
+    <string name="settings_lock_grace_title">Lock again after</string>
+    <string name="settings_lock_grace_immediately">Immediately after leaving</string>
+    <plurals name="settings_lock_grace_minutes">
+        <item quantity="one">%d minute in the background</item>
+        <item quantity="other">%d minutes in the background</item>
+    </plurals>
+    <string name="settings_cancel">Cancel</string>
     <string name="settings_help_title">The service stops on its own</string>
     <string name="settings_help_intro">To save battery, some phones stop the apps they consider idle, accessibility services included. SeekMind then stops remembering, until you turn it back on.</string>
     <string name="settings_help_reactivate">If the search screen says “Service turned off”, tap “Turn back on” and enable SeekMind again in the accessibility settings. To keep it from stopping again, exclude SeekMind from battery optimisation as shown below for your phone.</string>
