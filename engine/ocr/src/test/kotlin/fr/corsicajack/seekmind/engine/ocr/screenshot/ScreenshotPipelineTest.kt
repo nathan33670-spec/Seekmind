@@ -71,6 +71,23 @@ class ScreenshotPipelineTest {
     private val window = IntRect(0, 0, 1_000, 1_000)
 
     @Test
+    fun `a check closes the frame at once, without copying it`() = runBlocking<Unit> {
+        val requester = Requester()
+        assertThat(pipeline(requester).check(7)).isEqualTo(Shot.Ok(Unit))
+        assertThat(requester.frames.single().closed).isEqualTo(1)
+        assertThat(ops.events).containsExactly("close")
+    }
+
+    @Test
+    fun `a check reports a secure window and the rate limit`() = runBlocking<Unit> {
+        val requester = Requester().apply { next = { FrameResult.Error(ScreenshotErrors.SECURE_WINDOW) } }
+        val pipeline = pipeline(requester)
+        assertThat(pipeline.check(7)).isEqualTo(Shot.SecureWindow)
+        assertThat(pipeline.check(7)).isEqualTo(Shot.RateLimited)
+        assertThat(requester.calls).isEqualTo(1)
+    }
+
+    @Test
     fun `the block receives a live image, released afterwards`() = runBlocking<Unit> {
         val requester = Requester()
         var seen: Image? = null

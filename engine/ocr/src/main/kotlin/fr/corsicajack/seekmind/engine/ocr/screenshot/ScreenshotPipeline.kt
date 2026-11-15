@@ -42,4 +42,17 @@ internal class ScreenshotPipeline<F, B>(
             )
         }
     }
+
+    /** A request whose frame is closed at once, never copied: only its success or error counts. */
+    suspend fun check(windowId: Int): Shot<Unit> {
+        if (!limiter.tryAcquire()) return Shot.RateLimited
+        return when (val result = requester.request(windowId)) {
+            is FrameResult.Error -> ScreenshotErrors.toShot(result.code)
+
+            is FrameResult.Frame -> {
+                ops.close(result.frame)
+                Shot.Ok(Unit)
+            }
+        }
+    }
 }

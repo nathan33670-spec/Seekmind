@@ -10,6 +10,7 @@ import fr.corsicajack.seekmind.core.common.IntRect
 import fr.corsicajack.seekmind.core.model.Shot
 import fr.corsicajack.seekmind.core.model.config.OcrConfig
 import fr.corsicajack.seekmind.core.model.port.ScreenshotSource
+import fr.corsicajack.seekmind.engine.ocr.probe.ProbeScreenshots
 import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -23,7 +24,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 class A11yScreenshotSource internal constructor(
     private val pipeline: ScreenshotPipeline<AccessibilityService.ScreenshotResult, Bitmap>,
-) : ScreenshotSource {
+) : ProbeScreenshots {
     constructor(service: AccessibilityService, config: OcrConfig, clock: Clock) : this(
         ScreenshotPipeline(
             requester = A11yFrameRequester(service),
@@ -38,6 +39,8 @@ class A11yScreenshotSource internal constructor(
         windowBounds: IntRect,
         block: suspend (Bitmap) -> T,
     ): Shot<T> = pipeline.withScreenshot(windowId, windowBounds, block)
+
+    override suspend fun checkWindow(windowId: Int): Shot<Unit> = pipeline.check(windowId)
 }
 
 /** The system call, chosen by API level. */
