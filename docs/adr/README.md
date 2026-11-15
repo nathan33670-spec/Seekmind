@@ -16,6 +16,7 @@ Un ADR accepté n'est pas réécrit : on le remplace par un nouvel ADR qui le r�
 | [0009](0009-publicite-admob-et-variante-sans-reseau.md) | Publicité par le SDK AdMob, variante sans réseau maintenue en continu | Accepté |
 | [0010](0010-modele-francais-et-packs-de-langue.md) | Modèle français embarqué, packs de langue téléchargeables | Accepté |
 | [0011](0011-evaluation-de-la-recherche-sur-emulateur.md) | Évaluation de la recherche sur émulateur, avec la vraie base et les vrais modèles | Accepté |
+| [0012](0012-composants-exportes-de-play-asset-delivery.md) | Composants exportés de Play Asset Delivery admis, empreintes vérifiées | Accepté |
 
 ## Modèle
 

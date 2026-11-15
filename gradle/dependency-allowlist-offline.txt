@@ -57,6 +57,9 @@ com.google.android.gms:play-services-mlkit-text-recognition         # ML Kit pub
 com.google.android.gms:play-services-mlkit-text-recognition-common  # ML Kit (M0-07)
 com.google.android.gms:play-services-tasks                          # ML Kit (M0-07)
 com.google.android.odml:image                                       # ML Kit (M0-07)
+com.google.android.play:asset-delivery                              # Play Asset Delivery, language packs (M4-07, ADR-0012); the Play Store downloads
+com.google.android.play:asset-delivery-ktx                          # Play Asset Delivery, language packs (M4-07, ADR-0012); the Play Store downloads
+com.google.android.play:core-common                                 # Play Asset Delivery, language packs (M4-07, ADR-0012); the Play Store downloads
 com.google.code.findbugs:jsr305                                     # Dagger annotations
 com.google.dagger:dagger                                            # Hilt (dependency injection)
 com.google.dagger:dagger-lint-aar                                   # Hilt (dependency injection)

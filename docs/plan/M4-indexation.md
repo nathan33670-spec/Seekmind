@@ -164,7 +164,7 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En cours — adaptateur Play Asset Delivery en attente de la décision du porteur sur INV-12 | M4-05, M4-06 | `engine:embedding`, `fixtureapp` | [embeddings §5](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) · EF-LANG-01 à 04 |
+| En cours — reste la validation du porteur sur la piste de test interne de Play | M4-05, M4-06 | `engine:embedding`, `fixtureapp` | [embeddings §5](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) · EF-LANG-01 à 04 |
 
 **À faire**
 
@@ -187,6 +187,10 @@ proposer un ADR (bibliothèque native de tokenisation).
       la recherche par mots-clés répond pendant le recalcul (`ModelPackE2ETest`, `:app`).
 - [x] Aucun téléchargement n'est lancé sans action de l'utilisateur (test : aucun appel à l'installateur au démarrage).
 - [x] Les listes blanches de permissions des deux variantes admettent `FOREGROUND_SERVICE_DATA_SYNC` et rien d'autre de nouveau.
+- [x] Adaptateur Play : statuts de Play convertis, confirmation demandée par `AwaitingConfirmation`, Play
+      choisi seulement pour une installation par Google Play (`PlayAssetPackGatewayTest`,
+      `DefaultModelCatalogTest`) ; composants exportés admis par l'ADR-0012 (`:app:verify*ReleaseManifest`).
+- [ ] Validation manuelle ci-dessous (porteur, non reportée : action dans la Play Console).
 
 **Validation manuelle** — sur la piste de test interne de Google Play : téléchargement du pack
 multilingue, activation, recherche dans une autre langue, suppression.
