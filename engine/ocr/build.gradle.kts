@@ -4,6 +4,8 @@ plugins {
 
 dependencies {
     api(project(":core:model"))
+    // The cache of the secure-window probe (`secure_probe`, docs/specs/ocr.md §3.2).
+    implementation(project(":core:database"))
     implementation(libs.kotlinx.coroutines.core)
     // Bundled model only: the variant that downloads its model is forbidden (docs/specs/ocr.md §4).
     implementation(libs.mlkit.text.recognition)

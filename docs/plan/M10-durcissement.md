@@ -34,6 +34,7 @@ protocole et l'outillage, puis corrige d'après les résultats.
      Chrome (prototype S3) ;
    - **M0-09** : mesures du prototype d'embeddings (S4) ;
    - **M2-05** : marqueurs de navigation privée observés sur Chrome et Firefox ; table mise à jour ;
+   - **M3-02** : onglet privé de Chrome et de Firefox (Android 14+) : aucune capture ;
    - **M5-08** : bancs de la recherche à 100 000 captures ;
    - **M7-02** : les sept règles par application (tableau de la PR #40) ; une règle qui échoue est
      retirée de `source_rules.json`.

@@ -10,9 +10,11 @@ import fr.corsicajack.seekmind.core.model.config.EmbeddingConfig
 import fr.corsicajack.seekmind.core.model.config.IndexConfig
 import fr.corsicajack.seekmind.core.model.config.OcrConfig
 import fr.corsicajack.seekmind.core.model.port.ThermalGovernor
+import fr.corsicajack.seekmind.engine.capture.url.BrowserProfiles
 import fr.corsicajack.seekmind.engine.ocr.policy.AndroidDeviceSignals
 import fr.corsicajack.seekmind.engine.ocr.policy.GovernorRules
 import fr.corsicajack.seekmind.engine.ocr.policy.SignalThermalGovernor
+import fr.corsicajack.seekmind.engine.ocr.probe.EphemeralMessaging
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 
@@ -26,7 +28,8 @@ import kotlinx.coroutines.CoroutineScope
 object DeviceModule {
     @Provides
     @Singleton
-    fun ocrConfig(): OcrConfig = OcrConfig()
+    fun ocrConfig(@ApplicationContext context: Context): OcrConfig =
+        OcrConfig(probeAlwaysPackages = EphemeralMessaging.probeAlways(BrowserProfiles.load(context).packages))
 
     @Provides
     @Singleton

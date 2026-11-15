@@ -32,7 +32,7 @@ sécurisées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M3-01, M1-05 | `engine:ocr` | [ocr §3](../specs/ocr.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) · EF-PRIV-02, EF-PRIV-03 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M3-01, M1-05 | `engine:ocr` | [ocr §3](../specs/ocr.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) · EF-PRIV-02, EF-PRIV-03 |
 
 **À faire**
 
@@ -42,10 +42,10 @@ sécurisées.
 
 **Critères d'acceptation**
 
-- [ ] API 34+ : `SecureActivity` → `Secure` ; `PlainTextActivity` → `NotSecure`.
-- [ ] API 30 : `SecureActivity` → `Secure` par l'heuristique ; un écran clair → `NotSecure`.
-- [ ] Heuristique testée sur des bitmaps de synthèse : noir, presque noir, sombre avec texte, clair.
-- [ ] Cache : pas de seconde sonde dans les 24 h pour une application hors liste (API 30–33) ; toujours une sonde pour un navigateur.
+- [x] API 34+ : `SecureActivity` → `Secure` ; `PlainTextActivity` → `NotSecure` (`SecureWindowProbeDeviceTest`, émulateurs API 34 et 36).
+- [x] API 30 : `SecureActivity` → `Secure` par l'heuristique ; un écran clair → `NotSecure` (`SecureWindowProbeDeviceTest`, émulateur API 30).
+- [x] Heuristique testée sur des bitmaps de synthèse : noir, presque noir, sombre avec texte, clair (`BlackFrameTest`).
+- [x] Cache : pas de seconde sonde dans les 24 h pour une application hors liste (API 30–33) ; toujours une sonde pour un navigateur (`ScreenshotSecureWindowProbeTest`).
 
 **Validation manuelle** — onglet privé de Chrome et de Firefox sur le téléphone de test (Android 14+) :
 aucune capture ; résultat dans la PR. Le cas Android 11 à 13 n'est vérifiable que sur émulateur à ce

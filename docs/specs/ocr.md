@@ -72,6 +72,7 @@ try {
 ```kotlin
 interface SecureWindowProbe {
     suspend fun probe(meta: ScreenMeta, windowBounds: IntRect, needImage: Boolean): ProbeResult
+    fun rejects(meta: ScreenMeta, result: ProbeResult): Boolean   // décision du §3.3
 }
 
 sealed interface ProbeResult {
@@ -97,7 +98,7 @@ Aucune API ne signale une fenêtre sécurisée ; le système en noircit le conte
   de `BrowserProfiles` et messageries à contenu éphémère) ; sinon une fois par couple
   `(paquet, activité)` et par 24 h, résultat mémorisé dans la table `secure_probe`.
 - **Heuristique d'image noire :** échantillonner une grille de 24 × 24 pixels dans la fenêtre ; si au
-  moins 98 % des échantillons ont une luminance inférieure à 8 sur 255 → `Secure`.
+  moins 98 % des échantillons ont une luminance d'au plus 8 sur 255 → `Secure`.
 - Un résultat `Secure` est mémorisé 10 min pour le couple `(paquet, activité)`.
 
 Un écran réellement noir est pris pour sécurisé : c'est l'erreur sans conséquence. Le cas inverse (fenêtre
@@ -108,6 +109,20 @@ les applications dont l'attribut varie d'un écran à l'autre.
 
 Capture impossible (limite de débit, erreur interne) : pour les paquets de `probeAlwaysPackages`, la
 capture est **rejetée** (`SECURE_WINDOW`) ; pour les autres, elle se poursuit sans OCR.
+
+`rejects(meta, result)` rend cette décision : vrai pour `Secure`, et pour `Unknown` sur un paquet de
+`probeAlwaysPackages`.
+
+### 3.4 Implémentation (M3-02)
+
+Paquet `fr.corsicajack.seekmind.engine.ocr.probe` :
+
+| Élément | Rôle |
+|---|---|
+| `ScreenshotSecureWindowProbe` | Implémente `SecureWindowProbe`. API 34+ : sans OCR, `ProbeScreenshots.checkWindow` demande la capture et ferme le tampon aussitôt, sans copie ; avec OCR, la même capture sert à la reconnaissance. API 30–33 : heuristique d'image noire, cache `secure_probe` (`SecureProbeStore`, `core:database`). Un écran mémorisé non sécurisé rend `Skipped` pendant 24 h, sauf si son image est prise de toute façon pour l'OCR : l'heuristique est alors refaite, sans coût. Une image noire n'est jamais envoyée à l'OCR. Base fermée : rien n'est mémorisé, chaque capture est sondée. |
+| `BlackFrame` | Heuristique du §3.2 : grille de 24 × 24 points au centre des cellules, luminance Rec. 601. |
+| `EphemeralMessaging` | Messageries à contenu éphémère. `:app` remplit `OcrConfig.probeAlwaysPackages` avec elles et les navigateurs de `BrowserProfiles`. |
+
 
 ## 4. Reconnaissance
 
