@@ -25,7 +25,8 @@ service ne l'est pas.
 ## Décision
 
 1. Les deux composants sont admis dans `gradle/exported-allowlist.txt`. `AssetPackExtractionService` y
-   figure sans permission : c'est une exception explicite à INV-12, limitée à ce composant.
+   figure sans permission, avec `enabled=false` : c'est une exception explicite à INV-12, limitée à ce
+   composant tant qu'il est déclaré désactivé.
 2. Le manifeste fusionné n'est pas modifié (pas de `tools:node="remove"`) : sans ces composants, le
    fonctionnement de Play Asset Delivery n'est plus garanti.
 3. Ce qui arrive par ce canal n'est jamais cru sur parole : avant toute activation, le catalogue vérifie
@@ -41,8 +42,9 @@ service ne l'est pas.
   que la vérification des empreintes refuse.
 - La bibliothèque ne déclare aucune permission réseau ; le Play Store télécharge. INV-01 et la variante
   `offline` ne sont pas touchés. Elle ajoute `FOREGROUND_SERVICE_DATA_SYNC`, déjà admise.
-- Toute nouvelle version de la bibliothèque qui changerait ces composants fait échouer
-  `:app:verify*ReleaseManifest`, et la question revient au porteur.
+- Une nouvelle version de la bibliothèque qui ajouterait un composant exporté, retirerait la permission
+  du récepteur ou déclarerait le service activé fait échouer `:app:verify*ReleaseManifest`, et la
+  question revient au porteur.
 
 ## Alternatives écartées
 
