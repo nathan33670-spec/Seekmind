@@ -48,7 +48,9 @@ import org.junit.runner.RunWith
  *
  * Measurement only, as ENF-PERF-01 and 05 on the shared emulators of the CI (decision of the project
  * owner, 13 November 2026): the figures and whether the targets are met are logged under
- * `SeekMindBench`, the test fails only when a search finds nothing.
+ * `SeekMindBench`, the test fails only when a search finds nothing. The diagnosis of the keyword search
+ * follows: alternating order, a typical query (a frequent word and a rare one), and the four forms of the
+ * FTS5 expression (AND or OR, with or without a prefix) with the number of captures they match.
  */
 @RunWith(AndroidJUnit4::class)
 class HundredThousandSearchDeviceTest {
@@ -82,39 +84,90 @@ class HundredThousandSearchDeviceTest {
         val parser = QueryParser(StopWords.load(context.resources), TemporalParser())
         val lexical = LexicalSearcher(handle.search)
 
-        report("lexical", queries) { query ->
-            val hits = lexical.search(
-                parser.parse(request(query), AppExtractor.NONE),
-                SearchFilters(),
-                config.lexicalLimit,
-            )
-            assertThat(hits).isNotEmpty()
-        }
         report("semantic", queries) { query ->
             assertThat(index.search(engine.embedQuery(query), SearchFilters())).isNotEmpty()
         }
 
+        // The keyword search alone and the hybrid chain, on the same query, in alternating order: an
+        // order or warming effect shows as a difference between even and odd queries.
         val searcher = searcher(handle, index)
+        val lexicalTimes = mutableListOf<Double>()
         val first = mutableListOf<Double>()
         val total = mutableListOf<Double>()
         queries.forEachIndexed { i, query ->
-            val start = SystemClock.elapsedRealtimeNanos()
-            var firstAt = 0L
-            var hybridHits = 0
-            searcher.search(request(query)).collect { results ->
-                if (results.stage == Stage.LEXICAL) firstAt = SystemClock.elapsedRealtimeNanos()
-                if (results.stage == Stage.HYBRID) hybridHits = results.hits.size
+            val runLexical = suspend {
+                timed {
+                    val parsed = parser.parse(request(query), AppExtractor.NONE)
+                    assertThat(lexical.search(parsed, SearchFilters(), config.lexicalLimit)).isNotEmpty()
+                }
             }
-            val end = SystemClock.elapsedRealtimeNanos()
-            assertThat(hybridHits).isGreaterThan(0)
+            val lexicalFirst = i % 2 == 0
+            val lexicalMs = if (lexicalFirst) runLexical() else 0.0
+            val (firstMs, totalMs) = hybrid(searcher, query)
+            val lexicalMsAfter = if (lexicalFirst) lexicalMs else runLexical()
             if (i >= WARMUP) {
-                first += (firstAt - start) / 1e6
-                total += (end - start) / 1e6
+                lexicalTimes += lexicalMsAfter
+                first += firstMs
+                total += totalMs
+                // The query by its index, never its text (INV-07).
+                log("m5_08_q${i}_lexical_${if (lexicalFirst) "before" else "after"}_ms", lexicalMsAfter)
+                log("m5_08_q${i}_hybrid_first_ms", firstMs)
             }
         }
+        logPercentiles("lexical", lexicalTimes, targetP95Ms = null)
         logPercentiles("hybrid_first_emission", first, targetP95Ms = PERF_03_MS)
         logPercentiles("hybrid_total_without_query_embedding", total, targetP95Ms = PERF_04_WITHOUT_EMBEDDING_MS)
+
+        // A typical query: a frequent word and a rare one (the number of an order code, found in a few
+        // captures only), instead of two of the 48 words that fill the corpus.
+        val typical = List(WARMUP + RUNS) { i ->
+            val code = CODE.find(corpus.capture(i * 997).text)?.groupValues?.get(1) ?: "00000"
+            "${corpus.queryWord(random)} $code"
+        }
+        val typicalFirst = mutableListOf<Double>()
+        typical.forEachIndexed { i, query ->
+            val (firstMs, _) = hybrid(searcher, query)
+            if (i >= WARMUP) typicalFirst += firstMs
+        }
+        logPercentiles("typical_hybrid_first_emission", typicalFirst, targetP95Ms = PERF_03_MS)
+
+        // Which of OR and the prefix costs: the four forms of the FTS5 expression on the same pairs of
+        // words, and the number of captures each one matches (counted apart, untimed).
+        val pairs = queries.drop(WARMUP).take(FORM_RUNS).map { it.split(' ') }
+        val forms = mapOf(
+            "and" to { a: String, b: String -> "${quote(a)} ${quote(b)}" },
+            "and_prefix" to { a: String, b: String -> "${quote(a)} ${quote(b)}*" },
+            "or" to { a: String, b: String -> "${quote(a)} OR ${quote(b)}" },
+            "or_prefix" to { a: String, b: String -> "${quote(a)} OR ${quote(b)}*" },
+        )
+        for ((form, expression) in forms) {
+            val times = pairs.map { (a, b) ->
+                timed { handle.search.lexical(expression(a, b), SearchFilters(), config.lexicalLimit) }
+            }
+            logPercentiles("form_$form", times, targetP95Ms = null)
+            val matches = pairs.take(COUNTED).map { (a, b) ->
+                handle.search.lexical(expression(a, b), SearchFilters(), Int.MAX_VALUE).size.toDouble()
+            }.sorted()
+            log("m5_08_form_${form}_matches_median", matches[matches.size / 2])
+            log("m5_08_form_${form}_matches_max", matches.last())
+        }
     }
+
+    /** Durations of the first (keywords) and the last (fused) emission of the hybrid chain, ms. */
+    private suspend fun hybrid(searcher: HybridSearcher, query: String): Pair<Double, Double> {
+        val start = SystemClock.elapsedRealtimeNanos()
+        var firstAt = 0L
+        var hybridHits = 0
+        searcher.search(request(query)).collect { results ->
+            if (results.stage == Stage.LEXICAL) firstAt = SystemClock.elapsedRealtimeNanos()
+            if (results.stage == Stage.HYBRID) hybridHits = results.hits.size
+        }
+        val end = SystemClock.elapsedRealtimeNanos()
+        assertThat(hybridHits).isGreaterThan(0)
+        return (firstAt - start) / 1e6 to (end - start) / 1e6
+    }
+
+    private fun quote(term: String) = "\"" + term.replace("\"", "\"\"") + "\""
 
     private fun searcher(handle: DatabaseHandle, index: VectorIndex): HybridSearcher {
         val provider = object : EmbeddingEngineProvider {
@@ -164,6 +217,9 @@ class HundredThousandSearchDeviceTest {
         const val COUNT = 100_000
         const val WARMUP = 10
         const val RUNS = 50
+        const val FORM_RUNS = 30
+        const val COUNTED = 5
+        val CODE = Regex("CMD-2026-(\\d{5})")
 
         // ENF-PERF-03: first display of the keyword results; ENF-PERF-04: hybrid search, query
         // embedding aside (docs/02-cahier-des-charges.md §5).
