@@ -166,7 +166,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-06, M1-07 | `benchmark` | [tests §6](../06-qualite-tests-ci.md#6-mesures-de-performance) · ENF-PERF-03, ENF-PERF-04 |
+| En revue — validation manuelle en attente | M5-06, M1-07 | `benchmark` | [tests §6](../06-qualite-tests-ci.md#6-mesures-de-performance) · ENF-PERF-03, ENF-PERF-04 |
 
 **À faire**
 
@@ -176,6 +176,8 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Résultats publiés pour l'émulateur de CI ; cibles ENF-PERF-03 et 04 comparées.
+- [x] Résultats publiés pour l'émulateur de CI ; cibles ENF-PERF-03 et 04 comparées
+      ([mesures du 15 novembre 2026](../mesures/2026-11-15-ci-emulateurs-M5-08.md)) : la recherche
+      sémantique les tient, la recherche lexicale non (2,2 à 4,1 s au p95).
 
 **Validation manuelle** — mêmes bancs sur le téléphone de test ; tableau dans la PR.
