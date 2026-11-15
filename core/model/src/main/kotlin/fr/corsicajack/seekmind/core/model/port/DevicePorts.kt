@@ -20,4 +20,11 @@ data class GovernorState(
  */
 interface ThermalGovernor {
     val state: StateFlow<GovernorState>
+
+    /**
+     * The state read from the device now, for a decision. On API 34+, the broadcasts of a process
+     * woken from the cached state can arrive late: [state] alone may still describe the device as it
+     * was before.
+     */
+    fun current(): GovernorState = state.value
 }

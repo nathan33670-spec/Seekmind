@@ -26,7 +26,7 @@ class OcrPolicy(private val config: OcrConfig, private val governor: ThermalGove
         if (!needsOcr(extraction)) return false
         val key = meta.packageName to treeSimHash
         if (memo.containsKey(key)) return false
-        if (!governor.state.value.allowsOcr) return false
+        if (!governor.current().allowsOcr) return false
         val now = clock.elapsedRealtime()
         if (!withinBudget(now)) return false
         memo[key] = Unit
