@@ -215,6 +215,19 @@ Trousseau : `keys-release.json` (clé de production `l1`) dans les sources princ
 Le champ `purpose` permet d'ajouter d'autres usages sans changer le vérificateur (l'annexe en ajoute un).
 Un test vérifie que le build `release` refuse un jeton signé par une clé de test.
 
+Implémentation (M8-02), paquet `fr.corsicajack.seekmind.engine.monetization.license` :
+
+| Élément | Rôle |
+|---|---|
+| `TokenVerifier` | Contrôles 1 à 5 dans l'ordre, refus typé (`TokenRefusal` : `TOO_LONG`, `MALFORMED`, `BAD_ALGORITHM`, `UNKNOWN_KEY`, `WRONG_PURPOSE`, `BAD_SIGNATURE`, `BAD_PAYLOAD`). Un segment vide est `MALFORMED`. L'usage est contrôlé deux fois : celui de la clé avant la signature, le `typ` de la charge après. `exp` et la révocation relèvent de `LicenseActivator` (§5.4). |
+| `Keyring` | Ressources Java `license/keys-release.json` (toujours) et `license/keys-debug.json` (sources `debug` seulement). Une entrée au `spki` vide est un emplacement réservé, ignoré : c'est le cas de `l1` tant que la clé de production n'est pas générée. Seules les clés P-256 sont admises. |
+
+Clé de test `l-test` : partie publique dans `keys-debug.json` et `testdata/tokens/keys-test.json` ;
+partie privée dans `tools/license/test_keys/l-test.TEST-KEY-ONLY.pkcs8.b64`, utilisée par
+`gen_test_vectors.py` seulement, et jamais embarquée dans un APK. `ReleaseKeyringTest` vérifie que le
+trousseau livré en `release` (`keys-release.json` seul) refuse un jeton de la clé de test. Les tests JVM
+ne sont lancés que sur la variante `debug` des bibliothèques : le test lit donc ce fichier directement.
+
 ### 5.3 Émission (`tools/license`)
 
 Outil en ligne de commande Python, exécuté par l'éditeur sur une machine de confiance.

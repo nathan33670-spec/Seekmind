@@ -43,7 +43,7 @@ charges réalisables ; variante `offline` vérifiée.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `engine:monetization`, `tools/license`, `testdata/tokens` | [monetisation §5.1, §5.2](../specs/monetisation.md) · [prérequis §3](../04-prerequis.md#3-clés-et-secrets) |
+| Fait | M1-01 | `engine:monetization`, `tools/license`, `testdata/tokens` | [monetisation §5.1, §5.2](../specs/monetisation.md) · [prérequis §3](../04-prerequis.md#3-clés-et-secrets) |
 
 **À faire**
 
@@ -54,10 +54,10 @@ charges réalisables ; variante `offline` vérifiée.
 
 **Critères d'acceptation**
 
-- [ ] Chaque vecteur invalide est refusé pour la bonne raison : signature altérée, charge altérée, `alg`
-      autre qu'ES256 (dont `none`), `kid` inconnu, usage inattendu, longueur excessive, base64 invalide.
-- [ ] Le build `release` refuse un jeton signé par la clé de test (test dédié).
-- [ ] Aucune clé privée de production dans le dépôt ; la clé de test est nommée comme telle.
+- [x] Chaque vecteur invalide est refusé pour la bonne raison : signature altérée, charge altérée, `alg`
+      autre qu'ES256 (dont `none`), `kid` inconnu, usage inattendu, longueur excessive, base64 invalide (`TokenVerifierTest` sur `testdata/tokens/vectors.json`).
+- [x] Le build `release` refuse un jeton signé par la clé de test (`ReleaseKeyringTest`).
+- [x] Aucune clé privée de production dans le dépôt ; la clé de test est nommée comme telle (`l-test.TEST-KEY-ONLY.pkcs8.b64`, `test_license_tools.py`).
 
 ---
 
