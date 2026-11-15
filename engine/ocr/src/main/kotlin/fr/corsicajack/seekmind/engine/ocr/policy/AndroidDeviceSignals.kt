@@ -11,11 +11,13 @@ import java.util.concurrent.Executor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * The device signals of the governor (docs/specs/ocr.md §6): the thermal status listener of
  * [PowerManager], and two receivers registered at run time, never exported (power saving, battery).
- * Call [start] once, [stop] when the service disconnects.
+ * Call [start] once, [stop] when the service disconnects; [stop] without [start], or twice, does nothing.
+ * The signals change from several threads (thermal executor, main thread): every change is atomic.
  */
 class AndroidDeviceSignals(private val context: Context, private val executor: Executor) {
     private val power = context.getSystemService(PowerManager::class.java)
@@ -23,14 +25,20 @@ class AndroidDeviceSignals(private val context: Context, private val executor: E
     val state: StateFlow<DeviceSignals> = signals.asStateFlow()
 
     private val thermal = PowerManager.OnThermalStatusChangedListener { status ->
-        signals.value = signals.value.copy(thermalThrottled = status >= PowerManager.THERMAL_STATUS_MODERATE)
+        signals.update { it.copy(thermalThrottled = status >= PowerManager.THERMAL_STATUS_MODERATE) }
     }
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) = read(intent)
     }
 
+    // Guarded by this.
+    private var started = false
+
+    @Synchronized
     fun start() {
+        if (started) return
+        started = true
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_BATTERY_CHANGED)
             addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
@@ -41,15 +49,17 @@ class AndroidDeviceSignals(private val context: Context, private val executor: E
         } else {
             context.registerReceiver(receiver, filter)
         }
-        signals.value = signals.value.copy(
-            thermalThrottled = power.currentThermalStatus >= PowerManager.THERMAL_STATUS_MODERATE,
-            powerSave = power.isPowerSaveMode,
-        )
+        val thermalNow = power.currentThermalStatus >= PowerManager.THERMAL_STATUS_MODERATE
+        val powerSaveNow = power.isPowerSaveMode
+        signals.update { it.copy(thermalThrottled = thermalNow, powerSave = powerSaveNow) }
         sticky?.let(::read)
         power.addThermalStatusListener(executor, thermal)
     }
 
+    @Synchronized
     fun stop() {
+        if (!started) return
+        started = false
         power.removeThermalStatusListener(thermal)
         context.unregisterReceiver(receiver)
     }
@@ -65,11 +75,10 @@ class AndroidDeviceSignals(private val context: Context, private val executor: E
                 val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
                 val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN)
                 val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
-                signals.value = signals.value.copy(
-                    batteryPercent = if (level >= 0 && scale > 0) level * 100 / scale else 100,
-                    charging = plugged != 0 || status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                        status == BatteryManager.BATTERY_STATUS_FULL,
-                )
+                val percent = if (level >= 0 && scale > 0) level * 100 / scale else 100
+                val charging = plugged != 0 || status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                    status == BatteryManager.BATTERY_STATUS_FULL
+                signals.update { it.copy(batteryPercent = percent, charging = charging) }
             }
         }
     }

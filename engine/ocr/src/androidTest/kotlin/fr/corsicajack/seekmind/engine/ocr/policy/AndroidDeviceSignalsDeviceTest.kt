@@ -66,6 +66,13 @@ class AndroidDeviceSignalsDeviceTest {
         awaitReason(null)
     }
 
+    @Test
+    fun stopIsIdempotent() {
+        signals.stop()
+        signals.stop() // and tearDown stops once more
+        AndroidDeviceSignals(instrumentation.targetContext) { it.run() }.stop() // never started
+    }
+
     private fun reset() {
         shell("cmd thermalservice reset")
         shell("cmd power set-mode 0")
