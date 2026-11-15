@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "_comment": "Built-in lists of docs/specs/confidentialite.md \u00a73.4.",
+  "messaging": [
+    "com.whatsapp",
+    "com.whatsapp.w4b",
+    "com.facebook.orca",
+    "org.telegram.messenger",
+    "org.thoughtcrime.securesms",
+    "com.discord",
+    "com.google.android.gm",
+    "com.microsoft.office.outlook",
+    "com.google.android.apps.messaging",
+    "com.samsung.android.messaging",
+    "com.viber.voip",
+    "jp.naver.line.android",
+    "com.Slack",
+    "com.microsoft.teams",
+    "ch.protonmail.android",
+    "com.yahoo.mobile.client.android.mail"
+  ],
+  "social": [
+    "com.instagram.android",
+    "com.zhiliaoapp.musically",
+    "com.ss.android.ugc.trill",
+    "com.google.android.youtube",
+    "com.twitter.android",
+    "com.facebook.katana",
+    "com.reddit.frontpage",
+    "com.snapchat.android",
+    "com.linkedin.android",
+    "com.pinterest",
+    "tv.twitch.android.app",
+    "com.instagram.barcelona",
+    "com.bereal.ft",
+    "com.tumblr",
+    "org.joinmastodon.android",
+    "xyz.blueskyweb.app"
+  ]
+}

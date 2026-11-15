@@ -45,6 +45,6 @@ object DeviceModule {
     ): ThermalGovernor {
         val signals = AndroidDeviceSignals(context, context.mainExecutor)
         signals.start()
-        return SignalThermalGovernor(signals.state, GovernorRules(ocr, embedding), scope)
+        return SignalThermalGovernor(signals.state, GovernorRules(ocr, embedding), scope, signals::refresh)
     }
 }
