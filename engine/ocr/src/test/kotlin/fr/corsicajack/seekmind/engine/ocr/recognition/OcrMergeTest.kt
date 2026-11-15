@@ -56,6 +56,27 @@ class OcrMergeTest {
     }
 
     @Test
+    fun aShortNewLineIsNotTakenForPartOfALongerWord() {
+        // "jeu" is in "jeudi" as characters, not as a word.
+        val merged = OcrMerge.merge(tree, listOf(ocr("Jeu", top = 300), ocr("Lyon", top = 400)))
+        assertThat(merged.lines).contains("Jeu")
+        assertThat(merged.lines).doesNotContain("Lyon") // a whole word of "Salle Lyon"
+    }
+
+    @Test
+    fun linesOfOneRowAreReadFromLeftToRightDespiteAFewPixels() {
+        // Two columns whose lines are off by 2 px: one row each time, read left then right.
+        val lines = listOf(
+            OcrLine("prix droite 1", IntRect(600, 100, 900, 140), 0.9f),
+            OcrLine("libellé gauche 1", IntRect(0, 102, 400, 142), 0.9f),
+            OcrLine("libellé gauche 2", IntRect(0, 200, 400, 240), 0.9f),
+            OcrLine("prix droite 2", IntRect(600, 198, 900, 238), 0.9f),
+        )
+        assertThat(OcrMerge.merge(emptyList(), lines).lines)
+            .containsExactly("libellé gauche 1", "prix droite 1", "libellé gauche 2", "prix droite 2").inOrder()
+    }
+
+    @Test
     fun withoutAnyLineOfOcrTheTextIsTheTree() {
         val merged = OcrMerge.merge(tree, emptyList())
         assertThat(merged.lines).hasSize(2)

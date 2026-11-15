@@ -6,8 +6,13 @@ import android.graphics.Color
 import android.graphics.Paint
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -41,6 +46,42 @@ class MlKitOcrEngineDeviceTest {
             assertThat(texts.none { it.trim() == "OK" }).isTrue()
             assertThat(texts.joinToString(" ").lowercase()).contains("facture")
         } finally {
+            bitmap.recycle()
+        }
+    }
+
+    /**
+     * A cancelled recognition returns only once ML Kit is done with the bitmap: recycling it then, as
+     * the caller does, is safe, and the engine still works.
+     */
+    @Test
+    fun aCancelledRecognitionWaitsForMlKitBeforeReturning() = runBlocking {
+        repeat(5) {
+            val bitmap = draw(Color.WHITE, Color.BLACK, 56f, LINES)
+            val recognition =
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) { engine.recognize(bitmap) }
+            recognition.cancel()
+            val outcome = runCatching { recognition.await() }
+            assertThat(outcome.exceptionOrNull()).isInstanceOf(CancellationException::class.java)
+            bitmap.recycle()
+        }
+        assertRecognized(background = Color.WHITE, ink = Color.BLACK, size = 56f)
+    }
+
+    /** close() during a recognition lets it finish; later calls are refused. */
+    @Test
+    fun closeWaitsForTheRunningRecognition() = runBlocking {
+        val closing = MlKitOcrEngine()
+        val bitmap = draw(Color.WHITE, Color.BLACK, 56f, LINES)
+        try {
+            val recognition =
+                async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) { closing.recognize(bitmap) }
+            closing.close()
+            val text = OcrMerge.comparisonForm(recognition.await().lines.joinToString(" ") { it.text })
+            assertThat(text).contains(OcrMerge.comparisonForm(LINES.first()))
+            assertThrows(IllegalStateException::class.java) { runBlocking { closing.recognize(bitmap) } }
+        } finally {
+            closing.close()
             bitmap.recycle()
         }
     }
