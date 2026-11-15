@@ -39,7 +39,7 @@ class MlKitOcrEngineDeviceTest {
     fun aSmallTypeSize() = assertRecognized(background = Color.WHITE, ink = Color.BLACK, size = 26f)
 
     @Test
-    fun linesBelowThreeCharactersAreFilteredOut() = runBlocking {
+    fun linesBelowThreeCharactersAreFilteredOut() = runBlocking<Unit> {
         val bitmap = draw(Color.WHITE, Color.BLACK, 64f, listOf("OK", LINES.first()))
         try {
             val texts = engine.recognize(bitmap).lines.map { it.text }
@@ -55,7 +55,7 @@ class MlKitOcrEngineDeviceTest {
      * the caller does, is safe, and the engine still works.
      */
     @Test
-    fun aCancelledRecognitionWaitsForMlKitBeforeReturning() = runBlocking {
+    fun aCancelledRecognitionWaitsForMlKitBeforeReturning() = runBlocking<Unit> {
         repeat(5) {
             val bitmap = draw(Color.WHITE, Color.BLACK, 56f, LINES)
             val recognition =
@@ -70,7 +70,7 @@ class MlKitOcrEngineDeviceTest {
 
     /** close() during a recognition lets it finish; later calls are refused. */
     @Test
-    fun closeWaitsForTheRunningRecognition() = runBlocking {
+    fun closeWaitsForTheRunningRecognition() = runBlocking<Unit> {
         val closing = MlKitOcrEngine()
         val bitmap = draw(Color.WHITE, Color.BLACK, 56f, LINES)
         try {
@@ -86,7 +86,7 @@ class MlKitOcrEngineDeviceTest {
         }
     }
 
-    private fun assertRecognized(background: Int, ink: Int, size: Float) = runBlocking {
+    private fun assertRecognized(background: Int, ink: Int, size: Float) = runBlocking<Unit> {
         val bitmap = draw(background, ink, size, LINES)
         try {
             val outcome = engine.recognize(bitmap)
