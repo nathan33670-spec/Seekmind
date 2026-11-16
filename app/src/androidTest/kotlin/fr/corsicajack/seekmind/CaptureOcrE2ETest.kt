@@ -104,9 +104,9 @@ class CaptureOcrE2ETest {
         assertThat(database().search.lexical("\"4821\"", SearchFilters(), 10).map { it.captureId })
             .contains(stored.captureId)
 
-        // E2E-06: no file outside the database files.
-        val created = files() - before
-        assertWithMessage("files created during the capture").that(created).isEmpty()
+        // E2E-06: no file outside the database files, created or rewritten.
+        val written = files().filter { (path, state) -> before[path] != state }.keys
+        assertWithMessage("files written during the capture").that(written).isEmpty()
     }
 
     private fun database() = (graph.database() as DatabaseState.Ready).database
@@ -132,14 +132,16 @@ class CaptureOcrE2ETest {
         }
     }
 
-    /** Every file of the application's data directory but the databases (Room, SQLCipher, WorkManager). */
-    private fun files(): Set<String> {
+    /**
+     * Every file of the application's data directory but the databases (Room, SQLCipher, WorkManager),
+     * with its size and modification time: a file rewritten during the capture counts as written.
+     */
+    private fun files(): Map<String, Pair<Long, Long>> {
         val root = context.dataDir
         return root.walkTopDown()
             .onEnter { it.name != "databases" }
             .filter(File::isFile)
-            .map { it.relativeTo(root).path }
-            .toSet()
+            .associate { it.relativeTo(root).path to (it.length() to it.lastModified()) }
     }
 
     private fun setting(name: String): String? = shell("settings get secure $name").trim().takeIf {
