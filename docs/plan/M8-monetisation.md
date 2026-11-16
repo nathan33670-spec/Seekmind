@@ -66,7 +66,7 @@ charges réalisables ; variante `offline` vérifiée.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01, M0-04 | `engine:ads`, `app` (variante `ads`) | [monetisation §3](../specs/monetisation.md) · [architecture §3.2, §10.2 à §10.4](../03-architecture.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) · EF-MON-02, 09, 10 · INV-01 |
+| Fait — validation manuelle reportée à M10-01 | M1-01, M0-04 | `engine:ads`, `app` (variante `ads`) | [monetisation §3](../specs/monetisation.md) · [architecture §3.2, §10.2 à §10.4](../03-architecture.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) · EF-MON-02, 09, 10 · INV-01 |
 
 **À faire**
 

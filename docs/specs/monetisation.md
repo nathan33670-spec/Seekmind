@@ -143,6 +143,12 @@ et il ne dépend que de `core:common` et `core:model`.
 3. **Initialisation** du SDK, une seule fois par processus : `MobileAds.initialize`, hors thread principal.
 4. **Chargement** : `RewardedAd.load(context, unitId, AdRequest.Builder().build(), …)`, délai maximal
    de 15 s. Code d'erreur « aucune annonce » → `NO_FILL` ; erreur réseau → `OFFLINE` ; autre → `ERROR`.
+   Un chargement qui dépasse le délai est abandonné et compte comme `OFFLINE` : une connexion trop lente
+   ne doit pas priver l'utilisateur du crédit de courtoisie.
+
+Si la mise à jour du consentement échoue faute de connexion et qu'aucun consentement antérieur ne
+permet de demander une annonce, `prepare` renvoie `OFFLINE`, et non `NOT_ALLOWED` : l'utilisateur n'a
+rien refusé.
 
 **`show(activity)`** : `rewardedAd.show(activity, …)`. `EARNED` si `onUserEarnedReward` a été reçu avant
 la fermeture de l'annonce ; `DISMISSED` sinon ; `FAILED` si l'affichage échoue.
@@ -166,8 +172,9 @@ n'émet rien sur le réseau.** Conséquences :
 
 - aucune initialisation du SDK ni demande de consentement au démarrage de l'application ou du service ;
 - le chargement d'une annonce commence à l'ouverture de la feuille de crédits, pas avant ;
-- le SDK publicitaire déclare un composant d'initialisation automatique : le ticket M8-03 vérifie ce
-  qu'il fait au démarrage et le neutralise s'il émet quoi que ce soit ;
+- le SDK publicitaire déclare un composant d'initialisation automatique (`MobileAdsInitProvider`),
+  exécuté à chaque démarrage du processus : il est retiré du manifeste de la variante `ads`
+  (`tools:node="remove"`), et le SDK démarre dans `prepare()` (`MobileAds.initialize`) ;
 - un test instrumenté (`NetworkSilenceTest`) démarre l'application, laisse le service capturer, exécute
   une recherche, et vérifie que le compteur d'octets émis par l'application
   (`TrafficStats.getUidTxBytes`) n'a pas bougé.

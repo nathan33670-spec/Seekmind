@@ -40,6 +40,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
      refus puis réouverture par le bandeau ;
    - **M6-07** : déverrouillage par empreinte et par code ; aperçu masqué dans les applications récentes,
      y compris pendant la confirmation de Play d'un pack de langue (`PlayCoreDialogWrapperActivity`) ;
+   - **M8-03** : annonce de test affichée et récompense signalée (build `debug`) ; fenêtre de
+     consentement en région Europe ; formulaire des choix de confidentialité accessible ;
    - **M7-02** : les sept règles par application (tableau de la PR #40) ; une règle qui échoue est
      retirée de `source_rules.json`.
 
