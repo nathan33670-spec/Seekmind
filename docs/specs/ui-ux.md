@@ -71,7 +71,7 @@ texte est `DISCLOSURE_VERSION` (`core:database`). `Settings.hasCurrentConsent()`
 consentement, appelée par le pipeline de capture, le routeur d'événements et l'état du service : un
 consentement d'une version antérieure compte comme absent. Le parcours est montré au premier lancement
 (`Settings.onboardingDone`) et rouvert à la divulgation par le bandeau « Activer la mémorisation ». Après
-« J'accepte », le retour arrière termine le parcours ; ce qui a été choisi reste enregistré. La
+la validation des familles, le retour arrière termine le parcours ; ce qui a été choisi reste enregistré. La
 proposition du pack de langue n'est pas encore affichée : M6-06 la branche en fin de parcours.
 
 ### 3.2 Recherche (`feature:search`)
