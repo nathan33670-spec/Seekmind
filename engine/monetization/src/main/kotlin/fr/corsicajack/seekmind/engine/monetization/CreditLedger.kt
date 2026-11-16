@@ -64,7 +64,7 @@ class CreditLedger(
 
     /** True when [queryKey] was charged less than [MonetizationConfig.freeRepeatWindowMs] ago. */
     suspend fun chargedRecently(queryKey: String): Boolean {
-        val last = store.lastAt(CreditReason.SEARCH, queryKey) ?: return false
+        val last = store.lastAt(CreditReason.SEARCH, fingerprint(queryKey)) ?: return false
         // A charge "in the future" (clock moved back) does not make the query free.
         return clock.nowMillis() - last in 0 until config.freeRepeatWindowMs
     }
@@ -76,7 +76,7 @@ class CreditLedger(
     suspend fun charge(queryKey: String): Boolean = mutex.withLock {
         if (chargedRecently(queryKey)) return@withLock false
         if (store.balance() < 1) return@withLock false
-        record(CreditReason.SEARCH, -1, ref = queryKey)
+        record(CreditReason.SEARCH, -1, ref = fingerprint(queryKey))
         true
     }
 
@@ -109,5 +109,16 @@ class CreditLedger(
         val zone = zone()
         return Instant.ofEpochMilli(clock.nowMillis()).atZone(zone).toLocalDate().atStartOfDay(zone).toInstant()
             .toEpochMilli()
+    }
+
+    companion object {
+        /**
+         * What `credit_ledger.ref` keeps of a query: its SHA-256, never its text (decision of the
+         * project owner, 16 November 2026). The rule of the 10 minutes needs only an equality, and the
+         * text would outlive the search history, even when the user turned it off.
+         */
+        fun fingerprint(queryKey: String): String = java.security.MessageDigest.getInstance("SHA-256")
+            .digest(queryKey.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
     }
 }

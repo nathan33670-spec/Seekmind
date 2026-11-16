@@ -31,14 +31,24 @@ class CreditLedgerTest {
     }
 
     @Test
-    fun `charge debits one credit and records the query key`() = runBlocking<Unit> {
+    fun `charge debits one credit and records a fingerprint of the query, never its text`() = runBlocking<Unit> {
         val ledger = ledger()
         ledger.ensureWelcome()
 
         assertThat(ledger.charge("chat")).isTrue()
 
         assertThat(ledger.balance()).isEqualTo(9)
-        assertThat(store.all.last()).isEqualTo(CreditMovement(MIDNIGHT_UTC, -1, CreditReason.SEARCH, "chat"))
+        val recorded = store.all.last()
+        assertThat(recorded.copy(ref = null)).isEqualTo(CreditMovement(MIDNIGHT_UTC, -1, CreditReason.SEARCH, null))
+        assertThat(recorded.ref).isEqualTo(CreditLedger.fingerprint("chat"))
+        assertThat(recorded.ref).hasLength(64)
+        assertThat(recorded.ref).doesNotContain("chat")
+    }
+
+    @Test
+    fun `the fingerprint is the SHA-256 of the query key`() {
+        assertThat(CreditLedger.fingerprint("abc"))
+            .isEqualTo("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
     }
 
     @Test

@@ -6,11 +6,12 @@ import fr.corsicajack.seekmind.core.model.Authorization
 import fr.corsicajack.seekmind.core.model.Entitlement
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 
 /**
@@ -35,7 +36,12 @@ class LedgerEntitlementGate(
             license?.let { Entitlement.Activated(it.licenseId, it.plan) } ?: Entitlement.Free(balance)
         }
             .onStart { ledger.ensureWelcome() }
-            .catch { error -> SmLog.w(TAG, "entitlement_state_failed", error) }
+            // A failure of the database does not freeze the state: logged, then read again later.
+            .retryWhen { error, _ ->
+                SmLog.w(TAG, "entitlement_state_failed", error)
+                delay(RETRY_DELAY_MS)
+                true
+            }
             .stateIn(scope, SharingStarted.Eagerly, Entitlement.Free(0))
 
     override suspend fun authorize(queryKey: String): Authorization {
@@ -55,5 +61,6 @@ class LedgerEntitlementGate(
 
     private companion object {
         const val TAG = "Entitlement"
+        const val RETRY_DELAY_MS = 5_000L
     }
 }
