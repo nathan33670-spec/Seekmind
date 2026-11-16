@@ -141,7 +141,9 @@ data class OcrLine(val text: String, val bounds: IntRect, val confidence: Float?
   native), qui est celui chargé. Est interdit : déclarer `play-services-mlkit-text-recognition` **sans**
   l'artefact embarqué, ou déclarer la méta-donnée `com.google.mlkit.vision.DEPENDENCIES` (téléchargement
   du modèle par les services Play).
-- Un seul `TextRecognizer` pour le processus, fermé à la déconnexion du service.
+- Un seul `TextRecognizer` pour le processus, fermé à la déconnexion du service. `ConnectedOcrEngine` (`:app`) le crée à
+  la première reconnaissance et le ferme quand le service se déconnecte (`ConnectedService.onDisconnected`) ; la
+  fermeture attend les reconnaissances en cours.
 - La `Task` de ML Kit est adaptée en fonction suspendue par `suspendCancellableCoroutine` (pas de
   dépendance supplémentaire).
 - Filtrage : lignes d'au moins 3 caractères alphanumériques ; confiance ≥ 0,45 lorsqu'elle est fournie.

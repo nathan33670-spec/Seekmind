@@ -79,7 +79,7 @@ Configurator.getInstance().uiAutomationFlags =
 | E2E-03 | Ouvrir `SecureActivity` | `Dropped(SECURE_WINDOW)` |
 | E2E-04 | Ouvrir `EditableActivity` | `Stored` ; le texte statique est présent, le texte du champ absent |
 | E2E-05 | Ouvrir `ImageTextActivity` | `Stored` avec l'origine OCR ; le texte de l'image est trouvé |
-| E2E-06 | Après E2E-05 | Aucun fichier créé hors des fichiers de base de données (comparaison des répertoires avant/après) |
+| E2E-06 | Après E2E-05 | Aucun fichier créé ni réécrit hors des fichiers de base de données (comparaison avant/après des chemins, tailles et dates). Seule exception, nommée (décision du porteur, 16 novembre 2026) : `shared_prefs/com.google.mlkit.internal.xml`, tant qu'il ne contient que `ml_sdk_instance_id`, l'identifiant d'installation de ML Kit |
 | E2E-07 | Faire défiler `ScrollActivity` pendant 5 s | Au plus 4 captures (configuration rapide) |
 | E2E-08 | Ouvrir cinq fois `PlainTextActivity` | Une capture, `seen_count = 5` |
 | E2E-09 | Consentement absent | Aucun événement du pipeline |
