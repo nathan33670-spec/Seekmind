@@ -12,9 +12,17 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
+    implementation(project(":core:model"))
+    implementation(project(":core:database"))
     // Header, payload and keyrings of the activation codes (docs/specs/monetisation.md §5).
     implementation(libs.kotlinx.serialization.json)
 
+    testImplementation(project(":core:testing"))
     testImplementation(libs.junit)
     testImplementation(libs.truth)
+
+    androidTestImplementation(project(":core:testing"))
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.truth)
 }

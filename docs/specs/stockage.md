@@ -107,7 +107,7 @@ CREATE TABLE credit_ledger (
   at     INTEGER NOT NULL,
   delta  INTEGER NOT NULL,
   reason TEXT    NOT NULL,                 -- WELCOME, REWARD, COURTESY, DAILY, SEARCH
-  ref    TEXT                              -- clé de requête, le cas échéant
+  ref    TEXT                              -- empreinte SHA-256 de la clé de requête, le cas échéant (jamais son texte)
 );
 
 CREATE TABLE license (

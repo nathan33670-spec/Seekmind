@@ -11,7 +11,6 @@ import fr.corsicajack.seekmind.core.common.DefaultDispatcherProvider
 import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.model.config.EmbeddingConfig
 import fr.corsicajack.seekmind.core.model.config.SearchConfig
-import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import fr.corsicajack.seekmind.core.model.port.ThermalGovernor
 import fr.corsicajack.seekmind.engine.embedding.catalog.DefaultModelCatalog
 import fr.corsicajack.seekmind.engine.embedding.codec.VectorCodec
@@ -24,7 +23,6 @@ import fr.corsicajack.seekmind.engine.search.query.AppAliases
 import fr.corsicajack.seekmind.engine.search.query.QueryParser
 import fr.corsicajack.seekmind.engine.search.query.StopWords
 import fr.corsicajack.seekmind.engine.search.query.TemporalParser
-import fr.corsicajack.seekmind.search.AllowAllEntitlementGate
 import fr.corsicajack.seekmind.search.SearchStack
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -87,11 +85,6 @@ object SearchModule {
     @Provides
     @Singleton
     fun cache(config: SearchConfig, clock: Clock): SearchCache = SearchCache(config, clock)
-
-    /** Until the credit ledger (M8-01). */
-    @Provides
-    @Singleton
-    fun entitlements(): EntitlementGate = AllowAllEntitlementGate()
 
     @Provides
     @Singleton
