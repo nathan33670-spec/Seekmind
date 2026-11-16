@@ -5,10 +5,15 @@ import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
 import android.view.WindowManager
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
@@ -20,16 +25,23 @@ import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.database.WipeService
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
 import fr.corsicajack.seekmind.core.designsystem.theme.SeekMindTheme
+import fr.corsicajack.seekmind.core.model.AppFamily
+import fr.corsicajack.seekmind.core.model.CaptureStatus
 import fr.corsicajack.seekmind.core.model.SourceRef
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import fr.corsicajack.seekmind.di.ApplicationScope
 import fr.corsicajack.seekmind.engine.capture.pause.PauseController
 import fr.corsicajack.seekmind.engine.capture.status.CaptureStatusRepository
+import fr.corsicajack.seekmind.engine.privacy.apps.AppFamilies
 import fr.corsicajack.seekmind.engine.source.LaunchResult
 import fr.corsicajack.seekmind.engine.source.SourceLinks
 import fr.corsicajack.seekmind.engine.source.SourceReturn
 import fr.corsicajack.seekmind.feature.journal.JournalRoute
 import fr.corsicajack.seekmind.feature.journal.JournalViewModel
+import fr.corsicajack.seekmind.feature.onboarding.FamilyApp
+import fr.corsicajack.seekmind.feature.onboarding.OnboardingRoute
+import fr.corsicajack.seekmind.feature.onboarding.OnboardingStart
+import fr.corsicajack.seekmind.feature.onboarding.OnboardingViewModel
 import fr.corsicajack.seekmind.feature.search.SearchRoute
 import fr.corsicajack.seekmind.feature.search.SearchViewModel
 import fr.corsicajack.seekmind.feature.search.StatusAction
@@ -42,6 +54,7 @@ import fr.corsicajack.seekmind.lock.AppLock
 import fr.corsicajack.seekmind.lock.BiometricAuthenticator
 import fr.corsicajack.seekmind.lock.LockGate
 import fr.corsicajack.seekmind.lock.LockState
+import fr.corsicajack.seekmind.onboarding.InstalledFamilyApps
 import fr.corsicajack.seekmind.search.SearchStack
 import fr.corsicajack.seekmind.ui.SeekMindRoot
 import java.time.LocalDate
@@ -79,6 +92,11 @@ class MainActivity : SecureActivity() {
 
     @Inject lateinit var deletions: CaptureDeletions
 
+    @Inject lateinit var families: AppFamilies
+
+    /** The welcome flow asked for from the banner; null otherwise. */
+    private var onboarding by mutableStateOf<OnboardingStart?>(null)
+
     @Inject lateinit var captureStatus: CaptureStatusRepository
 
     @Inject lateinit var pause: PauseController
@@ -97,10 +115,18 @@ class MainActivity : SecureActivity() {
                 val lockState by appLock.state.collectAsStateWithLifecycle(initialValue = LockState.PENDING)
                 // Outside the gate, so that the screens come back as they were after an unlock.
                 val navController = rememberNavController()
+                val current by settings.settings.collectAsStateWithLifecycle(initialValue = null)
                 LockGate(
                     state = lockState,
                     onUnlock = { BiometricAuthenticator.authenticate(this, appLock::onAuthenticated) },
                 ) {
+                    val loaded = current ?: return@LockGate
+                    // The welcome flow at the first start, or the disclosure reopened from the banner.
+                    val start = onboarding ?: if (!loaded.onboardingDone) OnboardingStart.WELCOME else null
+                    if (start != null) {
+                        OnboardingContent(start) { onboarding = null }
+                        return@LockGate
+                    }
                     SeekMindRoot(
                         navController = navController,
                         searchContent = { open, help -> SearchContent(open, help) },
@@ -156,10 +182,11 @@ class MainActivity : SecureActivity() {
 
                     StatusAction.HELP -> openHelp()
 
-                    // The disclosure arrives with M6-02; until then the banner offers no button.
-                    StatusAction.ENABLE -> Unit
+                    // « Activer la mémorisation »: the disclosure again (EF-ONB-04).
+                    StatusAction.ENABLE -> onboarding = OnboardingStart.DISCLOSURE
                 }
             },
+            canEnableCapture = true,
         )
     }
 
@@ -226,6 +253,36 @@ class MainActivity : SecureActivity() {
             appLock.onBackground()
             search.onBackground()
         }
+    }
+
+    /** The welcome flow (docs/specs/ui-ux.md §3.1); [onDone] when it ends, accepted or refused. */
+    @Composable
+    private fun OnboardingContent(start: OnboardingStart, onDone: () -> Unit) {
+        var help by rememberSaveable { mutableStateOf(false) }
+        val model = viewModel(key = "onboarding-$start") {
+            OnboardingViewModel(
+                settings = settings,
+                start = start,
+                serviceEnabled = captureStatus.status.map { it is CaptureStatus.Active || it is CaptureStatus.Paused },
+                isDeviceSecure = appLock::isDeviceSecure,
+                now = System::currentTimeMillis,
+            )
+        }
+        val apps by produceState(emptyMap<AppFamily, List<FamilyApp>>()) {
+            value = withContext(Dispatchers.IO) { InstalledFamilyApps(packageManager, families).load() }
+        }
+        if (help) {
+            BackHandler { help = false }
+            ServiceHelpScreen()
+            return
+        }
+        OnboardingRoute(
+            viewModel = model,
+            familyApps = apps,
+            onOpenAccessibilitySettings = ::openAccessibilitySettings,
+            onHelp = { help = true },
+            onFinished = { onDone() },
+        )
     }
 
     @Composable

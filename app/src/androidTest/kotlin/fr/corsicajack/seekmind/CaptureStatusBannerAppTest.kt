@@ -25,7 +25,10 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class CaptureStatusBannerAppTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val onboardingDone = OnboardingDoneRule()
+
+    @get:Rule(order = 1)
     val compose = createAndroidComposeRule<MainActivity>()
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()

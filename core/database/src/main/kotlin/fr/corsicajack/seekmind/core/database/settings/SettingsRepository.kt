@@ -24,6 +24,12 @@ import kotlinx.coroutines.flow.map
 data class Consent(val version: Int, val acceptedAt: Long)
 
 /**
+ * The version of the disclosure text (docs/05-conformite-play-store.md §4.1). Raised on every change of
+ * substance: a consent to an older version counts as none (EF-ONB-05), until the user accepts again.
+ */
+const val DISCLOSURE_VERSION = 1
+
+/**
  * The non-sensitive settings (architecture §6, docs/07-securite-vie-privee.md §5): switches, durations,
  * choices. **No captured data ever goes here** (INV-06): neither text, nor title, nor URL, nor query.
  */
@@ -45,7 +51,15 @@ data class Settings(
     val activeModelId: String,
     /** Search history, on by default and deletable (EF-SRCH-09). */
     val historyEnabled: Boolean,
-)
+    /** The welcome flow was gone through once, accepted or not (docs/specs/ui-ux.md §3.1). */
+    val onboardingDone: Boolean = false,
+) {
+    /**
+     * The only consent rule (INV-04): accepted, and for the current [DISCLOSURE_VERSION]. Every check of
+     * the consent calls it: the capture pipeline, the event router and the capture status.
+     */
+    fun hasCurrentConsent(version: Int = DISCLOSURE_VERSION): Boolean = consent?.version == version
+}
 
 /** Settings in DataStore Preferences, exposed as typed flows (ticket M1-05). */
 class SettingsRepository(private val store: DataStore<Preferences>, private val defaults: Settings = DEFAULTS) {
@@ -116,6 +130,10 @@ class SettingsRepository(private val store: DataStore<Preferences>, private val 
         store.edit { it[HISTORY_ENABLED] = enabled }
     }
 
+    suspend fun setOnboardingDone() {
+        store.edit { it[ONBOARDING_DONE] = true }
+    }
+
     /** Back to the defaults, consent withdrawn: part of "erase everything". */
     suspend fun reset() {
         store.edit { it.clear() }
@@ -140,6 +158,7 @@ class SettingsRepository(private val store: DataStore<Preferences>, private val 
             lockGraceMs = prefs[LOCK_GRACE_MS] ?: defaults.lockGraceMs,
             activeModelId = prefs[ACTIVE_MODEL] ?: defaults.activeModelId,
             historyEnabled = prefs[HISTORY_ENABLED] ?: defaults.historyEnabled,
+            onboardingDone = prefs[ONBOARDING_DONE] ?: defaults.onboardingDone,
         )
     }
 
@@ -178,9 +197,10 @@ class SettingsRepository(private val store: DataStore<Preferences>, private val 
         private val LOCK_GRACE_MS = longPreferencesKey("lock_grace_ms")
         private val ACTIVE_MODEL = stringPreferencesKey("active_model_id")
         private val HISTORY_ENABLED = booleanPreferencesKey("history_enabled")
+        private val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         private val ALL_KEYS = listOf(
             CONSENT_VERSION, CONSENT_AT, ENABLED_FAMILIES, PAUSED_UNTIL, RETENTION_DAYS, STORAGE_BUDGET,
-            LOCK_ENABLED, LOCK_GRACE_MS, ACTIVE_MODEL, HISTORY_ENABLED,
+            LOCK_ENABLED, LOCK_GRACE_MS, ACTIVE_MODEL, HISTORY_ENABLED, ONBOARDING_DONE,
         )
     }
 }

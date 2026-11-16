@@ -36,7 +36,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-01, M2-01, M2-05 | `feature:onboarding` | [ui-ux §3.1](../specs/ui-ux.md) · [conformité §4](../05-conformite-play-store.md#4-écran-de-divulgation) · [confidentialite §3.4](../specs/confidentialite.md) · EF-ONB-01 à 05, 07 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M6-01, M2-01, M2-05 | `feature:onboarding` | [ui-ux §3.1](../specs/ui-ux.md) · [conformité §4](../05-conformite-play-store.md#4-écran-de-divulgation) · [confidentialite §3.4](../specs/confidentialite.md) · EF-ONB-01 à 05, 07 |
 
 **À faire**
 
@@ -61,13 +61,13 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 **Critères d'acceptation**
 
-- [ ] Aucune redirection vers les réglages système sans consentement **et** choix des familles enregistrés.
-- [ ] Une famille décochée à l'accueil ne produit aucune capture (avec E2E-19).
-- [ ] Aucune fenêtre de consentement publicitaire dans ce parcours.
-- [ ] « J'accepte » est inactif tant que le texte n'a pas été entièrement affiché ; le retour arrière vaut refus.
-- [ ] Après refus, le bandeau rouvre la divulgation.
-- [ ] Incrément de version → la capture s'arrête jusqu'à la nouvelle acceptation (avec E2E-09).
-- [ ] Les textes FR et EN sont, mot pour mot, ceux du document de conformité.
+- [x] Aucune redirection vers les réglages système sans consentement **et** choix des familles enregistrés (`OnboardingViewModelTest`).
+- [x] Une famille décochée à l'accueil ne produit aucune capture : le choix est enregistré (`OnboardingViewModelTest`), la porte refuse une famille désactivée (`DefaultPrivacyGateTest`). Scénario sur appareil E2E-19 : M2-08.
+- [x] Aucune fenêtre de consentement publicitaire dans ce parcours (aucun appel au module publicitaire).
+- [x] « J'accepte » est inactif tant que le texte n'a pas été entièrement affiché (`DisclosureScreenTest`) ; le retour arrière vaut refus (`OnboardingViewModelTest`).
+- [x] Après refus, le bandeau « Activer la mémorisation » rouvre la divulgation (`MainActivity`, action `ENABLE`). Vérifié à la campagne M10-01 avec le parcours complet.
+- [x] Incrément de version → la capture s'arrête jusqu'à la nouvelle acceptation : `Settings.hasCurrentConsent`, seule règle des trois contrôles (`OnboardingViewModelTest`, `CaptureStatusRepositoryTest`). E2E-09 : M2-08.
+- [x] Les textes FR et EN sont, mot pour mot, ceux du document de conformité (`DisclosureTextTest`).
 
 **Validation manuelle** — parcours complet sur un vrai téléphone, chronométré (cible : moins d'une minute).
 

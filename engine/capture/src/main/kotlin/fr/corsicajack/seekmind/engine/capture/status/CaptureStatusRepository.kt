@@ -80,7 +80,7 @@ class CaptureStatusRepository(serviceEnabled: Flow<Boolean>, settings: Flow<Sett
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val status: Flow<CaptureStatus> = combine(serviceEnabled, settings, lastCaptureAt) { enabled, current, last ->
-        Inputs(enabled, current.consent != null, current.pausedUntil, last)
+        Inputs(enabled, current.hasCurrentConsent(), current.pausedUntil, last)
     }.transformLatest { inputs ->
         while (true) {
             val now = clock.nowMillis()

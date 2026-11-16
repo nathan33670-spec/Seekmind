@@ -2,6 +2,7 @@ package fr.corsicajack.seekmind.engine.capture.status
 
 import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.database.settings.Consent
+import fr.corsicajack.seekmind.core.database.settings.DISCLOSURE_VERSION
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
 import fr.corsicajack.seekmind.core.model.CaptureStatus
 import fr.corsicajack.seekmind.core.testing.FakeClock
@@ -39,6 +40,16 @@ class CaptureStatusRepositoryTest {
 
         settings.value = settings.value.copy(consent = null)
         assertThat(status()).isEqualTo(CaptureStatus.ConsentMissing)
+    }
+
+    @Test
+    fun `a consent to an older version of the disclosure counts as none`() = runBlocking<Unit> {
+        enabled.value = false
+        settings.value = settings.value.copy(consent = Consent(DISCLOSURE_VERSION - 1, 0))
+        // ConsentMissing, never ServiceDisabled: « Réactiver » would skip the new disclosure (M6-02).
+        assertThat(status()).isEqualTo(CaptureStatus.ConsentMissing)
+        settings.value = settings.value.copy(consent = Consent(DISCLOSURE_VERSION, 0))
+        assertThat(status()).isEqualTo(CaptureStatus.ServiceDisabled)
     }
 
     @Test

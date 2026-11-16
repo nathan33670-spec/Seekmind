@@ -63,6 +63,14 @@ des familles à la validation de son écran : tous deux avant la redirection ver
 Le consentement **publicitaire** n'apparaît pas dans ce parcours : la fenêtre de Google s'affiche à la
 première demande de publicité ([monetisation §3.3](monetisation.md)).
 
+Implémentation (M6-02) : `feature:onboarding` (`OnboardingViewModel`, `OnboardingScreen`). La version du
+texte est `DISCLOSURE_VERSION` (`core:database`). `Settings.hasCurrentConsent()` est la seule règle du
+consentement, appelée par le pipeline de capture, le routeur d'événements et l'état du service : un
+consentement d'une version antérieure compte comme absent. Le parcours est montré au premier lancement
+(`Settings.onboardingDone`) et rouvert à la divulgation par le bandeau « Activer la mémorisation ». Après
+« J'accepte », le retour arrière termine le parcours ; ce qui a été choisi reste enregistré. La
+proposition du pack de langue n'est pas encore affichée : M6-06 la branche en fin de parcours.
+
 ### 3.2 Recherche (`feature:search`)
 
 De haut en bas :

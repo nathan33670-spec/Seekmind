@@ -73,6 +73,19 @@ object PipelineModule {
 
     @Provides
     @Singleton
+    fun sensitiveApps(@ApplicationContext context: Context): SensitiveApps = SensitiveApps.load(context)
+
+    /** The families of applications (confidentialite §3.4), shared by the gate and the welcome flow. */
+    @Provides
+    @Singleton
+    fun appFamilies(
+        @ApplicationContext context: Context,
+        browsers: BrowserProfiles,
+        sensitive: SensitiveApps,
+    ): AppFamilies = AppFamilies(AndroidPackageFacts(context), FamilyLists.load(context), browsers.packages, sensitive)
+
+    @Provides
+    @Singleton
     fun privacyGate(
         @ApplicationContext context: Context,
         browsers: BrowserProfiles,
@@ -80,8 +93,9 @@ object PipelineModule {
         database: Provider<DatabaseState>,
         router: Provider<EventRouter>,
         @ApplicationScope scope: CoroutineScope,
+        sensitive: SensitiveApps,
+        families: AppFamilies,
     ): PrivacyGate {
-        val sensitive = SensitiveApps.load(context)
         val facts = AndroidPackageFacts(context)
         // The rules live in the database, opened off the main thread on first use.
         val rules = flow {
@@ -92,7 +106,7 @@ object PipelineModule {
         return DefaultPrivacyGate(
             config = PrivacyConfig(),
             sensitive = sensitive,
-            families = AppFamilies(facts, FamilyLists.load(context), browsers.packages, sensitive),
+            families = families,
             facts = facts,
             browserPackages = browsers.packages,
             ignoredPackages = { router.get().ignoredPackages() },
@@ -150,7 +164,7 @@ object PipelineModule {
             config = config,
             clock = clock,
             gate = {
-                settings.current().let { CaptureGate(consented = it.consent != null, pausedUntil = it.pausedUntil) }
+                settings.current().let { CaptureGate(consented = it.hasCurrentConsent(), pausedUntil = it.pausedUntil) }
             },
             screens = A11yScreenSource(context, connected),
             metas = ScreenMetaReader(activities, clock),
