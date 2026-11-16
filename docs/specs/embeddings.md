@@ -46,14 +46,23 @@ Scripts Python, versions figées dans `tools/model/requirements.txt`. Un jeu d'a
 | `gen_sentences.py` | Produit les phrases sources versionnées de `tools/model/data/` (générateur déterministe, valeurs fictives) |
 | `compare_embedding_golden.py` | Workflow `model` : compare les vecteurs régénérés aux vecteurs committés (identifiants identiques, cosinus ≥ 0,99) |
 
-Quantification : `onnxruntime.quantization.quantize_dynamic(..., weight_type=QuantType.QInt8,
-per_channel=False, reduce_range=False)`.
+Quantification : `onnxruntime.quantization.quantize_dynamic(..., weight_type=QuantType.QUInt8,
+per_channel=True, reduce_range=False)`. Elle est faite par canal depuis la décision du porteur du
+14 novembre 2026 (ticket M5-07). Avec une échelle par tenseur, le modèle `fr` perdait 0,10 de Rappel@5
+par le sens sur le jeu d'évaluation, alors que le contrôle par cosinus passait. Les poids sont non
+signés (u8u8) : les exécuteurs x86 sans VNNI, émulateurs de la CI compris, ne saturent pas, et leurs
+vecteurs se rapprochent de ceux des téléphones.
 
 Contrôles de qualité, pour chaque modèle (échec du script sinon) :
 
 - cosinus moyen entre vecteurs du modèle d'origine et du modèle quantifié ≥ 0,98 sur 200 phrases ;
-- sur le jeu d'évaluation de la recherche, Rappel@5 du modèle quantifié ≥ Rappel@5 d'origine − 0,02
-  (contrôle ajouté par le ticket M5-07, quand le jeu d'évaluation existe).
+- sur le jeu d'évaluation de la recherche (80 requêtes), le modèle quantifié retrouve parmi ses cinq
+  premiers résultats, par le sens, au plus **deux requêtes de moins** que le modèle d'origine
+  (`eval_set.py`, `MAX_LOST_QUERIES`, ticket M5-07 ; décision du porteur du 15 novembre 2026). Le
+  seuil est un nombre de requêtes et non une fraction, pour ne pas dériver si le jeu change de taille.
+  La marge est nulle pour `fr`, qui en perd exactement deux (0,863 → 0,838) : une requête de plus
+  perdue, à un changement d'outil ou de version d'ONNX Runtime, fait échouer la construction et
+  rouvre la décision. `multi` n'en perd aucune.
 
 Le modèle `fr` est exporté par `torch.onnx.export` (exportateur TorchScript, opset 17) : entrées
 `input_ids` et `attention_mask`, sortie `last_hidden_state`, axes de lot et de séquence dynamiques. Le
@@ -64,22 +73,27 @@ Chaque jeu contient `model.onnx`, `vocab.bin` et `MODEL_MANIFEST.json` (identifi
 empreintes des sorties, versions des outils). Les empreintes attendues de `model.onnx` et `vocab.bin`, et
 celles des jeux de référence de `testdata/`, sont versionnées dans `engine/embedding/model.lock.json`.
 
-**Arithmétique int8.** Sur un processeur x86 sans VNNI, les noyaux int8 (u8s8) d'ONNX Runtime saturent :
-les vecteurs s'écartent de ceux d'un téléphone (arithmétique exacte des instructions ARM) d'un cosinus
-d'environ 0,995, mesuré sur un exécuteur GitHub. Les vecteurs de référence de `testdata/` sont donc
-produits sur une machine ARM ou x86 avec VNNI (le générateur refuse les autres), et toute comparaison
-faite sur un exécuteur x86 quelconque (workflow `model`, évaluation de la recherche sur JVM) tolère cet
-écart. `reduce_range=True` éviterait la saturation au prix d'une précision moindre sur les téléphones :
-écarté.
+**Arithmétique int8.** Avec des poids signés (u8s8, réglage d'avant M5-07), les noyaux d'ONNX Runtime
+saturent sur un processeur x86 sans VNNI : les vecteurs s'y écartaient de ceux d'un téléphone
+(arithmétique exacte des instructions ARM) d'un cosinus d'environ 0,995, mesuré sur un exécuteur GitHub.
+Avec les poids non signés (u8u8), cet écart n'apparaît plus dans les mesures : la construction donne sur un exécuteur GitHub sans VNNI les mêmes valeurs qu'une machine avec VNNI (cosinus
+0,9965 et 0,9901, Rappel@5 0,838 pour `fr`, au dix-millième près). Par prudence, tant que l'écart avec un
+téléphone n'a pas été mesuré pour l'u8u8, le générateur des vecteurs de référence de `testdata/` refuse
+toujours les x86 sans VNNI, et les comparaisons faites sur un exécuteur x86 quelconque (workflow `model`)
+gardent leur tolérance. `reduce_range=True` n'a plus d'objet.
 
 Valeurs relevées à la construction (M0-10) :
 
 | | `fr` | `multi` |
 |---|---|---|
-| `model.onnx` quantifié | 36,4 Mo | 118,1 Mo |
+| `model.onnx` quantifié | 36,6 Mo | 118,3 Mo |
 | `vocab.bin` | 0,46 Mo | 4,1 Mo |
-| Archive `.smpack` | 36,8 Mo | 122,2 Mo |
-| Cosinus moyen origine / quantifié (minimum), 200 phrases | 0,9887 (0,9766) | 0,9888 (0,9788) |
+| Archive `.smpack` | 37,1 Mo | 122,4 Mo |
+| Cosinus moyen origine / quantifié (minimum), 200 phrases | 0,9965 (0,9901) | 0,9965 (0,9905) |
+| Rappel@5 par le sens sur `testdata/eval`, origine → quantifié | 0,863 → 0,838 | 0,863 → 0,863 |
+
+Avant le passage par canal : 36,4 Mo et 118,1 Mo, cosinus 0,9887 et 0,9888, Rappel@5 quantifié 0,762
+et 0,800.
 
 **Les artefacts binaires ne sont jamais committés.** Intégration au build :
 
@@ -87,9 +101,15 @@ Valeurs relevées à la construction (M0-10) :
   `engine/embedding/src/main/assets/model/fr/` et conforme à `model.lock.json` ; sinon message indiquant
   la commande à lancer (`python tools/model/build_model.py --model fr --install`).
 - Le jeu `multi` n'est requis que pour construire le lot d'application (`bundle`) : il alimente le
-  module de pack d'assets `:modelpack_multi`.
-- La propriété `-PskipModel` désactive la vérification pour les tâches qui n'ont pas besoin du modèle
-  (tests JVM, lint). Les tests JVM utilisent `FakeEmbeddingEngine`.
+  module de pack d'assets `:modelpack_multi` (`python tools/model/build_model.py --model multi --install`
+  l'y copie). `:modelpack_multi:verifyModel` le vérifie contre `model.lock.json` avant tout lot `release`.
+- La propriété `-PskipModel` désactive la vérification pour les tâches de `debug` qui n'ont pas besoin du
+  modèle (tests JVM, lint). Elle est sans effet sur un build `release`, qui échoue toujours sans un
+  modèle `fr` conforme. Les tests JVM utilisent `FakeEmbeddingEngine`.
+- `:app:verify<Variante>ReleaseBundle` contrôle le lot `release` (à partir des APK qu'en tire
+  bundletool) : `model.onnx` de `fr` non compressé dans la base, `multi` seulement dans le pack à la
+  demande, taille de téléchargement de la base (`get-size total`, maximum sur les configurations
+  d'appareil) ≤ 100 Mo (ENF-STO-02). Mesure du 14/11/2026 : 51,6 Mo.
 - En CI, les artefacts sont mis en cache avec `model.lock.json` comme clé.
 
 ## 3. Tokenizer
@@ -107,18 +127,34 @@ class Encoding(val inputIds: IntArray, val attentionMask: IntArray)
 
 ### 3.1 Algorithme
 
-1. **Normalisation** (approximation du jeu de règles `nmt_nfkc`) : NFKC ; caractères de contrôle
-   supprimés ; tabulations, retours à la ligne, espaces insécables et espaces de largeur nulle remplacés
-   par une espace ; espaces multiples réduites ; espaces de bord retirées.
+Implémentation : `UnigramTokenizer`, `Vocabulary` et `UnigramNormalizer`, paquet
+`fr.corsicajack.seekmind.engine.embedding.tokenizer`. Le tokenizer est sans état et partageable entre threads.
+
+1. **Normalisation** (approximation du jeu de règles `nmt_nfkc`, établie point de code par point de code
+   contre la référence) :
+   - caractères de contrôle supprimés : U+0001 à U+0008, U+000B, U+000E à U+001F, U+007F, U+008F,
+     U+009F (U+0000 et les autres contrôles C1, dont U+0085, sont conservés, comme par la référence) ;
+   - remplacés par une espace : tabulation, saut de ligne, saut de page, retour chariot, U+1680,
+     U+200B à U+200F (espaces et liants de largeur nulle), U+2028, U+2029, U+2581, U+FEFF, U+FFFD ;
+   - NFKC sur le reste (les espaces insécables, fines et idéographiques deviennent ainsi une espace),
+     sauf pour quelques caractères ajoutés à Unicode après la compilation du jeu de règles, que la
+     référence laisse tels quels (par exemple U+FF5E) ;
+   - toute suite d'au moins deux espaces réduite à une seule. Les espaces de bord sont **conservées** :
+     la référence ne les retire pas (une espace finale produit un jeton `▁` isolé).
 2. **Pré-découpage** : chaque espace devient `▁` (U+2581) ; un `▁` est ajouté en tête ; le texte est
-   découpé en mots commençant chacun par `▁`.
+   découpé en mots commençant chacun par `▁`. Un texte vide après normalisation ne donne aucun mot.
 3. **Segmentation** de chaque mot par l'algorithme de Viterbi : parmi tous les découpages en jetons du
-   vocabulaire, retenir celui dont la somme des scores est maximale. Un caractère absent du vocabulaire
-   produit le jeton inconnu (`<unk>`, identifiant 3) avec le score `score minimal du vocabulaire − 10` ;
-   des inconnus consécutifs sont fusionnés en un seul.
+   vocabulaire, retenir celui dont la somme des scores est maximale (parcours et comparaisons stricts
+   identiques à la référence, pour départager les égalités de la même façon). Une position sans jeton
+   d'un seul caractère reçoit le jeton inconnu (`<unk>`, identifiant 3) avec le score
+   `score minimal du vocabulaire − 10` ; des inconnus consécutifs sont fusionnés en un seul, dont le texte
+   est recherché dans le vocabulaire (identifiant trouvé, sinon `<unk>`), comme le fait la référence.
 4. **Identifiants** : la position du jeton dans le vocabulaire. Jetons spéciaux : `<s>` = 0,
-   `<pad>` = 1, `</s>` = 2, `<unk>` = 3.
-5. **Gabarit** : `<s>` + jetons + `</s>`. **Troncature** : au plus `maxTokens`, `</s>` final conservé.
+   `<pad>` = 1, `</s>` = 2, `<unk>` = 3. Ils ne sont jamais reconnus dans le texte : un texte qui
+   contient `</s>` est découpé comme du texte ordinaire (la référence, elle, le transformerait en jeton
+   spécial).
+5. **Gabarit** : `<s>` + jetons + `</s>`. **Troncature** : au plus `maxTokens` (au moins 2), `</s>` final
+   conservé. Les mots étant indépendants, la segmentation s'arrête dès que le budget est atteint.
 6. `attentionMask` : 1 pour chaque jeton.
 
 ### 3.2 Vocabulaire binaire
@@ -130,13 +166,27 @@ pour `fr`, 4,1 Mo pour `multi`.
 Chargement en structures compactes : un tableau d'octets unique, un tableau de positions, un tableau de
 scores, et une table de hachage à adressage ouvert (hachage 64 bits des octets du jeton → identifiant,
 vérification des octets à chaque succès). **Budget mémoire : 16 Mo** pour le plus grand vocabulaire.
-Pas de `HashMap<String, Int>`.
+Pas de `HashMap<String, Int>`. Hachage FNV-1a 64 bits, calculé octet par octet pendant la segmentation ;
+taux de remplissage de la table au plus 1/2 ; les jetons spéciaux (0 à 3) n'y figurent pas. Le lecteur
+refuse un fichier mal formé (magique, longueurs, octets en trop, jetons spéciaux absents de 0 à 3).
+
+Mesures (M4-03, JVM) : structures de 1,0 Mo pour `fr`, 6,4 Mo pour `multi` (8 Mo de croissance du tas
+au chargement).
 
 ### 3.3 Parité
 
 Pour **chaque** modèle, le tokenizer doit produire exactement les mêmes identifiants que la référence
 Python sur au moins **99,5 %** des 1 000 phrases de `testdata/tokenizer_golden_<id>.jsonl`. Les écarts
-restants sont listés dans le rapport de test. Si le seuil n'est pas atteint (risque R-12), repli :
+restants sont listés dans le rapport de test (`build/reports/tokenizer/parity-<id>.txt`). Les tests JVM lisent
+le `vocab.bin` produit par `tools/model` (`tools/model/out/<id>/`, ou l'asset installé pour `fr`) et
+vérifient son empreinte contre `model.lock.json` ; sans vocabulaire, ils sont ignorés en local et
+échouent en CI. Résultat (M4-03) : 1 000/1 000 phrases identiques pour chacun des deux modèles.
+
+Limite connue de l'approximation : le jeu `nmt_nfkc` traite certaines suites de diacritiques combinants
+par graphème, sans le réordonnancement canonique de NFKC (par exemple `é` + U+0330 reste tel quel, et
+`e` + U+0330 + U+0301 devient U+1E1B seul). Sur 20 000 phrases altérées par insertion aléatoire de
+caractères rares, 0,2 % (`fr`) et 0,3 % (`multi`) divergent, toutes pour cette raison (diacritiques
+combinants isolés, jamos hangûl) ; aucun texte réaliste n'est concerné. Si le seuil n'est pas atteint (risque R-12), repli :
 embarquer une bibliothèque native de tokenisation, par un ADR.
 
 ## 4. Moteur
@@ -164,6 +214,13 @@ Implémentation `OrtEmbeddingEngine` :
   d'un tampon projeté, si bien que la projection (`FileChannel.map` → `createSession(ByteBuffer)`) coûte
   deux fois la taille du modèle en mémoire (61 à 70 Mo contre 27 à 35 Mo) ; elle ne sert que de repli si
   la copie est impossible. Un modèle de pack est ouvert par son chemin de fichier.
+- **Intégrité** (M4-06) : chaque copie, c'est-à-dire le premier chargement après une installation ou une
+  mise à jour, vérifie les fichiers de l'asset (`model.onnx`, `vocab.bin`) contre les empreintes SHA-256
+  et les tailles de son `MODEL_MANIFEST.json` ; le repli par projection fait la même vérification à
+  chaque chargement. Les chargements suivants ne contrôlent que la taille de la copie (une copie
+  tronquée est refaite). Un modèle absent ou altéré lève `CorruptModelException` et ne laisse aucune
+  copie : la recherche se déclare sans le sens (`semanticAvailable = false`), la recherche par mots-clés
+  n'est pas touchée. Les fichiers d'un pack sont vérifiés par son installateur (§5.2).
 - **Options de session** : optimisation maximale, un thread inter-opérateurs, threads intra-opérateurs
   donnés par le gouverneur (2, ou 4 en charge), fournisseur d'exécution processeur.
 - **Lots** : textes triés par longueur, sous-lots de 8, remplissage à la longueur du plus long du sous-lot
@@ -171,9 +228,20 @@ Implémentation `OrtEmbeddingEngine` :
   `attention_mask`, et `token_type_ids` à zéro si elle l'exige).
 - **Sortie** : moyenne masquée de `last_hidden_state`, puis normalisation L2.
 - **Cycle de vie** : le fournisseur compte les utilisateurs ; la session est fermée 60 s après le
-  dernier usage et sur `onTrimMemory(TRIM_MEMORY_RUNNING_LOW)`. L'interface de recherche la retient tant
+  dernier usage et sous pression mémoire. L'interface de recherche la retient tant
   qu'elle est au premier plan.
 - Les appels sont sérialisés (un seul calcul à la fois dans le processus).
+
+**Implémentation (M4-04)**, paquet `fr.corsicajack.seekmind.engine.embedding.engine` :
+
+| Élément | Rôle |
+|---|---|
+| `OrtEmbeddingEngine` | Préfixes, tokenisation, tri par longueur, sous-lots, agrégation ; vecteurs rendus dans l'ordre des textes. Calcule sur le dispatcher `default`. |
+| `Encoder`, `OrtEncoder` | Exécution du réseau sur un sous-lot rembourré (`PaddedBatch`) ; `OrtEncoder` lit la dimension dans la forme de sortie de la session. Le reste du moteur est testé sur JVM avec un encodeur factice. |
+| `OrtEmbeddingEngineFactory` | Charge `vocab.bin` et la session (`OrtModelLoader`) d'un `LoadableModel` : `ModelSpec` (qui donne le `modelId`) et `ModelSource` (`Bundled("model/fr")` ou `Pack(ModelFiles)`). |
+| `ActiveModel` | Le modèle à charger à la prochaine session ; `BuiltInModels.bundledFr` jusqu'au catalogue de M4-07. |
+| `SharedEmbeddingEngineProvider` | Implémente `EmbeddingEngineProvider` : chargement au premier `use`, rechargement si le modèle actif ou le nombre de threads (`EmbeddingThreads`, fourni par le gouverneur) a changé, `retain()` (poignées comptées), `release()` (fermeture après le calcul en cours), fermeture après `idleCloseMs`. Un bloc passé à `use` ne doit pas rappeler `use`. |
+| `MemoryPressureRelease` | `ComponentCallbacks2` qui appelle `release()` sur `TRIM_MEMORY_RUNNING_LOW`, `TRIM_MEMORY_RUNNING_CRITICAL`, les niveaux `TRIM_MEMORY_BACKGROUND` et au-delà, et `onLowMemory`. Les niveaux `RUNNING_*` ne sont plus envoyés à partir de l'API 34 : les niveaux d'arrière-plan sont alors le seul signal. |
 
 ## 5. Packs de langue
 
@@ -192,7 +260,7 @@ data class ModelSpec(
 interface ModelCatalog {
     val models: List<ModelSpec>
     val active: StateFlow<ModelSpec>
-    fun state(id: String): Flow<PackState>     // NotInstalled, Downloading(progress), Installed, Failed
+    fun state(id: String): Flow<PackState>     // NotInstalled, Downloading(progress), AwaitingConfirmation, Installed, Failed
     suspend fun activate(id: String)           // change le modèle actif ; déclenche le recalcul des vecteurs
 }
 
@@ -218,9 +286,19 @@ d'artefacts `multi`.
 Règles :
 
 - Le téléchargement n'est **jamais** lancé sans une action de l'utilisateur.
-- Au-delà du seuil de données mobiles fixé par Google Play, la confirmation système est affichée.
+- Au-delà du seuil de données mobiles fixé par Google Play, le pack passe en `AwaitingConfirmation` et l'écran affiche la confirmation de Play.
 - Les fichiers d'un pack sont vérifiés (empreintes) avant toute activation.
 - Un pack installé peut être supprimé ; s'il était actif, le modèle `fr` redevient actif.
+
+Implémentation (M4-07), paquet `fr.corsicajack.seekmind.engine.embedding.catalog` :
+
+| Élément | Rôle |
+|---|---|
+| `PackLock` | Empreintes attendues des packs, copie de `model.lock.json` (`PackLockTest` échoue si elles divergent). |
+| `ModelPackInstaller` | Interface du §5.1, plus `state(spec)` : l'état d'un pack, lu sans rien télécharger. |
+| `FileModelPackInstaller` | Import d'un `.smpack` : exactement `model.onnx`, `vocab.bin` et `MODEL_MANIFEST.json` (tout autre nom, chemin compris, est refusé). Les deux fichiers du modèle sont vérifiés (taille et SHA-256) pendant l'écriture dans un répertoire temporaire, avec un arrêt dès que la taille attendue est dépassée. Ce répertoire ne devient `noBackupFilesDir/packs/<id>` qu'une fois tout vérifié ; sinon, rien ne reste. |
+| `PlayModelPackInstaller` | Le pack Play derrière `AssetPackGateway` ; `PlayAssetPackGateway` est l'adaptateur sur `AssetPackManager`. Statuts de `AssetPackStatus` → `PackState` : `WAITING_FOR_WIFI` et `REQUIRES_USER_CONFIRMATION` donnent `AwaitingConfirmation`, et l'écran propose alors `requestConfirmation(activity)` (boîte de dialogue de Play, `showConfirmationDialog`) ; une erreur de Play donne `Failed(code)`. Composants exportés de la bibliothèque : [ADR-0012](../adr/0012-composants-exportes-de-play-asset-delivery.md). `:app` ne l'utilise que si Google Play a installé l'application (`InstallSourceInfo`), sinon `FileModelPackInstaller`. |
+| `DefaultModelCatalog` | Implémente `ModelCatalog`. Le modèle actif est lu dans le réglage ; s'il désigne un pack absent, `fr` le remplace. `install` (action de l'utilisateur seulement) ; `activate` vérifie les empreintes, enregistre le réglage, puis ferme la session et remet les vecteurs à zéro (§5.3, câblé par `:app`) ; `remove` du pack actif réactive `fr` d'abord ; les deux sont sérialisés, et les empreintes sont calculées sur le dispatcher d'E/S. `loadable()` donne le modèle à charger au fournisseur du moteur. Un lot d'embeddings en cours pendant l'activation ne laisse aucun vecteur de l'ancien modèle : la base écarte ses lignes ([indexation §7.2](indexation.md)). |
 
 ### 5.3 Changer de modèle
 
@@ -253,11 +331,35 @@ Pour chercher aussi *par le sens* dans d'autres langues que le français, ajoute
 | Binaire | bit `i` = 1 si `v[i] > 0` ; 6 mots de 64 bits, petit-boutiste | 48 octets | Présélection par distance de Hamming |
 
 Les composantes d'un vecteur normalisé de dimension 384 valent typiquement ±0,05 : multiplier par 127
-gaspillerait la plage. L'échelle de départ est **`S = 400`** (plage utile ±0,32) ; le ticket M4-05 la
-calibre pour que moins de 0,1 % des composantes soient écrêtées sur les vecteurs des 1 000 phrases de référence.
+gaspillerait la plage. L'échelle de départ était `S = 400` (plage utile ±0,32). **Calibrée à `S = 600`**
+(M4-05, `tools/model/calibrate_int8.py`, plage utile ±0,21) sur les vecteurs des 1 000 phrases de
+référence, modèles `fr` et `multi` quantifiés :
+
+| S | Composantes écrêtées | Cosinus moyen vecteur / code int8 |
+|---|---|---|
+| 400 | 0 % | 0,999901 |
+| 600 (retenue) | 0 % | 0,999956 |
+| 700 | 0 % | 0,999968 |
+| 800 | 0,004 % | 0,999974 |
+| ≈ 965 | 0,1 % (limite du critère) | — |
+
+La plus grande composante vaut 0,18 pour les deux modèles. Le critère du ticket (moins de 0,1 %
+d'écrêtage) admettrait jusqu'à `S ≈ 965`, mais le gain de cosinus au-delà de 600 est négligeable ;
+600 garde une marge pour des textes réels aux composantes plus fortes que celles des phrases de
+référence (jusqu'à 0,21 sans écrêtage).
+
+**Un changement d'échelle impose de recalculer les vecteurs.** Les codes stockés valent
+`round(v × S_ancien)` et le rescore divise par `S_nouveau` : toute similarité serait multipliée par
+`S_ancien / S_nouveau` (0,67 de 400 à 600) et passerait sous `semanticFloor`, sans erreur. L'échelle est
+donc enregistrée dans `meta.int8_scale` ; les lots d'embeddings la comparent à celle du codec, comme le
+modèle, et réinitialisent les vecteurs si elle diffère ([indexation §7.3](indexation.md)).
 
 Similarité de rescore entre une requête en flottants `q` et un document int8 `d` :
 `(Σ q[i] × d[i]) / S`, approximation du cosinus.
+
+`round` arrondit au pair le plus proche (comme NumPy) : le code de `−v` est l'opposé de celui de `v`.
+Dans le code binaire, le bit `i` est le bit `i mod 8` de l'octet `i / 8`, ce qui donne bien les octets de
+6 mots de 64 bits petit-boutistes (`VectorCodec.words`).
 
 ## 7. Identifiant de modèle
 
@@ -282,6 +384,39 @@ encodeur) ; ils diffèrent par la mémoire et le temps de chargement.
 
 Si l'appareil bas dépasse ces cibles d'un facteur deux, le ticket M10-02 isole le moteur dans un
 processus dédié.
+
+Mesures du moteur (M4-04, `OrtEmbeddingEngineDeviceTest`, émulateurs x86_64 de la CI, exécution
+`device-tests` 43440665786, API 30 / 34 / 36) — moteur complet, tokenizer Kotlin compris, 2 threads :
+
+| Mesure | `fr` | `multi` |
+|---|---|---|
+| Chargement de la session (première fois ; vocabulaire compris) | 152 / 257 / 212 ms | 216 / 416 / 359 ms |
+| Requête courte, médiane | 5,8 / 10,2 / 16,6 ms | 5,8 / 10,4 / 8,9 ms |
+| Passage tronqué à 256 jetons, médiane | 97 / 161 / 151 ms | 92 / 171 / 140 ms |
+| Lot de 8 passages de 256 jetons, médiane | 779 / 1 347 / 1 149 ms | 722 / 1 436 / 1 064 ms |
+| PSS ajoutée par la session | 36 / 35 / 28 Mo | 131 / 95 / 131 Mo |
+| PSS totale du processus de test | 207 / 178 / 189 Mo | 279 / 258 / 279 Mo |
+| Cosinus le plus bas avec `embedding_golden_fr.json`, texte par texte (en un lot) | 0,9971 (0,9958) | — |
+
+Après la quantification par canal (exécution `device-tests` 43610735658, API 30 / 34 / 36) :
+
+| Mesure | `fr` | `multi` |
+|---|---|---|
+| Chargement de la session (première fois ; vocabulaire compris) | 196 / 248 / 285 ms | 307 / 421 / 452 ms |
+| Requête courte, médiane | 10,5 / 9,1 / 17,9 ms | 9,8 / 9,1 / 10,9 ms |
+| Passage tronqué à 256 jetons, médiane | 150 / 146 / 183 ms | 152 / 146 / 168 ms |
+| Lot de 8 passages de 256 jetons, médiane | 1 304 / 1 128 / 1 435 ms | 1 203 / 1 049 / 1 281 ms |
+| PSS ajoutée par la session | 36 / 8 / 28 Mo | 114 / 95 / 132 Mo |
+| Cosinus le plus bas avec `embedding_golden_fr.json`, texte par texte (en un lot) | 0,9964 (0,9944) | — |
+
+Les écarts avec la première série restent dans la dispersion des émulateurs, d'une exécution à l'autre
+(API 30 plus lente, API 34 plus rapide) : la quantification par canal n'a pas de coût de latence
+mesurable ici. À confirmer sur le téléphone (M10-01).
+
+Les cibles de latence et de chargement sont tenues, sauf le passage de 256 jetons sur les émulateurs
+API 34 et 36, au niveau de la cible (151 à 171 ms pour 150 ms), comme au prototype S4. La PSS totale
+compte le processus d'instrumentation : la session `fr` n'ajoute que 28 à 36 Mo. Ces deux points sont
+à confirmer sur le téléphone, application seule (M10-01).
 
 ## 9. Configuration
 

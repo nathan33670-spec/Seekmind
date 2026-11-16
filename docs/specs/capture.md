@@ -269,6 +269,17 @@ En v1.1, une dixième étape notifiera le module des actions contextuelles ; ell
 Toute exception est interceptée au niveau de `onStable()`, comptée (`ERROR`) et n'atteint jamais le
 service. Chaque issue incrémente un compteur de `metric_daily`.
 
+Implémentation (M2-06), paquet `fr.corsicajack.seekmind.engine.capture.pipeline` :
+
+| Élément | Rôle |
+|---|---|
+| `CapturePipeline` | Les neuf étapes, `events` et le rappel des issues. Compteurs : `capture_stored`, `capture_deduplicated`, `capture_dropped_<motif>` (motif en minuscules), au jour local. Une panne des compteurs ne change pas l'issue. La contre-pression (un seul déclenchement en attente) est celle de `Debouncer` (§3). |
+| `ScreenSource`, `A11yScreenSource` | Étapes 1 et 2 : verrouillage (`KeyguardManager.isKeyguardLocked`), fenêtre active (`A11yUiNode.activeWindow`) du service connecté (`ConnectedService`, posé par `EventRouter`). |
+| `ScreenshotStep`, `ProbeScreenshotStep` | Étape 6 (M3-05). `OcrPolicy.shouldOcr` décide si l'image est nécessaire. `SecureWindowProbe.probe` prend alors une seule capture, pour la sonde et l'OCR. Un rejet de la sonde (`rejects`) donne `SECURE_WINDOW` ; un `Unknown` non rejeté continue sans OCR. `:app` fournit les captures du service connecté (`ConnectedScreenshots`, une source par connexion). `NotProbed` sert aux tests. |
+| `LineMerger` | Étape 7 : fusion des lignes de l'arbre et de l'OCR, par `OcrMerge` dans `:app` ([ocr §7](ocr.md)). Elle donne aussi l'origine du texte (`TextSource`). `Append` sert aux tests. |
+
+`:app` (`PipelineModule`) lie le pipeline comme `StableScreenHandler`. Il crée aussi `DefaultPrivacyGate`, avec les règles de la base et les familles des réglages, et l'écriture par `IngestService` une fois la base ouverte : une capture avant cela compte comme `ERROR`.
+
 ```kotlin
 data class RawCapture(
     val meta: ScreenMeta,
@@ -290,7 +301,9 @@ data class RawCapture(
 - `PauseTileService` : un tap bascule entre active et en pause sans limite ; le sous-titre indique l'état
   (« Active », « En pause », « En pause jusqu'à 14:30 », « Non activée ») ; un appui long ouvre
   l'application (`MainActivity` déclare `QS_TILE_PREFERENCES`). Sans consentement ou service désactivé,
-  un tap ouvre l'application. La tuile suit `CaptureStatusRepository` tant qu'elle est visible ; le
+  un tap ouvre l'application. Depuis l'écran verrouillé, un tap qui **reprend** la mémorisation demande
+  d'abord le déverrouillage (`unlockAndRun`), pour qu'un tiers qui a le téléphone en main ne puisse pas
+  la relancer ; la mise en pause n'en demande pas. La tuile suit `CaptureStatusRepository` tant qu'elle est visible ; le
   système appelle `onStartListening` à chaque ouverture du panneau, une tuile active
   (`ACTIVE_TILE`) n'est donc pas nécessaire.
 - Début de pause ou retrait du consentement : `EventRouter` remet `CaptureLoop` à zéro, si bien qu'un
@@ -317,6 +330,9 @@ le consentement et la pause. L'interface l'observe (EF-CAP-05).
 
 Priorité, du premier état qui s'applique au dernier : `ConsentMissing` (sans consentement, l'interface
 rouvre la divulgation avant tout passage par les réglages système), `ServiceDisabled`, `Paused`, `Active`.
+Un consentement d'une version de la divulgation antérieure à `DISCLOSURE_VERSION` compte comme absent
+(`ConsentMissing`). Aujourd'hui, seule la présence du consentement est testée : la comparaison des
+versions arrive avec M6-02, qui crée la constante.
 `Paused.until` vaut `null` pour une pause sans limite (`pausedUntil = Long.MAX_VALUE`). `lastCaptureAt`
 est publié par le pipeline (`onCaptureStored`).
 

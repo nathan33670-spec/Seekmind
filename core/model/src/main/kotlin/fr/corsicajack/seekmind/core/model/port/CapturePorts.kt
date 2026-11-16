@@ -5,6 +5,7 @@ import fr.corsicajack.seekmind.core.common.IntRect
 import fr.corsicajack.seekmind.core.model.GateDecision
 import fr.corsicajack.seekmind.core.model.IngestResult
 import fr.corsicajack.seekmind.core.model.OcrOutcome
+import fr.corsicajack.seekmind.core.model.ProbeResult
 import fr.corsicajack.seekmind.core.model.RawCapture
 import fr.corsicajack.seekmind.core.model.Redaction
 import fr.corsicajack.seekmind.core.model.ScreenMeta
@@ -41,6 +42,17 @@ interface ScreenshotSource {
 /** Text recognition of an in-memory image (docs/specs/ocr.md §4), implemented by `engine:ocr`. */
 interface OcrEngine {
     suspend fun recognize(bitmap: Bitmap): OcrOutcome
+}
+
+/**
+ * Secure-window probe (docs/specs/ocr.md §3, ADR-0008), implemented by `engine:ocr`. One screenshot
+ * serves the probe and, when [needImage], the text recognition.
+ */
+interface SecureWindowProbe {
+    suspend fun probe(meta: ScreenMeta, windowBounds: IntRect, needImage: Boolean): ProbeResult
+
+    /** Whether the capture must be rejected (`SECURE_WINDOW`) after [result] (§3.3). */
+    fun rejects(meta: ScreenMeta, result: ProbeResult): Boolean
 }
 
 /** Deduplication and storage of an accepted capture (docs/specs/indexation.md §2), implemented by `engine:index`. */

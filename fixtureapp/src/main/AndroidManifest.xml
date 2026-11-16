@@ -13,5 +13,14 @@
         <activity android:name=".SecureActivity" android:exported="true" />
         <activity android:name=".ImageTextActivity" android:exported="true" />
         <activity android:name=".WebActivity" android:exported="true" />
+        <!-- E2E-14: the return to the source opens seekmind-fixture://item/<id>. -->
+        <activity android:name=".DeepLinkActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="seekmind-fixture" android:host="item" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

@@ -103,7 +103,7 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M1-05, M2-03 | `engine:privacy` | [confidentialite](../specs/confidentialite.md) · EF-PRIV-01, 03 à 07, 12 |
 
 **À faire**
 
@@ -116,13 +116,16 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 
 **Critères d'acceptation**
 
-- [ ] Table de décision complète de `checkPackage` (liste × règle utilisateur × catégorie × famille).
-- [ ] Familles : priorité entre familles, application de SMS par défaut classée « messageries », famille
+- [x] Table de décision complète de `checkPackage` (liste × règle utilisateur × catégorie × famille).
+- [x] Familles : priorité entre familles, application de SMS par défaut classée « messageries », famille
       désactivée → `APP_FAMILY_DISABLED`, règle « inclure » de l'utilisateur prioritaire.
-- [ ] Carte, IBAN et numéro de sécurité sociale valides masqués ; invalides et numéros de suivi intacts ; `redact` idempotente.
-- [ ] Aucun moyen de désactiver la porte : ni réglage, ni paramètre de configuration.
+- [x] Carte, IBAN et numéro de sécurité sociale valides masqués ; invalides et numéros de suivi intacts ; `redact` idempotente.
+- [x] Aucun moyen de désactiver la porte : ni réglage, ni paramètre de configuration.
 
 **Validation manuelle** — marqueurs de navigation privée observés sur Chrome et Firefox ; table mise à jour.
+
+**Reste à faire** — la validation manuelle ci-dessus, reportée à M10-01. `sensitive_apps.json` compte 308
+identifiants pour les sept pays, tous vérifiés par `tools/privacy/verify_sensitive_apps.py` (spec §3.2).
 
 ---
 
@@ -130,7 +133,7 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M2-01 à M2-05, M4-02 | `engine:capture`, `app` | [capture §6](../specs/capture.md) · INV-04, INV-05 |
+| Fait | M2-01 à M2-05, M4-02 | `engine:capture`, `app` | [capture §6](../specs/capture.md) · INV-04, INV-05 |
 
 **À faire**
 
@@ -143,10 +146,10 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 
 **Critères d'acceptation**
 
-- [ ] Test JVM du pipeline avec doubles : chaque étape produit le bon `DropReason` ; l'ordre est respecté
-      (aucune lecture de l'arbre si le paquet est refusé).
-- [ ] Une exception dans une étape donne `Dropped(ERROR)` et n'atteint pas le service.
-- [ ] Sans consentement courant : aucune lecture (E2E-09).
+- [x] Test JVM du pipeline avec doubles : chaque étape produit le bon `DropReason` ; l'ordre est respecté
+      (aucune lecture de l'arbre si le paquet est refusé) (`CapturePipelineTest`).
+- [x] Une exception dans une étape donne `Dropped(ERROR)` et n'atteint pas le service (`CapturePipelineTest`).
+- [x] Sans consentement courant : aucune lecture (`CapturePipelineTest` ; le scénario sur appareil E2E-09 est écrit avec les autres en M2-08).
 
 ---
 
@@ -181,6 +184,9 @@ porteur du projet : la table livrée est celle de la spec, non vérifiée sur ap
 1. Compléter l'application de test : `PasswordActivity`, `EditableActivity`, `ScrollActivity`,
    `SensitiveDataActivity`, `MessagingLikeActivity`.
 2. Écrire les scénarios E2E-01, 02, 04, 07 à 13, 18 et 19, synchronisés sur `CapturePipeline.events`.
+3. E2E-14, parcours complet : capturer un écran de l'application de test, le retrouver par la recherche,
+   puis toucher le bouton de retour à la source, qui ouvre `DeepLinkActivity` sur le bon identifiant.
+   Le maillon résolution et lancement est déjà couvert par M7-03 (`SourceReturnDeviceTest`).
 
 **Critères d'acceptation**
 

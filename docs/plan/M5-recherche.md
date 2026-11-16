@@ -12,7 +12,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01 | `engine:search` | [recherche §2](../specs/recherche.md) |
+| Fait | M1-01 | `engine:search` | [recherche §2](../specs/recherche.md) |
 
 **À faire**
 
@@ -21,8 +21,8 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Table de cas : mots vides retirés ; requête faite uniquement de mots vides conservée ; codes reconnus ; profils `DEFAULT`, `CODE`, `NATURAL`.
-- [ ] Les filtres explicites de la requête priment sur ceux extraits du texte.
+- [x] Table de cas : mots vides retirés ; requête faite uniquement de mots vides conservée ; codes reconnus ; profils `DEFAULT`, `CODE`, `NATURAL`.
+- [x] Les filtres explicites de la requête priment sur ceux extraits du texte.
 
 ---
 
@@ -30,7 +30,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-01 | `engine:search`, `testdata` | [recherche §3](../specs/recherche.md) · EF-SRCH-04 |
+| Fait | M5-01 | `engine:search`, `testdata` | [recherche §3](../specs/recherche.md) · EF-SRCH-04 |
 
 **À faire**
 
@@ -40,9 +40,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Tous les cas du fichier passent, avec horloge et fuseau fixés.
-- [ ] Cas particuliers couverts : changement d'heure, passage d'année, « mardi » un mardi, « soir » à cheval sur deux jours.
-- [ ] Une requête sans expression temporelle n'est pas modifiée.
+- [x] Tous les cas du fichier passent, avec horloge et fuseau fixés.
+- [x] Cas particuliers couverts : changement d'heure, passage d'année, « mardi » un mardi, « soir » à cheval sur deux jours.
+- [x] Une requête sans expression temporelle n'est pas modifiée.
 
 ---
 
@@ -50,7 +50,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-01 | `engine:search` | [recherche §4](../specs/recherche.md) · EF-SRCH-05 |
+| Fait | M5-01 | `engine:search` | [recherche §4](../specs/recherche.md) · EF-SRCH-05 |
 
 **À faire**
 
@@ -60,9 +60,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] « sur Instagram », « dans WhatsApp », « on YouTube », alias (« insta ») → bon paquet, expression retirée du texte.
-- [ ] Sans préposition, rien n'est extrait (« chrome » reste un mot de la requête).
-- [ ] Application non installée → pas de filtre.
+- [x] « sur Instagram », « dans WhatsApp », « on YouTube », alias (« insta ») → bon paquet, expression retirée du texte.
+- [x] Sans préposition, rien n'est extrait (« chrome » reste un mot de la requête).
+- [x] Application non installée → pas de filtre.
 
 ---
 
@@ -70,7 +70,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-01, M1-04 | `engine:search` | [recherche §5](../specs/recherche.md) · [stockage §5](../specs/stockage.md) · EF-SRCH-02 |
+| Fait | M5-01, M1-04 | `engine:search` | [recherche §5](../specs/recherche.md) · [stockage §5](../specs/stockage.md) · EF-SRCH-02 |
 
 **À faire**
 
@@ -79,9 +79,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Entrées hostiles (guillemets, parenthèses, `NEAR`, `*`, `:`) : aucune erreur de syntaxe FTS5, aucune injection.
-- [ ] Recherche sans accents retrouvant un texte accentué, et l'inverse.
-- [ ] Un code exact (`SUMMER20`) arrive en première position sur le corpus de test.
+- [x] Entrées hostiles (guillemets, parenthèses, `NEAR`, `*`, `:`) : aucune erreur de syntaxe FTS5, aucune injection.
+- [x] Recherche sans accents retrouvant un texte accentué, et l'inverse.
+- [x] Un code exact (`SUMMER20`) arrive en première position sur le corpus de test.
 
 ---
 
@@ -89,7 +89,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-04, M4-04 | `engine:search` | [recherche §6](../specs/recherche.md) · [ADR-0005](../adr/0005-recherche-vectorielle-en-memoire.md) |
+| Fait | M1-04, M4-04 | `engine:search` | [recherche §6](../specs/recherche.md) · [ADR-0005](../adr/0005-recherche-vectorielle-en-memoire.md) |
 
 **À faire**
 
@@ -98,11 +98,16 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Sur 20 000 vecteurs aléatoires normalisés : le rappel des 10 plus proches voisins exacts parmi les
-      résultats (présélection de 200 puis rescore) est mesuré et consigné ; cible ≥ 0,90.
-- [ ] Les filtres de dates et de paquets sont appliqués pendant le parcours.
-- [ ] Un vecteur ajouté apparaît à la recherche suivante ; une suppression déclenche le rechargement.
-- [ ] Aucune allocation par vecteur pendant le parcours (tableaux primitifs uniquement).
+- [x] Sur 20 000 vecteurs aléatoires normalisés : le rappel des 10 plus proches voisins exacts parmi les
+      résultats (présélection de `binaryTopK` candidats, 200 à l'origine, puis rescore) est mesuré et
+      consigné ; cible ≥ 0,90.
+      ([recherche §6.3](../specs/recherche.md) : avec 400 candidats, valeur retenue par le porteur le
+      13 novembre 2026, 0,924 autour d'une direction commune comme les vecteurs e5 et 0,997 sur des
+      vecteurs groupés ; 0,878 avec 200 candidats. Le cas isotrope, sans rapport avec des vecteurs de
+      texte, reste sous la cible : 0,806.)
+- [x] Les filtres de dates et de paquets sont appliqués pendant le parcours.
+- [x] Un vecteur ajouté apparaît à la recherche suivante ; une suppression déclenche le rechargement.
+- [x] Aucune allocation par vecteur pendant le parcours (tableaux primitifs uniquement).
 
 ---
 
@@ -110,7 +115,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-02 à M5-05 | `engine:search` | [recherche §1, §7 à §9](../specs/recherche.md) · EF-SRCH-01, 03, 07, 08 |
+| Fait | M5-02 à M5-05 | `engine:search` | [recherche §1, §7 à §9](../specs/recherche.md) · EF-SRCH-01, 03, 07, 08 |
 
 **À faire**
 
@@ -121,11 +126,11 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Fusion : tables de rangs calculées à la main ; un document présent dans une seule liste est classé ; égalités départagées par la date.
-- [ ] Deux émissions dans l'ordre `LEXICAL` puis `HYBRID` ; l'annulation interrompt les deux branches.
-- [ ] Assouplissement : `TIME` puis `ALL`, avec l'indication correspondante.
-- [ ] Moteur indisponible → une seule émission, `semanticAvailable = false`.
-- [ ] Test instrumenté de la chaîne complète sur une base chiffrée avec `FakeEmbeddingEngine`.
+- [x] Fusion : tables de rangs calculées à la main ; un document présent dans une seule liste est classé ; égalités départagées par la date.
+- [x] Deux émissions dans l'ordre `LEXICAL` puis `HYBRID` ; l'annulation interrompt les deux branches.
+- [x] Assouplissement : `TIME` puis `ALL`, avec l'indication correspondante.
+- [x] Moteur indisponible → une seule émission, `semanticAvailable = false`.
+- [x] Test instrumenté de la chaîne complète sur une base chiffrée avec `FakeEmbeddingEngine`.
 
 ---
 
@@ -133,7 +138,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-06 | `engine:search`, `tools/eval`, `testdata/eval` | [recherche §11](../specs/recherche.md) · [tests §5](../06-qualite-tests-ci.md#5-jeux-de-référence) · EF-SRCH-01 à 03 |
+| Fait | M5-06 | `engine:search`, `tools/eval`, `testdata/eval` | [recherche §11](../specs/recherche.md) · [tests §5](../06-qualite-tests-ci.md#5-jeux-de-référence) · EF-SRCH-01 à 03 |
 
 **À faire**
 
@@ -148,12 +153,12 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Hybride : Rappel@5 ≥ 0,85 et MRR ≥ 0,70 ; codes : Rappel@1 ≥ 0,90 ; paraphrases : Rappel@5 ≥ 0,75 —
+- [x] Hybride : Rappel@5 ≥ 0,85 et MRR ≥ 0,70 ; codes : Rappel@1 ≥ 0,90 ; paraphrases : Rappel@5 ≥ 0,75 —
       en français pour le modèle `fr`, sur tout le jeu pour le modèle `multi`.
-- [ ] Le rapport chiffre ce que perd le modèle `fr` sur les requêtes en anglais et bilingues par rapport
+- [x] Le rapport chiffre ce que perd le modèle `fr` sur les requêtes en anglais et bilingues par rapport
       à `multi` (risque R-06) ; le porteur du projet en est informé.
-- [ ] L'hybride fait au moins aussi bien que chacune des deux méthodes seules sur le Rappel@5 global.
-- [ ] Si un seuil est hors d'atteinte, le rapport explique pourquoi et propose le seuil révisé — décision du porteur du projet.
+- [x] L'hybride fait au moins aussi bien que chacune des deux méthodes seules sur le Rappel@5 global.
+- [x] (Sans objet : aucun seuil hors d'atteinte.) Si un seuil est hors d'atteinte, le rapport explique pourquoi et propose le seuil révisé — décision du porteur du projet.
 
 ---
 
@@ -161,7 +166,7 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-06, M1-07 | `benchmark` | [tests §6](../06-qualite-tests-ci.md#6-mesures-de-performance) · ENF-PERF-03, ENF-PERF-04 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M5-06, M1-07 | `benchmark` | [tests §6](../06-qualite-tests-ci.md#6-mesures-de-performance) · ENF-PERF-03, ENF-PERF-04 |
 
 **À faire**
 
@@ -171,6 +176,9 @@ cibles ENF-PERF-03 et 04 mesurées.
 
 **Critères d'acceptation**
 
-- [ ] Résultats publiés pour l'émulateur de CI ; cibles ENF-PERF-03 et 04 comparées.
+- [x] Résultats publiés pour l'émulateur de CI ; cibles ENF-PERF-03 et 04 comparées
+      ([mesures du 15 novembre 2026](../mesures/2026-11-15-ci-emulateurs-M5-08.md)) : la recherche
+      sémantique les tient, la recherche lexicale non (2,2 à 4,1 s au p95) ; cause : la jonction des mots par
+      OU (diagnostic §2 du rapport).
 
 **Validation manuelle** — mêmes bancs sur le téléphone de test ; tableau dans la PR.

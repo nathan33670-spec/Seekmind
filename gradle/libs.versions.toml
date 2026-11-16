@@ -11,6 +11,8 @@ jvmTarget = "17"
 
 # Build
 agp = "9.5.1"
+# The bundletool that AGP 9.5.1 runs; build-logic compiles against it (bundle size guard, ticket M4-06).
+bundletool = "1.18.3"
 kotlin = "2.4.21"
 ksp = "2.3.13"
 spotless = "8.11.0"
@@ -61,6 +63,7 @@ benchmark = "1.5.0"
 [libraries]
 # Gradle plugins used by build-logic
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bundletool" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 compose-gradlePlugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
 ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
@@ -77,6 +80,7 @@ androidx-compose-ui = { module = "androidx.compose.ui:ui" }
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-compose-ui-test-junit4-accessibility = { module = "androidx.compose.ui:ui-test-junit4-accessibility" }
 androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
 androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
@@ -127,6 +131,7 @@ androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-asset-pack = { id = "com.android.asset-pack", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -146,3 +151,4 @@ seekmind-android-test = { id = "seekmind.android.test" }
 seekmind-app-guards = { id = "seekmind.app.guards" }
 seekmind-root = { id = "seekmind.root" }
 seekmind-model-assets = { id = "seekmind.model.assets" }
+seekmind-model-pack = { id = "seekmind.model.pack" }

@@ -37,6 +37,7 @@ secrets.properties
 *.ort
 *.tflite
 engine/embedding/src/main/assets/model/
+modelpack_multi/src/main/assets/model/
 tools/model/out/
 *.smpack
 vocab.bin

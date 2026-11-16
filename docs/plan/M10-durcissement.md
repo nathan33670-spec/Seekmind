@@ -25,6 +25,23 @@ protocole et l'outillage, puis corrige d'après les résultats.
 3. Variante `ads` : vérifier que le SDK publicitaire ne consomme rien (processeur, réseau, réveils) en
    dehors des demandes de publicité.
 4. D'après les relevés, ajuster les réglages (`CaptureConfig`, `OcrConfig`, `IndexConfig`) et corriger les postes excessifs.
+5. Faire, sur le même téléphone, les validations manuelles reportées ici par le porteur (décision du
+   15 novembre 2026 : toutes, le plus tard possible), puis retirer la mention « reportée » du statut de
+   chaque ticket. La liste à jour est celle des tickets dont le statut porte « validation manuelle
+   reportée à M10-01 » ; au 15 novembre 2026 :
+   - **M0-07** : 20 reconnaissances ML Kit en mode avion, installation neuve (prototype S2) ;
+   - **M0-08** : lecture de l'arbre de trois applications courantes et sonde sur un onglet privé de
+     Chrome (prototype S3) ;
+   - **M0-09** : mesures du prototype d'embeddings (S4) ;
+   - **M2-05** : marqueurs de navigation privée observés sur Chrome et Firefox ; table mise à jour ;
+   - **M3-02** : onglet privé de Chrome et de Firefox (Android 14+) : aucune capture ;
+   - **M5-08** : bancs de la recherche à 100 000 captures ;
+   - **M6-07** : déverrouillage par empreinte et par code ; aperçu masqué dans les applications récentes,
+     y compris pendant la confirmation de Play d'un pack de langue (`PlayCoreDialogWrapperActivity`) ;
+   - **M7-02** : les sept règles par application (tableau de la PR #40) ; une règle qui échoue est
+     retirée de `source_rules.json`.
+
+   Une validation qui échoue rouvre le ticket (statut `En cours`) et bloque M10-01 jusqu'à sa correction.
 
 **Critères d'acceptation**
 
@@ -72,6 +89,10 @@ protocole et l'outillage, puis corrige d'après les résultats.
    présente dans plus de 60 % d'entre elles (barre d'onglets, menus) est retirée du texte soumis au
    modèle d'embeddings. Elle reste dans le texte stocké et dans l'index plein texte.
 2. Mesurer l'effet sur le jeu d'évaluation, enrichi de captures comportant ce bruit.
+3. Analyseur temporel : un jour de la semaine précédé de « le » (« cours de yoga le lundi », « réunion le
+   jeudi ») peut désigner une habitude, et non une date. Aujourd'hui, il devient un filtre de date, et la
+   requête q78 du jeu d'évaluation est manquée (recherche §11.1). À trancher sur des requêtes réelles :
+   ignorer cette forme, ou chercher avec et sans le filtre.
 
 **Critères d'acceptation**
 
@@ -91,12 +112,19 @@ protocole et l'outillage, puis corrige d'après les résultats.
 1. Règles R8 pour ONNX Runtime, SQLCipher, ML Kit, Room, Hilt ; exécution de la suite instrumentée sur le build `release`.
 2. Profil de référence (Macrobenchmark) pour le démarrage et la première recherche.
 3. Mesure du démarrage à froid ; suppression de tout travail inutile avant le premier affichage.
+4. Rendre de nouveau bloquant `IngestDeviceTest` (ENF-PERF-05), mesuré seulement pendant le
+   développement : 15 ms au 95ᵉ centile, sur le build `release` et sur le téléphone de test.
+5. Rendre de nouveau bloquant le 99ᵉ centile de `RoutingDeviceTest` (ENF-PERF-01), mesuré seulement
+   pendant le développement : 2 ms par événement sur le thread principal, sur le build `release` et
+   sur le téléphone de test.
 
 **Critères d'acceptation**
 
 - [ ] La suite instrumentée est verte sur le build `release` minifié.
 - [ ] Démarrage à froid jusqu'au champ de recherche ≤ 1,5 s sur l'appareil moyen (mesure consignée).
 - [ ] `scripts/check-elf-alignment.sh` vert sur l'APK `release`.
+- [ ] `IngestDeviceTest` affirme de nouveau 15 ms au 95ᵉ centile (ENF-PERF-05), et la mesure sur le
+      téléphone de test est consignée dans `docs/mesures/`.
 
 ---
 

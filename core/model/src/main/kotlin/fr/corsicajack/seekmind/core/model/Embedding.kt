@@ -23,6 +23,12 @@ sealed interface PackState {
     /** [progress] between 0 and 1. */
     data class Downloading(val progress: Float) : PackState
 
+    /**
+     * Google Play waits for the user: Wi-Fi, or a confirmation before downloading on mobile data. The
+     * screen offers the system confirmation (docs/specs/embeddings.md §5.2).
+     */
+    data object AwaitingConfirmation : PackState
+
     data object Installed : PackState
 
     data class Failed(val code: Int) : PackState

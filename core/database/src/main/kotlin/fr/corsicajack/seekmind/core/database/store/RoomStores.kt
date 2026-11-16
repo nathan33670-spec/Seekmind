@@ -43,15 +43,19 @@ internal class RoomCaptureStore(private val dao: CaptureDao) : CaptureStore {
         charCount = text.length,
     )
 
-    override suspend fun touch(captureId: Long, seenAt: Long) = dao.touch(captureId, seenAt)
+    override suspend fun touch(captureId: Long, seenAt: Long): Boolean = dao.touch(captureId, seenAt) > 0
 
     override suspend fun recentHashes(packageName: String, limit: Int): List<HashRef> =
         dao.recentHashes(packageName, limit).map { HashRef(it.id, it.simhash, it.first_seen_at, it.last_seen_at) }
 
     override suspend fun get(captureId: Long): Capture? = dao.get(captureId)?.toModel()
 
-    override suspend fun page(before: Long?, packageName: String?, limit: Int): List<CaptureSummary> =
-        dao.page(before, packageName, limit, PREVIEW_CHARS).map {
+    override suspend fun page(before: JournalCursor?, packageName: String?, limit: Int): List<CaptureSummary> =
+        if (before == null) {
+            dao.firstPage(packageName, limit, PREVIEW_CHARS)
+        } else {
+            dao.nextPage(before.lastSeenAt, before.captureId, packageName, limit, PREVIEW_CHARS)
+        }.map {
             CaptureSummary(
                 id = it.id,
                 firstSeenAt = it.first_seen_at,
@@ -64,6 +68,8 @@ internal class RoomCaptureStore(private val dao: CaptureDao) : CaptureStore {
                 textSource = it.text_source,
             )
         }
+
+    override suspend fun packages(): List<String> = dao.packages()
 
     override suspend fun delete(captureId: Long) = dao.deleting { dao.deleteOne(captureId) }
 
@@ -108,6 +114,10 @@ internal class RoomSearchStore(private val dao: CaptureDao) : SearchStore {
         return ids.mapNotNull { byId[it]?.toModel() }
     }
 
+    override suspend fun fragments(embeddingIds: List<Long>): List<FragmentSpan> =
+        embeddingIds.chunked(MAX_BOUND_IDS).flatMap { dao.fragments(it) }
+            .map { FragmentSpan(it.id, it.capture_id, it.start_offset, it.end_offset) }
+
     internal companion object {
         /** Stays under SQLite's limit of bound parameters. */
         const val MAX_BOUND_IDS = 500
@@ -141,9 +151,9 @@ internal class RoomVectorStore(private val dao: VectorDao, private val config: I
         PendingChunk(it.id, it.capture_id, it.window_title, it.text.substring(start, end), it.attempts)
     }
 
-    override suspend fun saveEmbeddings(rows: List<NewEmbedding>) {
-        if (rows.isEmpty()) return
-        dao.save(
+    override suspend fun saveEmbeddings(rows: List<NewEmbedding>): Int {
+        if (rows.isEmpty()) return 0
+        return dao.save(
             rows.map {
                 EmbeddingEntity(
                     chunkId = it.chunkId,
@@ -160,7 +170,7 @@ internal class RoomVectorStore(private val dao: VectorDao, private val config: I
 
     override suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow> =
         dao.binaryAfter(embeddingId, limit).map {
-            BinaryRow(it.id, it.capture_id, it.first_seen_at, it.last_seen_at, it.package_name, it.vec_bin)
+            BinaryRow(it.id, it.capture_id, it.first_seen_at, it.last_seen_at, it.package_name, it.vec_bin, it.vec_i8)
         }
 
     override suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row> =
@@ -171,6 +181,12 @@ internal class RoomVectorStore(private val dao: VectorDao, private val config: I
     override suspend fun pendingCount(): Int = dao.pendingCount()
 
     override suspend fun resetForModel(modelId: Int) = dao.reset(modelId)
+
+    override suspend fun modelId(): Int? = dao.modelId()
+
+    override suspend fun int8Scale(): Float? = dao.int8Scale()?.toFloatOrNull()
+
+    override suspend fun setInt8Scale(scale: Float) = dao.setInt8Scale(scale.toString())
 
     override suspend fun indexGeneration(): Long = dao.generation() ?: 0
 }
@@ -187,4 +203,5 @@ internal fun CaptureEntity.toModel() = Capture(
     text = text,
     textSource = textSource,
     charCount = charCount,
+    simhash = simhash,
 )

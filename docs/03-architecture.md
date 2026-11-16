@@ -68,7 +68,7 @@ flowchart LR
 | `:benchmark` | Microbenchmarks des modules `core` (outillage de test, jamais livré) | `InsertCaptureBenchmark`, `LexicalQueryBenchmark` |
 | `:engine:privacy` | Décision de capture, familles et listes d'applications, masquage | `PrivacyGate`, `AppFamilies`, `SensitiveApps`, `Redactor` |
 | `:engine:capture` | Service d'accessibilité, anti-rebond, lecture de l'arbre, orchestration | `SeekMindAccessibilityService`, `Debouncer`, `TreeExtractor`, `CapturePipeline` |
-| `:engine:ocr` | Capture d'écran en RAM, sonde de fenêtre sécurisée, reconnaissance | `ScreenshotSource`, `SecureWindowProbe`, `OcrEngine`, `OcrPolicy`, `ThermalGovernor` |
+| `:engine:ocr` | Capture d'écran en RAM, sonde de fenêtre sécurisée, reconnaissance | `ScreenshotSource`, `SecureWindowProbe`, `OcrEngine`, `OcrPolicy`, `ThermalGovernor` (ports dans `core:model`) |
 | `:engine:index` | Normalisation, déduplication, fragments, file et lot d'embeddings | `TextNormalizer`, `SimHash`, `Chunker`, `IngestService`, `EmbeddingWorker` |
 | `:engine:embedding` | Tokenizer, runtime ONNX, quantification, catalogue de modèles et packs de langue | `Tokenizer`, `EmbeddingEngine`, `VectorCodec`, `ModelCatalog`, `ModelPackInstaller` |
 | `:engine:search` | Analyse de requête, recherche lexicale et vectorielle, fusion | `QueryParser`, `LexicalSearcher`, `VectorIndex`, `HybridSearcher` |
@@ -188,7 +188,7 @@ sequenceDiagram
   and
     H->>E: embed("query: …")
     E-->>H: vecteur
-    H->>H: index binaire en mémoire → 200 candidats → rescore int8
+    H->>H: index binaire en mémoire → 400 candidats → rescore int8
   end
   H->>H: fusion RRF, filtres
   H-->>UI: résultats hybrides (émission 2)
@@ -286,7 +286,7 @@ retient la combinaison stable la plus récente qui compile et corrige le tableau
 | Publicité (variante `ads`) | Google Mobile Ads SDK (`com.google.android.gms:play-services-ads`) | 25.5.0 |
 | | User Messaging Platform (`com.google.android.ump:user-messaging-platform`) | 4.0.0 |
 | Web | `androidx.browser` (ouverture de la politique de confidentialité) | 1.10.0 |
-| Sécurité | `androidx.biometric` | 1.1.0 |
+| Sécurité | `androidx.biometric` (non utilisée en v1 : le verrouillage emploie le `BiometricPrompt` de la plateforme, ui-ux §3.6) | 1.1.0 |
 | Tests | JUnit 4.13.2 · Truth 1.4.5 · Turbine 1.2.1 · MockK 1.14.12 · Robolectric 4.17 | |
 | | AndroidX Test runner 1.7.0 · ext-junit 1.3.0 · UI Automator 2.4.1 · Benchmark 1.5.0 | |
 | Qualité | Spotless + ktlint, Android Lint | dernières stables à M0-02 |
@@ -335,6 +335,15 @@ l'annonce récompensée.
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" />
+        </intent>
+        <!-- Apportés par le manifeste de engine:privacy : messageries (specs/confidentialite.md §3.4). -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
         </intent>
         <!-- Apportés par le manifeste de engine:capture : lanceurs et claviers, dont les événements
              sont ignorés sans lecture (specs/capture.md §5.3). -->
@@ -435,7 +444,8 @@ aucune statistique d'usage n'est planifiée ni émise ([ocr §4.1](specs/ocr.md)
 
 | Permission | Origine | `offline` | `ads` |
 |---|---|---|---|
-| `USE_BIOMETRIC`, `USE_FINGERPRINT` | `androidx.biometric` | Admise | Admise |
+| `USE_BIOMETRIC` | `:app` : `BiometricPrompt` de la plateforme (M6-07) | Admise | Admise |
+| `USE_FINGERPRINT` | Réservée à `androidx.biometric`, non utilisée en v1 | Admise | Admise |
 | `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` | WorkManager | Admises | Admises |
 | `FOREGROUND_SERVICE_DATA_SYNC` | Play Asset Delivery (packs de langue) | Admise | Admise |
 | `<applicationId>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | `androidx.core` | Admise | Admise |
@@ -450,7 +460,7 @@ aucune statistique d'usage n'est planifiée ni émise ([ocr §4.1](specs/ocr.md)
 
 | Garde-fou | Vérifie | Créé par |
 |---|---|---|
-| `:app:verifyAdsReleaseManifest`, `:app:verifyOfflineReleaseManifest` | Permissions (§10.3) par variante (`gradle/permission-allowlist-*.txt`), composants exportés (INV-12, `gradle/exported-allowlist.txt` : un composant de bibliothèque n'y est admis que protégé par une permission système, comme `ProfileInstallReceiver` derrière `DUMP`), `allowBackup`, capacités du service d'accessibilité (uniquement `canRetrieveWindowContent` et `canTakeScreenshot`) | M0-04 |
+| `:app:verifyAdsReleaseManifest`, `:app:verifyOfflineReleaseManifest` | Permissions (§10.3) par variante (`gradle/permission-allowlist-*.txt`), composants exportés (INV-12, `gradle/exported-allowlist.txt` : un composant de bibliothèque n'y est admis que protégé par une permission système, comme `ProfileInstallReceiver` derrière `DUMP` ; seule exception : `AssetPackExtractionService`, tenu déclaré désactivé (`enabled=false`), [ADR-0012](adr/0012-composants-exportes-de-play-asset-delivery.md)), `allowBackup`, capacités du service d'accessibilité (uniquement `canRetrieveWindowContent` et `canTakeScreenshot`) | M0-04 |
 | `scripts/check-forbidden-apis.sh` | Motifs interdits dans les sources hors tests : API réseau et SDK en ligne **hors de `engine/ads`**, `WebView`, `MediaProjection`, `performGlobalAction`, `performAction(`, `dispatchGesture`, `GestureDescription`, `Bitmap.compress`, `MediaStore`, `android.util.Log` hors `core:common` ; dans `engine/ads` : `addKeyword`, `setContentUrl`, `setNeighboringContentUrls`, `addCustomTargeting` | M0-04, M8-03 |
 | `:app:verifyDependencies` | Dépendances d'exécution `release` de chaque variante ⊆ sa liste blanche (`gradle/dependency-allowlist-ads.txt`, `-offline.txt` ; groupes AndroidX, Kotlin et JetBrains admis en bloc, bibliothèques tierces une par une) | M0-04 |
 | `:verifyModuleGraph` | Graphe de modules du §3.2, dont l'isolement de `engine:ads` et son absence de la variante `offline` | M0-04 |

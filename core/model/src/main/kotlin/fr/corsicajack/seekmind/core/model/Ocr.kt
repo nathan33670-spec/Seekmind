@@ -17,3 +17,17 @@ sealed interface Shot<out T> {
 
     data class Failed(val code: Int) : Shot<Nothing>
 }
+
+/** Result of the secure-window probe (docs/specs/ocr.md §3). */
+sealed interface ProbeResult {
+    data object Secure : ProbeResult
+
+    /** [ocr]: the text recognised on the same screenshot, when it was asked for. */
+    data class NotSecure(val ocr: OcrOutcome?) : ProbeResult
+
+    /** The policy needs no probe for this screen. */
+    data object Skipped : ProbeResult
+
+    /** The screenshot failed (rate limit, internal error). */
+    data object Unknown : ProbeResult
+}

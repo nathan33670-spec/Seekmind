@@ -1,0 +1,32 @@
+{
+  "comment": "Aliases of the application filter (docs/specs/recherche.md §4). An alias counts only for the packages installed on the phone.",
+  "aliases": {
+    "insta": ["com.instagram.android"],
+    "ig": ["com.instagram.android"],
+    "yt": ["com.google.android.youtube"],
+    "wa": ["com.whatsapp", "com.whatsapp.w4b"],
+    "whatsapp": ["com.whatsapp", "com.whatsapp.w4b"],
+    "fb": ["com.facebook.katana"],
+    "facebook": ["com.facebook.katana"],
+    "messenger": ["com.facebook.orca"],
+    "twitter": ["com.twitter.android"],
+    "x": ["com.twitter.android"],
+    "gmaps": ["com.google.android.apps.maps"],
+    "maps": ["com.google.android.apps.maps"],
+    "google maps": ["com.google.android.apps.maps"],
+    "gmail": ["com.google.android.gm"],
+    "chrome": ["com.android.chrome"],
+    "snap": ["com.snapchat.android"],
+    "tiktok": ["com.zhiliaoapp.musically"],
+    "tik tok": ["com.zhiliaoapp.musically"],
+    "linkedin": ["com.linkedin.android"],
+    "telegram": ["org.telegram.messenger"],
+    "signal": ["org.thoughtcrime.securesms"],
+    "spotify": ["com.spotify.music"],
+    "le bon coin": ["fr.leboncoin"],
+    "lbc": ["fr.leboncoin"],
+    "vinted": ["fr.vinted"],
+    "sncf": ["com.vsct.vsc.mobile.horaireetresa.android"],
+    "sncf connect": ["com.vsct.vsc.mobile.horaireetresa.android"]
+  }
+}

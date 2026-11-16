@@ -14,6 +14,7 @@ import fr.corsicajack.seekmind.engine.capture.StableScreenHandler
 import fr.corsicajack.seekmind.engine.capture.meta.ActivityTracker
 import fr.corsicajack.seekmind.engine.capture.meta.PackageManagerActivityLookup
 import fr.corsicajack.seekmind.engine.capture.pause.PauseController
+import fr.corsicajack.seekmind.engine.capture.pipeline.ConnectedService
 import fr.corsicajack.seekmind.engine.capture.routing.AndroidCaptureEnvironment
 import fr.corsicajack.seekmind.engine.capture.routing.CaptureLoop
 import fr.corsicajack.seekmind.engine.capture.routing.CaptureThread
@@ -44,19 +45,22 @@ object CaptureModule {
 
     @Provides
     @Singleton
+    fun connectedService(): ConnectedService = ConnectedService()
+
+    @Provides
+    @Singleton
+    fun activities(@ApplicationContext context: Context): ActivityTracker =
+        ActivityTracker(PackageManagerActivityLookup(context.packageManager))
+
+    @Provides
+    @Singleton
     fun captureLoop(
         config: CaptureConfig,
         clock: Clock,
         thread: CaptureThread,
-        @ApplicationContext context: Context,
+        activities: ActivityTracker,
         handler: Optional<StableScreenHandler>,
-    ): CaptureLoop = CaptureLoop(
-        config,
-        clock,
-        thread,
-        ActivityTracker(PackageManagerActivityLookup(context.packageManager)),
-        handler.orElse(null),
-    )
+    ): CaptureLoop = CaptureLoop(config, clock, thread, activities, handler.orElse(null))
 
     @Provides
     @Singleton
@@ -67,11 +71,13 @@ object CaptureModule {
         settings: SettingsRepository,
         connection: ServiceConnection,
         clock: Clock,
+        connected: ConnectedService,
     ): EventRouter = EventRouter(
         thread,
         loop,
         AndroidCaptureEnvironment(thread, IgnoredPackages(context), settings, connection),
         clock,
+        connected,
     )
 
     @Provides
@@ -89,7 +95,7 @@ object CaptureModule {
     fun pause(settings: SettingsRepository, clock: Clock): PauseController =
         PauseController(settings, clock, zone = ZoneId::systemDefault)
 
-    /** The pipeline binds it (M2-06); until then a stable screen reads nothing. */
+    /** Bound by PipelineModule (M2-06). */
     @Module
     @InstallIn(SingletonComponent::class)
     interface Bindings {

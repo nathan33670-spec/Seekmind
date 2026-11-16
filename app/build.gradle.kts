@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.seekmind.android.compose)
     alias(libs.plugins.seekmind.hilt)
     alias(libs.plugins.seekmind.app.guards)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 // AdMob application id (docs/04-prerequis.md §3). Google's public sample id is used unless the
@@ -57,6 +58,13 @@ android {
         // Embedding models are memory-mapped from the APK: they must stay uncompressed.
         noCompress += "onnx"
     }
+    // The multilingual model, downloaded on demand from Google Play (docs/specs/embeddings.md §5.2).
+    assetPacks += ":modelpack_multi"
+}
+
+// A release bundle never ships a missing or altered pack (ticket M4-06).
+tasks.matching { it.name.matches(Regex("bundle.*Release|package.*ReleaseBundle")) }.configureEach {
+    dependsOn(":modelpack_multi:verifyModel")
 }
 
 dependencies {
@@ -83,10 +91,21 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.work.runtime)
 
+    testImplementation(project(":core:testing"))
+    testImplementation(libs.junit)
+    testImplementation(libs.truth)
+    testImplementation(libs.kotlinx.coroutines.test)
+
+    androidTestImplementation(project(":core:testing"))
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.truth)
     androidTestImplementation(libs.kotlinx.coroutines.core)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)
 }

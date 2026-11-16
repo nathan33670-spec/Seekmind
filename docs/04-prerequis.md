@@ -47,8 +47,8 @@ Aucun de ces éléments ne va dans le dépôt (INV-10). Les clés publiques, ell
 | Clé | Algorithme | Générée par | Partie privée conservée | Partie publique |
 |---|---|---|---|---|
 | **Clé d'import Play** (*upload key*) | RSA 4096, keystore PKCS12 | **[Humain]** `keytool` | Gestionnaire de mots de passe + secret GitHub `UPLOAD_KEYSTORE_B64` | Play Console (Play App Signing) |
-| **Clé de signature des licences** | ECDSA P-256 (ES256) | `tools/license/seekmind_keys.py keygen --purpose license` | **Hors ligne** : gestionnaire de mots de passe ou clé matérielle. Jamais sur un serveur. | `engine/monetization/.../keys-release.json`, `kid` = `l1` |
-| Clé de **test** | ECDSA P-256 | Committée dans `engine/monetization/src/debug/` et `src/test/` | Committée (ne protège rien) | `keys-debug.json`, `kid` = `l-test` ; refusée par le build `release` |
+| **Clé de signature des licences** | ECDSA P-256 (ES256) | `tools/license/seekmind_keys.py keygen --purpose license --kid l1 --out <hors du dépôt>` | **Hors ligne** : gestionnaire de mots de passe ou clé matérielle. Jamais sur un serveur. | `engine/monetization/.../keys-release.json`, `kid` = `l1` |
+| Clé de **test** | ECDSA P-256 | Committée dans `tools/license/test_keys/` | Committée (ne protège rien), jamais embarquée dans l'application | `engine/monetization/src/debug/resources/license/keys-debug.json` et `testdata/tokens/keys-test.json`, `kid` = `l-test` ; refusée par le build `release` |
 
 Rotation : le champ `kid` des jetons permet d'embarquer plusieurs clés publiques. Une clé compromise est
 retirée de `keys-release.json` dans une mise à jour de l'application.

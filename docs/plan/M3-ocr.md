@@ -11,7 +11,7 @@ sécurisées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M2-01 | `engine:ocr` | [ocr §2](../specs/ocr.md) · INV-03 |
+| Fait | M2-01 | `engine:ocr` | [ocr §2](../specs/ocr.md) · INV-03 |
 
 **À faire**
 
@@ -22,9 +22,9 @@ sécurisées.
 
 **Critères d'acceptation**
 
-- [ ] Le bitmap n'est accessible que pendant `block` ; il est recyclé même si `block` échoue.
-- [ ] Deux demandes rapprochées → `RateLimited`, sans appel au système.
-- [ ] Après 200 captures consécutives, la mémoire native du processus ne croît pas au-delà de 10 Mo.
+- [x] Le bitmap n'est accessible que pendant `block` ; il est recyclé même si `block` échoue.
+- [x] Deux demandes rapprochées → `RateLimited`, sans appel au système.
+- [x] Après 200 captures consécutives, la mémoire native du processus ne croît pas au-delà de 10 Mo.
 
 ---
 
@@ -32,7 +32,7 @@ sécurisées.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M3-01, M1-05 | `engine:ocr` | [ocr §3](../specs/ocr.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) · EF-PRIV-02, EF-PRIV-03 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M3-01, M1-05 | `engine:ocr` | [ocr §3](../specs/ocr.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) · EF-PRIV-02, EF-PRIV-03 |
 
 **À faire**
 
@@ -42,10 +42,10 @@ sécurisées.
 
 **Critères d'acceptation**
 
-- [ ] API 34+ : `SecureActivity` → `Secure` ; `PlainTextActivity` → `NotSecure`.
-- [ ] API 30 : `SecureActivity` → `Secure` par l'heuristique ; un écran clair → `NotSecure`.
-- [ ] Heuristique testée sur des bitmaps de synthèse : noir, presque noir, sombre avec texte, clair.
-- [ ] Cache : pas de seconde sonde dans les 24 h pour une application hors liste (API 30–33) ; toujours une sonde pour un navigateur.
+- [x] API 34+ : `SecureActivity` → `Secure` ; `PlainTextActivity` → `NotSecure` (`SecureWindowProbeDeviceTest`, émulateurs API 34 et 36).
+- [x] API 30 : `SecureActivity` → `Secure` par l'heuristique ; un écran clair → `NotSecure` (`SecureWindowProbeDeviceTest`, émulateur API 30).
+- [x] Heuristique testée sur des bitmaps de synthèse : noir, presque noir, sombre avec texte, clair (`BlackFrameTest`).
+- [x] Cache : pas de seconde sonde dans les 24 h pour une application hors liste (API 30–33) ; toujours une sonde pour un navigateur (`ScreenshotSecureWindowProbeTest`).
 
 **Validation manuelle** — onglet privé de Chrome et de Firefox sur le téléphone de test (Android 14+) :
 aucune capture ; résultat dans la PR. Le cas Android 11 à 13 n'est vérifiable que sur émulateur à ce
@@ -57,7 +57,7 @@ stade ; il est rejoué par les testeurs du test fermé (M11-05, risque R-14).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M3-01, M0-07 | `engine:ocr` | [ocr §4, §7](../specs/ocr.md) · EF-OCR-01, EF-OCR-04 |
+| Fait | M3-01, M0-07 | `engine:ocr` | [ocr §4, §7](../specs/ocr.md) · EF-OCR-01, EF-OCR-04 |
 
 **À faire**
 
@@ -67,8 +67,10 @@ stade ; il est rejoué par les testeurs du test fermé (M11-05, risque R-14).
 
 **Critères d'acceptation**
 
-- [ ] Trois images de synthèse (texte clair sur fond sombre, sombre sur clair, petit corps) : texte reconnu.
-- [ ] Fusion : une ligne déjà présente dans l'arbre n'est pas ajoutée ; une ligne nouvelle l'est ; l'origine OCR est marquée.
+- [x] Trois images de synthèse (texte clair sur fond sombre, sombre sur clair, petit corps) : texte reconnu
+      (`MlKitOcrEngineDeviceTest`).
+- [x] Fusion : une ligne déjà présente dans l'arbre n'est pas ajoutée ; une ligne nouvelle l'est ; l'origine OCR est marquée
+      (`OcrMergeTest`).
 
 ---
 
@@ -76,7 +78,7 @@ stade ; il est rejoué par les testeurs du test fermé (M11-05, risque R-14).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M3-03 | `engine:ocr` | [ocr §5, §6](../specs/ocr.md) · EF-OCR-03 · ENF-BAT-01 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M3-03 | `engine:ocr` | [ocr §5, §6](../specs/ocr.md) · EF-OCR-03 · ENF-BAT-01 |
 
 **À faire**
 
@@ -85,8 +87,11 @@ stade ; il est rejoué par les testeurs du test fermé (M11-05, risque R-14).
 
 **Critères d'acceptation**
 
-- [ ] Table de décision de `OcrPolicy` ; budgets par intervalle, par minute et par jour (horloge simulée).
-- [ ] Le gouverneur suspend l'OCR et les embeddings pour chacun des trois signaux, et les rétablit.
+- [x] Table de décision de `OcrPolicy` ; budgets par intervalle, par minute et par jour (horloge simulée)
+      (`OcrPolicyTest`).
+- [x] Le gouverneur suspend l'OCR et les embeddings pour chacun des trois signaux, et les rétablit
+      (`ThermalGovernorTest` avec signaux simulés ; `AndroidDeviceSignalsDeviceTest` sur les vrais signaux,
+      pilotés par `cmd thermalservice`, `cmd power` et `dumpsys battery`).
 
 **Validation manuelle** — sur dix applications (dont Instagram, TikTok, YouTube, un jeu, une application
 Flutter) : relever quand l'OCR se déclenche et ce qu'il apporte ; ajuster les seuils de `OcrConfig` ;
@@ -98,7 +103,7 @@ consigner le tableau dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M3-02, M3-04, M2-06 | `engine:capture`, `app`, `fixtureapp` | [capture §6](../specs/capture.md) · [tests §4](../06-qualite-tests-ci.md#4-tests-de-bout-en-bout) |
+| Fait | M3-02, M3-04, M2-06 | `engine:capture`, `app`, `fixtureapp` | [capture §6](../specs/capture.md) · [tests §4](../06-qualite-tests-ci.md#4-tests-de-bout-en-bout) |
 
 **À faire**
 
@@ -107,7 +112,7 @@ consigner le tableau dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] E2E-03 : `SecureActivity` → `Dropped(SECURE_WINDOW)`, sur les trois niveaux d'API.
-- [ ] E2E-05 : le texte de `ImageTextActivity` est stocké avec l'origine OCR et retrouvé par la recherche.
-- [ ] E2E-06 : aucun fichier créé hors des fichiers de la base.
-- [ ] Gouverneur en état « suspendu » : aucun OCR, la capture du texte de l'arbre continue.
+- [x] E2E-03 : `SecureActivity` → `Dropped(SECURE_WINDOW)`, sur les trois niveaux d'API (`CaptureOcrE2ETest`).
+- [x] E2E-05 : le texte de `ImageTextActivity` est stocké avec l'origine OCR et retrouvé par la recherche (`CaptureOcrE2ETest`).
+- [x] E2E-06 : aucun fichier créé hors des fichiers de la base (`CaptureOcrE2ETest`).
+- [x] Gouverneur en état « suspendu » : aucun OCR, la capture du texte de l'arbre continue (`ProbeScreenshotStepTest`).

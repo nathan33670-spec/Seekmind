@@ -30,10 +30,10 @@ class DoublesTest {
 
     @Test
     fun `vector encodings`() {
-        val vector = FloatArray(384) { if (it % 2 == 0) 0.5f else -0.001f }
+        val vector = FloatArray(384) { if (it % 2 == 0) 0.5f else -0.0005f }
         val int8 = TestVectors.int8(vector)
-        assertThat(int8[0]).isEqualTo(127.toByte()) // 0.5 × 400 = 200, clamped
-        assertThat(int8[1]).isEqualTo(0.toByte())
+        assertThat(int8[0]).isEqualTo(127.toByte()) // 0.5 × 600 = 300, clamped
+        assertThat(int8[1]).isEqualTo(0.toByte()) // -0.0005 × 600 = -0.3, rounded to 0
         val binary = TestVectors.binary(vector)
         assertThat(binary).hasLength(48)
         assertThat(binary[0]).isEqualTo(0b01010101.toByte())

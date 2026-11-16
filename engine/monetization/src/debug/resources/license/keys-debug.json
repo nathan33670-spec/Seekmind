@@ -1,0 +1,9 @@
+{
+  "keys": [
+    {
+      "kid": "l-test",
+      "purpose": "license",
+      "spki": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEdehE3z79Di/0XsdNOypF5qnpxc59wjJCyFTrw12wRu4oCCJHyeObqUx4ZakkwBAmWeuiDrK5buS6Giom1HuUjw=="
+    }
+  ]
+}

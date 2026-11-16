@@ -171,7 +171,7 @@ requise) et autorise la fusion automatique.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En revue — validation manuelle en attente | M0-04, M0-08 | `engine:ocr`, `app` | [ocr §4](../specs/ocr.md) · [architecture §10.2, §10.3](../03-architecture.md) · risque R-11 |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M0-04, M0-08 | `engine:ocr`, `app` | [ocr §4](../specs/ocr.md) · [architecture §10.2, §10.3](../03-architecture.md) · risque R-11 |
 
 **À faire**
 
@@ -201,7 +201,7 @@ réussies ; résultat consigné dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En revue — validation manuelle en attente | M0-03 | `engine:capture`, `fixtureapp`, `.github/workflows` | [capture §2, §4](../specs/capture.md) · [ocr §2, §3](../specs/ocr.md) · [tests §3, §4](../06-qualite-tests-ci.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) |
+| Fait — validation manuelle reportée à M10-01 (décision du porteur, 15 novembre 2026) | M0-03 | `engine:capture`, `fixtureapp`, `.github/workflows` | [capture §2, §4](../specs/capture.md) · [ocr §2, §3](../specs/ocr.md) · [tests §3, §4](../06-qualite-tests-ci.md) · [ADR-0008](../adr/0008-detection-des-fenetres-securisees.md) |
 
 **À faire**
 
@@ -235,7 +235,7 @@ réussies ; résultat consigné dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En revue — validation manuelle en attente | M0-08, M0-10 | `engine:embedding` | [embeddings §4, §8](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) |
+| Fait — validation manuelle reportée à M10-01 (décisions du porteur, 13 et 15 novembre 2026) | M0-08, M0-10 | `engine:embedding` | [embeddings §4, §8](../specs/embeddings.md) · [ADR-0010](../adr/0010-modele-francais-et-packs-de-langue.md) |
 
 **À faire**
 

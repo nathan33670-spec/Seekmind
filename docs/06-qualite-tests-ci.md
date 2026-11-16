@@ -107,28 +107,29 @@ l'API 34 et sur l'heuristique d'image noire en API 30 (ADR-0008). La variante `o
 | `tokenizer_golden_fr.jsonl`, `tokenizer_golden_multi.jsonl` — 1 000 phrases FR/EN et leurs identifiants de jetons, pour chaque modèle | `tools/model/gen_tokenizer_golden.py` | Tests du tokenizer Kotlin : parité exacte ≥ 99,5 % |
 | `embedding_golden_fr.json`, `embedding_golden_multi.json` — 50 textes et leurs vecteurs de référence (modèle quantifié, exécuté en Python) | `tools/model/gen_embedding_golden.py` | Tests instrumentés du moteur : cosinus ≥ 0,99 |
 | `eval/corpus.jsonl` — environ 300 captures synthétiques réalistes (applications, dates, textes) | `tools/eval/gen_corpus.py` (gabarits déterministes) | Évaluation de la recherche |
-| `eval/queries.jsonl` — environ 80 requêtes annotées (type : exact, code, paraphrase, temporel, application ; langue : français, anglais, bilingue) | Rédigées, versionnées | Rappel@k, MRR, par modèle |
+| `eval/queries.jsonl` — environ 80 requêtes annotées (type : exact, code, paraphrase, temporel, application ; langue : français, anglais, bilingue) | Rédigées dans `tools/eval/gen_corpus.py`, qui les écrit avec le corpus | Rappel@k, MRR, par modèle |
 | `tokens/` — jetons de licence valides, altérés, expirés, mal typés | `tools/license/gen_test_vectors.py` | Tests du vérificateur Kotlin |
 | `temporal_cases.tsv` — expression, date de référence, intervalle attendu | Rédigé, versionné | Tests de l'analyseur temporel |
 | `sensitive_cases.tsv` — texte, résultat de masquage attendu | Rédigé, versionné | Tests du masquage |
 
-L'évaluation de la recherche tourne sur JVM en CI avec les vrais modèles (ONNX Runtime existe pour JVM
-de bureau) : `./gradlew :engine:search:evalSearch` écrit `build/reports/search-eval.json` et échoue
-sous les seuils de EF-SRCH-01 à 03 (en français pour le modèle `fr`, sur tout le jeu pour `multi`).
+L'évaluation de la recherche tourne sur les émulateurs de la CI avec les vrais modèles, sur la vraie base
+chiffrée ([ADR-0011](adr/0011-evaluation-de-la-recherche-sur-emulateur.md)). `SearchEvalDeviceTest`
+écrit `search-eval.json` et les lignes `m5_07_*` de logcat. Il échoue sous les seuils d'EF-SRCH-01 à 03 :
+en français pour le modèle `fr`, sur tout le jeu pour `multi`.
 
 ## 6. Mesures de performance
 
 | Cible | Protocole |
 |---|---|
-| ENF-PERF-01 | Trace de méthode sur `onAccessibilityEvent` pendant le défilement de `ScrollActivity` ; test instrumenté qui mesure le temps passé sur le thread principal. |
+| ENF-PERF-01 | Trace de méthode sur `onAccessibilityEvent` pendant le défilement de `ScrollActivity` ; test instrumenté (`RoutingDeviceTest`, `engine:capture`) qui mesure le temps passé sur le thread principal : 2 000 événements en régime établi, après 500 événements de préchauffage non mesurés, sous `StrictMode`. **Mesure seule** du 99ᵉ centile pendant le développement, décidée par le porteur du projet le 13 novembre 2026 : sur les émulateurs partagés de la CI, le même code varie de 2 à 9 ms. `StrictMode` reste bloquant (aucun accès au disque ni à la base sur le thread principal). Le seuil de 2 ms est exigé au ticket M10-04. |
 | ENF-PERF-02 | Durée de `TreeExtractor.extract` enregistrée dans `metric_daily` ; rapport sur dix applications réelles (manuel). |
 | ENF-PERF-03, 04 | Microbenchmark sur une base synthétique de 100 000 captures et 100 000 vecteurs générée par `core:testing` (textes tirés des gabarits du corpus, vecteurs pseudo-aléatoires normalisés). |
-| ENF-PERF-05 | Microbenchmark de `IngestService.ingest`. |
+| ENF-PERF-05 | Mesure de `IngestService.ingest` sur la base chiffrée (`IngestDeviceTest`, `engine:index`) : 1 000 ingestions du corpus synthétique, **en régime établi**, après 300 ingestions de préchauffage non mesurées (APK de test debuggable, code interprété tant que le JIT ne l'a pas compilé). p50, p95, p99 et la part en mémoire sont journalisés. Le module `:benchmark` ne mesure que les modules `core`. **Mesure seule** pendant le développement, décidée par le porteur du projet le 13 novembre 2026 : sur les émulateurs partagés de la CI, le même code varie de 1,6 à 46 ms ; le test journalise la valeur et le respect de la cible sans échouer (ce choix remplace le seuil provisoire de 30 ms du même jour). Le seuil de 15 ms est exigé au ticket M10-04. |
 | ENF-PERF-06 | Macrobenchmark de démarrage à froid, avec profil de référence. |
 | ENF-BAT-01, 02 | **Manuel**, appareil réel : `dumpsys batterystats --reset`, 24 h d'usage type dont 4 h d'écran, puis `dumpsys batterystats --charged <appId>` ; rapport de la consommation estimée et du temps CPU. Répété avec la mémorisation en pause pour obtenir la différence. |
 | ENF-MEM-01, 02 | `dumpsys meminfo <appId>` au repos après 10 min de capture, puis pendant un lot d'embeddings. |
 | ENF-STO-01 | Taille de la base après le scénario de 24 h. |
-| ENF-STO-02 | `bundletool get-size total` sur l'AAB. |
+| ENF-STO-02 | `bundletool get-size total` sur l'AAB (`:app:verifyAdsReleaseBundle`, `:app:verifyOfflineReleaseBundle`). |
 
 Les résultats sont consignés dans `docs/mesures/` (un fichier par campagne : appareil, version, chiffres).
 

@@ -23,7 +23,12 @@
 2. La clé est passée à SQLCipher au format clé brute `x'<64 caractères hexadécimaux>'` : pas de
    dérivation, ouverture immédiate. Le tableau d'octets est effacé après usage.
 3. Room est construit avec la fabrique SQLCipher, en mode WAL. `fallbackToDestructiveMigration` est interdit.
-4. Dans le rappel `onOpen` : `PRAGMA foreign_keys = ON; PRAGMA secure_delete = FAST; PRAGMA temp_store = MEMORY;`.
+4. Dans le rappel `onOpen` : `PRAGMA foreign_keys = ON; PRAGMA secure_delete = FAST; PRAGMA temp_store = MEMORY;
+   PRAGMA synchronous = NORMAL;`. Avec le journal WAL, `NORMAL` n'attend plus le disque à chaque
+   transaction : la base ne peut pas être corrompue, seules les dernières transactions peuvent être
+   perdues en cas de coupure de courant, ce qui est acceptable pour des captures. Sous `FULL` (la valeur
+   par défaut), l'ingestion dépassait 15 ms au 95ᵉ centile sur émulateur (29 ms pour l'insertion seule,
+   ticket M4-02).
 5. Dans le rappel `onCreate` : exécution de `FtsSchema.CREATE` (§3.2).
 6. Échec d'ouverture (clé absente, fichier illisible) → `DatabaseState.Unavailable(reason)` ; l'interface
    propose la réinitialisation (ENF-REL-02). Aucune tentative de réparation.
@@ -132,7 +137,7 @@ CREATE TABLE metric_daily (
 
 CREATE TABLE meta (
   key   TEXT PRIMARY KEY NOT NULL,
-  value TEXT NOT NULL                      -- schema_version, model_id (modèle actif), index_generation
+  value TEXT NOT NULL                      -- schema_version, model_id (modèle actif), int8_scale, index_generation
 );
 ```
 
@@ -180,10 +185,11 @@ END;
 interface CaptureStore {
     suspend fun insert(capture: NewCapture, chunks: List<NewChunk>): Long     // une transaction
     suspend fun insertAll(items: List<Pair<NewCapture, List<NewChunk>>>): List<Long>  // une transaction ; imports, bases synthétiques
-    suspend fun touch(captureId: Long, seenAt: Long)                          // last_seen_at, seen_count + 1
+    suspend fun touch(captureId: Long, seenAt: Long): Boolean                 // last_seen_at, seen_count + 1 ; false si la capture n'existe plus
     suspend fun recentHashes(packageName: String, limit: Int): List<HashRef>  // id, simhash, first/last_seen_at
     suspend fun get(captureId: Long): Capture?
-    suspend fun page(before: Long?, packageName: String?, limit: Int): List<CaptureSummary>  // curseur sur last_seen_at
+    suspend fun page(before: JournalCursor?, packageName: String?, limit: Int): List<CaptureSummary>  // curseur (last_seen_at, id)
+    suspend fun packages(): List<String>                                      // paquets présents, le plus récent d'abord
     suspend fun delete(captureId: Long)
     suspend fun deleteByPackage(packageName: String)
     suspend fun deleteByRange(from: Long, to: Long)
@@ -192,17 +198,21 @@ interface CaptureStore {
 
 interface SearchStore {
     suspend fun lexical(match: String, filters: SearchFilters, limit: Int): List<LexicalRow>
-    suspend fun captures(ids: List<Long>): List<Capture>
+    suspend fun captures(ids: List<Long>): List<Capture>                       // Capture porte aussi simhash (repli des quasi-doublons)
+    suspend fun fragments(embeddingIds: List<Long>): List<FragmentSpan>        // position du fragment de chaque vecteur (extraits sémantiques)
 }
 
 interface VectorStore {
     suspend fun pendingChunks(limit: Int): List<PendingChunk>                 // les plus récents d'abord
-    suspend fun saveEmbeddings(rows: List<NewEmbedding>)                      // + chunk.state = 1, une transaction
+    suspend fun saveEmbeddings(rows: List<NewEmbedding>): Int                 // une transaction ; écarte les lignes d'un autre modèle que meta.model_id (leurs fragments restent en attente), rend le nombre enregistré (M4-07)
     suspend fun markFailed(chunkId: Long)
-    suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow>
+    suspend fun binaryCodesAfter(embeddingId: Long, limit: Int): List<BinaryRow>  // codes binaire et int8, dates, paquet
     suspend fun int8Vectors(embeddingIds: List<Long>): List<Int8Row>
     suspend fun pendingCount(): Int
     suspend fun resetForModel(modelId: Int)                                   // vide embedding, remet chunk.state à 0, écrit meta.model_id
+    suspend fun modelId(): Int?                                               // meta.model_id, null avant le premier resetForModel (M4-05)
+    suspend fun int8Scale(): Float?                                           // meta.int8_scale : échelle des codes int8 stockés (M4-05)
+    suspend fun setInt8Scale(scale: Float)
     suspend fun indexGeneration(): Long                                       // meta.index_generation, 0 au départ
 }
 
@@ -229,8 +239,13 @@ Précisions (M1-04) :
 - `deleteByRange(from, to)` supprime toute capture **vue** pendant l'intervalle :
   `first_seen_at ≤ to` et `last_seen_at ≥ from`. C'est le choix le plus protecteur : un écran affiché
   pendant la période à effacer disparaît, même s'il avait été vu avant.
-- `page` : curseur strict sur `last_seen_at` ; l'aperçu (`CaptureSummary.preview`) est fait des
-  160 premiers caractères du texte.
+- `page` : ordre `(last_seen_at DESC, id DESC)` et curseur strict sur ce couple (`JournalCursor`, fait
+  de la dernière ligne de la page précédente), comparé par valeurs de ligne SQLite
+  (`(last_seen_at, id) < (?, ?)`). Un curseur sur `last_seen_at` seul sauterait les captures vues à la
+  même milliseconde que la dernière ligne d'une page (M6-05). L'aperçu (`CaptureSummary.preview`) est
+  fait des 160 premiers caractères du texte.
+- `packages` : paquets ayant au moins une capture, du plus récemment vu au plus ancien ; c'est le
+  filtre par application du journal.
 - `pendingChunks` : fragments en attente par identifiant décroissant (derniers insérés d'abord), avec le
   texte du fragment découpé en Kotlin dans `capture.text`. Les positions sont des indices de `String`
   (UTF-16), que `substr` de SQLite ne connaît pas.

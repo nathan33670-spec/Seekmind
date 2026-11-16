@@ -64,7 +64,12 @@ class PauseTileService : TileService() {
     override fun onClick() {
         super.onClick()
         when (model?.onTap) {
-            TileModel.Action.TOGGLE_PAUSE -> scope.launch { pause.toggle() }
+            TileModel.Action.TOGGLE_PAUSE -> {
+                val toggle = { scope.launch { pause.toggle() } }
+                // Resuming from the lock screen asks for the unlock; pausing never does.
+                if (model?.needsUnlock(isLocked) == true) unlockAndRun { toggle() } else toggle()
+            }
+
             TileModel.Action.OPEN_APP, null -> openApp()
         }
     }

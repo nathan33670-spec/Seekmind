@@ -57,7 +57,13 @@ try {
 - Le système impose un intervalle minimal entre deux captures
   (`ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT`) : 1 000 ms mesurés sous Android 11, 500 ms à partir
   d'Android 14 ([prototype S3](../prototypes/S3-accessibilite.md)). Un limiteur interne garantit au moins 1 000 ms entre
-  deux demandes ; au-delà, `RateLimited`.
+  deux demandes ; au-delà, `RateLimited`. Une demande refusée par le système compte aussi : le limiteur
+  mesure l'intervalle depuis la dernière demande transmise.
+- Correspondance des codes d'erreur du système : `ERROR_TAKE_SCREENSHOT_SECURE_WINDOW` → `SecureWindow` ;
+  `ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT` → `RateLimited` ; tout autre code → `Failed(code)`. Deux codes
+  internes, négatifs pour ne jamais rencontrer ceux du système, complètent `Failed` : `-1` (image
+  illisible, ou fenêtre hors de l'écran après recadrage) et `-2` (le système n'a pas répondu dans les
+  5 s). Une image qui arrive après l'abandon de l'attente est fermée aussitôt.
 - **Interdits** (INV-03) : `Bitmap.compress`, écriture de fichier, `MediaStore`, cache, passage de
   l'image à un autre module. Le bitmap ne sort jamais de `block`.
 
@@ -66,6 +72,7 @@ try {
 ```kotlin
 interface SecureWindowProbe {
     suspend fun probe(meta: ScreenMeta, windowBounds: IntRect, needImage: Boolean): ProbeResult
+    fun rejects(meta: ScreenMeta, result: ProbeResult): Boolean   // décision du §3.3
 }
 
 sealed interface ProbeResult {
@@ -91,7 +98,7 @@ Aucune API ne signale une fenêtre sécurisée ; le système en noircit le conte
   de `BrowserProfiles` et messageries à contenu éphémère) ; sinon une fois par couple
   `(paquet, activité)` et par 24 h, résultat mémorisé dans la table `secure_probe`.
 - **Heuristique d'image noire :** échantillonner une grille de 24 × 24 pixels dans la fenêtre ; si au
-  moins 98 % des échantillons ont une luminance inférieure à 8 sur 255 → `Secure`.
+  moins 98 % des échantillons ont une luminance d'au plus 8 sur 255 → `Secure`.
 - Un résultat `Secure` est mémorisé 10 min pour le couple `(paquet, activité)`.
 
 Un écran réellement noir est pris pour sécurisé : c'est l'erreur sans conséquence. Le cas inverse (fenêtre
@@ -102,6 +109,20 @@ les applications dont l'attribut varie d'un écran à l'autre.
 
 Capture impossible (limite de débit, erreur interne) : pour les paquets de `probeAlwaysPackages`, la
 capture est **rejetée** (`SECURE_WINDOW`) ; pour les autres, elle se poursuit sans OCR.
+
+`rejects(meta, result)` rend cette décision : vrai pour `Secure`, et pour `Unknown` sur un paquet de
+`probeAlwaysPackages`.
+
+### 3.4 Implémentation (M3-02)
+
+Paquet `fr.corsicajack.seekmind.engine.ocr.probe` :
+
+| Élément | Rôle |
+|---|---|
+| `ScreenshotSecureWindowProbe` | Implémente `SecureWindowProbe`. API 34+ : sans OCR, `ProbeScreenshots.checkWindow` demande la capture et ferme le tampon aussitôt, sans copie ; avec OCR, la même capture sert à la reconnaissance. API 30–33 : heuristique d'image noire, cache `secure_probe` (`SecureProbeStore`, `core:database`). Un écran mémorisé non sécurisé rend `Skipped` pendant 24 h, sauf si son image est prise de toute façon pour l'OCR : l'heuristique est alors refaite, sans coût. Une image noire n'est jamais envoyée à l'OCR. Base fermée : rien n'est mémorisé, chaque capture est sondée. |
+| `BlackFrame` | Heuristique du §3.2 : grille de 24 × 24 points au centre des cellules, luminance Rec. 601. |
+| `EphemeralMessaging` | Messageries à contenu éphémère. `:app` remplit `OcrConfig.probeAlwaysPackages` avec elles et les navigateurs de `BrowserProfiles`. |
+
 
 ## 4. Reconnaissance
 
@@ -124,6 +145,14 @@ data class OcrLine(val text: String, val bounds: IntRect, val confidence: Float?
 - La `Task` de ML Kit est adaptée en fonction suspendue par `suspendCancellableCoroutine` (pas de
   dépendance supplémentaire).
 - Filtrage : lignes d'au moins 3 caractères alphanumériques ; confiance ≥ 0,45 lorsqu'elle est fournie.
+- Implémentation (M3-03), paquet `fr.corsicajack.seekmind.engine.ocr.recognition` : `MlKitOcrEngine`
+  (reconnaisseur unique, `Task` adaptée) et `OcrLineFilter`
+  (`OcrConfig.minLineConfidence`). Les tests sur appareil d'`engine:ocr` exécutent ML Kit : leur
+  manifeste retire les mêmes composants de transport que l'application (§4.1).
+- Une `Task` de ML Kit ne s'annule pas et lit le bitmap jusqu'à sa fin, alors que l'appelant le recycle
+  dès le retour de `recognize` (INV-03). `recognize` attend donc toujours la fin de sa `Task`, même si sa
+  coroutine est annulée, et ne relance l'annulation qu'ensuite. `close()` ne libère le reconnaisseur
+  qu'une fois les reconnaissances en cours terminées ; un appel ultérieur à `recognize` est refusé.
 
 ### 4.1 Télémétrie de ML Kit
 
@@ -169,13 +198,20 @@ L'OCR est lancé si **toutes** ces conditions sont vraies :
 | Le budget le permet | ≥ 5 s depuis le dernier OCR, ≤ 6 par minute, ≤ 400 par jour |
 
 Les seuils sont des valeurs de départ ; le ticket M3-04 les ajuste sur dix applications réelles et
-consigne les mesures.
+consigne les mesures (validation reportée à M10-01, décision du porteur du 15 novembre 2026).
+
+Implémentation (M3-04), paquet `fr.corsicajack.seekmind.engine.ocr.policy` : `OcrPolicy.shouldOcr`
+vérifie les conditions dans l'ordre du tableau. Une réponse positive compte dans le budget et entre
+dans le mémo, quel que soit le sort de la capture d'écran : un écran dont l'OCR a échoué n'est pas
+relu aussitôt. La minute et le jour sont des fenêtres glissantes sur l'horloge monotone
+(`Clock.elapsedRealtime`).
 
 ## 6. Gouverneur thermique et énergétique
 
 ```kotlin
 interface ThermalGovernor {
     val state: StateFlow<GovernorState>
+    fun current(): GovernorState      // relu sur l'appareil, pour une décision
 }
 
 data class GovernorState(
@@ -194,15 +230,36 @@ data class GovernorState(
 | En charge | `ACTION_BATTERY_CHANGED` | `embeddingThreads = 4` (sinon 2) |
 
 Les récepteurs sont enregistrés dynamiquement, non exportés. Le gouverneur est partagé avec
-`engine:index` (lots d'embeddings).
+`engine:index` (lots d'embeddings) : l'interface `ThermalGovernor`, `GovernorState` et `ThrottleReason`
+sont des ports de `core:model` (`port/DevicePorts.kt`), comme `OcrEngine`, pour qu'aucun des deux
+moteurs ne dépende de l'autre.
+
+Les décisions (`OcrPolicy.shouldOcr`, début d'un lot d'embeddings et contrôle entre deux lots) lisent `current()`, pas `state`. Sur
+API 34+, les diffusions destinées à un processus en cache attendent qu'il en sorte : un processus réveillé
+pour un travail verrait encore l'appareil tel qu'il était. `current()` relit la diffusion persistante de
+la batterie, l'économie d'énergie et l'état thermique (`AndroidDeviceSignals.refresh`).
+
+Implémentation (M3-04), paquet `fr.corsicajack.seekmind.engine.ocr.policy` :
+
+| Élément | Rôle |
+|---|---|
+| `GovernorRules` | État pour des signaux donnés. Raison retenue quand plusieurs signaux tiennent : chaleur, puis économie d'énergie, puis batterie. Fils des embeddings : `EmbeddingConfig.threadsCharging` en charge, sinon `threadsDefault`. |
+| `AndroidDeviceSignals` | Signaux de l'appareil : écouteur d'état thermique de `PowerManager`, un récepteur non exporté pour `ACTION_POWER_SAVE_MODE_CHANGED` et `ACTION_BATTERY_CHANGED` (diffusion persistante : l'état initial est lu à l'enregistrement). « En charge » signifie branché (`EXTRA_PLUGGED` non nul), que la batterie se remplisse ou non. |
+| `SignalThermalGovernor` | `ThermalGovernor` sur un flux de signaux, réels ou simulés dans les tests. |
 
 ## 7. Fusion avec le texte de l'arbre
 
 1. Forme de comparaison d'une ligne : minuscules, sans diacritiques, espaces réduits.
-2. Une ligne d'OCR est écartée si sa forme de comparaison est contenue dans le texte de l'arbre, ou si
-   son recouvrement de mots (Jaccard) avec une ligne de l'arbre atteint 0,8.
-3. Les lignes d'OCR restantes sont ajoutées après celles de l'arbre, de haut en bas.
+2. Une ligne d'OCR est écartée si sa forme de comparaison est contenue dans une ligne de l'arbre, mot pour
+   mot (« jeu » n'est pas dans « jeudi »), ou si son recouvrement de mots (Jaccard) avec une ligne de
+   l'arbre atteint 0,8.
+3. Les lignes d'OCR restantes sont ajoutées après celles de l'arbre, dans l'ordre de lecture : par rangées
+   (lignes dont les hauteurs se recouvrent de plus de la moitié), chaque rangée de gauche à droite.
 4. `textSource` porte le bit OCR si au moins une ligne d'OCR est conservée.
+
+Implémentation (M3-03) : `OcrMerge.merge(tree, ocr)` rend les lignes fusionnées, les bits de
+`textSource` (arbre si l'arbre a des lignes, OCR si une ligne d'OCR est conservée) et le nombre de lignes
+d'OCR conservées. Les mots sont les suites de lettres et de chiffres de la forme de comparaison. L'intégration au pipeline relève de M3-05.
 
 ## 8. Configuration
 
@@ -236,4 +293,6 @@ data class OcrConfig(
   mémoire native au-delà d'un seuil.
 - **Bout en bout** : E2E-03, 05, 06.
 - **Garde-fou** : `scripts/check-forbidden-apis.sh` interdit `compress(`, `FileOutputStream`, `MediaStore`
-  et `ImageWriter` dans `engine/ocr` et `engine/capture`.
+  et `ImageWriter` dans `engine/ocr` et `engine/capture`, ainsi que les autres voies vers le disque :
+  `openFileOutput`, répertoires de cache, `RandomAccessFile`, `FileWriter`, `Files.write`/`newOutputStream`/`copy`,
+  `writeBytes(`, `outputStream(`, `bufferedWriter(`, `printWriter(`.
