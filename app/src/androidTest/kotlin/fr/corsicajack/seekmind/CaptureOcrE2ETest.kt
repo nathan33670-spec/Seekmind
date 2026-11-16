@@ -106,6 +106,11 @@ class CaptureOcrE2ETest {
 
         // E2E-06: no file outside the database files, created or rewritten.
         val written = files().filter { (path, state) -> before[path] != state }.keys
+            // Admitted by name (decision of the project owner, 16 November 2026): ML Kit rewrites its
+            // installation identifier when the recognizer starts. Admitted only while that is its sole
+            // key: no captured content, and its uploads are neutralised (ocr §4.1).
+            .filterNot { it == ML_KIT_PREFERENCES && preferenceKeys(setOf(it))[it] == listOf(ML_KIT_KEY) }
+            .toSet()
         assertWithMessage("files written during the capture; keys of the preferences: ${preferenceKeys(written)}")
             .that(written).isEmpty()
     }
@@ -170,6 +175,8 @@ class CaptureOcrE2ETest {
     private companion object {
         const val FIXTURE = "fr.corsicajack.seekmind.fixture"
         const val TIMEOUT_MS = 60_000L
+        const val ML_KIT_PREFERENCES = "shared_prefs/com.google.mlkit.internal.xml"
+        const val ML_KIT_KEY = "ml_sdk_instance_id"
         val KEY = Regex("""name="([^"]+)"""")
     }
 }
