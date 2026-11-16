@@ -68,7 +68,7 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En revue — protection de `main` par le porteur | M0-02 | `.github/workflows` | [prérequis §6](../04-prerequis.md#6-intégration-continue) · [tests §7](../06-qualite-tests-ci.md#7-intégration-continue) |
+| Fait | M0-02 | `.github/workflows` | [prérequis §6](../04-prerequis.md#6-intégration-continue) · [tests §7](../06-qualite-tests-ci.md#7-intégration-continue) |
 
 **À faire**
 
@@ -84,7 +84,7 @@ Ordre conseillé : M0-01 → M0-02 → M0-03 → M0-08 → M0-06 et M0-07 ; M0-0
 - [x] Une erreur de formatage introduite volontairement le fait échouer (preuve dans la PR, puis retirée) : commit `262e86b`, exécution `43212021102` en échec sur `:spotlessKotlinCheck`, annulé ensuite.
 
 **Validation manuelle** — le porteur du projet protège `main` (PR obligatoire, vérification `ci`
-requise) et autorise la fusion automatique.
+requise) et autorise la fusion automatique. Fait (confirmé par le porteur le 16 novembre 2026).
 
 ---
 
