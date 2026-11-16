@@ -48,7 +48,7 @@ class AndroidCaptureEnvironment(
         val scope = CoroutineScope(SupervisorJob() + thread.dispatcher).also { scope = it }
         scope.launch { listener.onIgnoredPackages(ignoredPackages.compute()) }
         scope.launch {
-            settings.settings.collect { listener.onSettings(it.consent != null, it.pausedUntil) }
+            settings.settings.collect { listener.onSettings(it.hasCurrentConsent(), it.pausedUntil) }
         }
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {

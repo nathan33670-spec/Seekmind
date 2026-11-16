@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Welcome pages (docs/specs/ui-ux.md §3.1). -->
+    <string name="onboarding_intro_1_title">Find everything you have seen</string>
+    <string name="onboarding_intro_1_text">SeekMind remembers the text of the screens you see, so that you can search it later.</string>
+    <string name="onboarding_intro_2_title">Everything stays on your phone</string>
+    <string name="onboarding_intro_2_text">What SeekMind remembers is encrypted on this phone and never sent anywhere.</string>
+    <string name="onboarding_intro_3_title">You stay in control</string>
+    <string name="onboarding_intro_3_text">Pause, exclude apps or delete everything, at any time.</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+
+    <!-- Disclosure, version 1 (docs/05-conformite-play-store.md §4.3), word for word. Variant ads; the
+         offline variant replaces onboarding_disclosure_data_2 (M8-06). -->
+    <string name="onboarding_disclosure_title">SeekMind needs to read what is shown on your screen</string>
+    <string name="onboarding_disclosure_intro">To let you find again what you have seen, SeekMind uses Android\'s accessibility service (AccessibilityService API).</string>
+    <string name="onboarding_disclosure_reads_title">What SeekMind reads</string>
+    <string name="onboarding_disclosure_reads_1">The text displayed in the apps you use, the app name, the screen title and the address of web pages.</string>
+    <string name="onboarding_disclosure_reads_2">When a screen mostly contains images or video, SeekMind occasionally analyses the image of the screen to recognise text in it. That image is processed in memory and is never saved.</string>
+    <string name="onboarding_disclosure_why_title">Why</string>
+    <string name="onboarding_disclosure_why">Only to build your personal search index on this phone.</string>
+    <string name="onboarding_disclosure_data_title">What happens to this data</string>
+    <string name="onboarding_disclosure_data_1">It stays on this phone, in an encrypted database. It is never sent, shared or sold — not to the publisher, not to the advertising network, not to anyone.</string>
+    <string name="onboarding_disclosure_data_2">The app\'s Internet access is only used to display the ads you choose to watch. Those ads are never selected based on what SeekMind has read.</string>
+    <string name="onboarding_disclosure_data_3">You can pause memorisation, exclude apps and delete everything at any time.</string>
+    <string name="onboarding_disclosure_not_title">What SeekMind does not read</string>
+    <string name="onboarding_disclosure_not">Password fields, private browsing, protected screens and sensitive apps (banking, password managers…).</string>
+    <string name="onboarding_disclosure_actions">SeekMind never performs actions on your behalf in other apps.</string>
+    <string name="onboarding_disclosure_refuse">No thanks</string>
+    <string name="onboarding_disclosure_accept">I agree</string>
+    <string name="onboarding_disclosure_scroll_hint">Scroll to the end of the text to agree.</string>
+
+    <!-- Families of applications (docs/specs/confidentialite.md §3.4). -->
+    <string name="onboarding_families_title">What do you want to remember?</string>
+    <string name="onboarding_family_browsers">Browsers</string>
+    <string name="onboarding_family_messaging">Messaging and e-mail</string>
+    <string name="onboarding_family_social">Social networks and video</string>
+    <string name="onboarding_family_other">Other apps</string>
+    <string name="onboarding_families_never">Banking, password managers and private browsing are never remembered.</string>
+
+    <!-- Activation of the service. -->
+    <string name="onboarding_activate_title">Turn on SeekMind</string>
+    <string name="onboarding_activate_step_1">1. Open the accessibility settings.</string>
+    <string name="onboarding_activate_step_2">2. Choose « SeekMind ».</string>
+    <string name="onboarding_activate_step_3">3. Turn it on.</string>
+    <string name="onboarding_activate_open">Open the settings</string>
+    <string name="onboarding_activate_help">I can\'t do it</string>
+    <string name="onboarding_confirmed_title">Memorisation is on</string>
+
+    <!-- Lock. -->
+    <string name="onboarding_lock_title">Protect SeekMind with your fingerprint or your code</string>
+    <string name="onboarding_lock_enable">Turn on</string>
+    <string name="onboarding_lock_later">Later</string>
+</resources>

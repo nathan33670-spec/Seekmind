@@ -26,7 +26,10 @@ import org.junit.runner.RunWith
 /** Navigation of [MainActivity] between the three destinations of the bottom bar (ticket M6-01). */
 @RunWith(AndroidJUnit4::class)
 class NavigationTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val onboardingDone = OnboardingDoneRule()
+
+    @get:Rule(order = 1)
     val compose = createAndroidComposeRule<MainActivity>()
 
     @Before
