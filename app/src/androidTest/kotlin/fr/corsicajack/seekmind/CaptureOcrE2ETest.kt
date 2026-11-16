@@ -106,7 +106,8 @@ class CaptureOcrE2ETest {
 
         // E2E-06: no file outside the database files, created or rewritten.
         val written = files().filter { (path, state) -> before[path] != state }.keys
-        assertWithMessage("files written during the capture").that(written).isEmpty()
+        assertWithMessage("files written during the capture; keys of the preferences: ${preferenceKeys(written)}")
+            .that(written).isEmpty()
     }
 
     private fun database() = (graph.database() as DatabaseState.Ready).database
@@ -132,6 +133,12 @@ class CaptureOcrE2ETest {
         }
     }
 
+    /** The key names (never the values) of the written preference files, to tell what a library keeps. */
+    private fun preferenceKeys(paths: Set<String>): Map<String, List<String>> =
+        paths.filter { it.startsWith("shared_prefs/") && it.endsWith(".xml") }.associateWith { path ->
+            KEY.findAll(File(context.dataDir, path).readText()).map { it.groupValues[1] }.toList()
+        }
+
     /**
      * Every file of the application's data directory but the databases (Room, SQLCipher, WorkManager),
      * with its size and modification time: a file rewritten during the capture counts as written.
@@ -141,6 +148,8 @@ class CaptureOcrE2ETest {
         return root.walkTopDown()
             .onEnter { it.name != "databases" }
             .filter(File::isFile)
+            // WorkManager keeps its database in no_backup/ (androidx.work.workdb and its journals).
+            .filterNot { it.parentFile?.name == "no_backup" && it.name.startsWith("androidx.work.workdb") }
             .associate { it.relativeTo(root).path to (it.length() to it.lastModified()) }
     }
 
@@ -161,5 +170,6 @@ class CaptureOcrE2ETest {
     private companion object {
         const val FIXTURE = "fr.corsicajack.seekmind.fixture"
         const val TIMEOUT_MS = 60_000L
+        val KEY = Regex("""name="([^"]+)"""")
     }
 }
