@@ -2,6 +2,7 @@ package fr.corsicajack.seekmind
 
 import android.app.UiAutomation
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -13,6 +14,7 @@ import fr.corsicajack.seekmind.core.model.DropReason
 import fr.corsicajack.seekmind.core.model.PipelineEvent
 import fr.corsicajack.seekmind.core.model.SearchFilters
 import fr.corsicajack.seekmind.core.model.TextSource
+import fr.corsicajack.seekmind.core.model.config.OcrConfig
 import fr.corsicajack.seekmind.di.CaptureEntryPoint
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
@@ -88,6 +90,9 @@ class CaptureOcrE2ETest {
         open("PlainTextActivity")
         awaitEvent("a stored plain screen") { it is PipelineEvent.Stored || it is PipelineEvent.Deduplicated }
         val before = files()
+        // The plain screen, sparse, may have used an OCR: the policy allows the next one only after
+        // its minimal interval (ocr §5), a known rule rather than an arbitrary delay.
+        SystemClock.sleep(OcrConfig().minIntervalMs)
 
         open("ImageTextActivity")
         val stored = awaitEvent("the image screen stored") { event ->
