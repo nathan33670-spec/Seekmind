@@ -30,10 +30,12 @@ data class OnboardingUiState(
 )
 
 /**
- * The welcome flow (docs/specs/ui-ux.md §3.1, docs/05-conformite-play-store.md §4). The consent is
- * recorded at the tap on « J'accepte », the families when their screen is confirmed: both before any
- * redirection to the system settings (INV-04). Refusing, closing or going back from the disclosure is a
- * refusal: nothing is recorded but the fact that the flow was gone through.
+ * The welcome flow (docs/specs/ui-ux.md §3.1, docs/05-conformite-play-store.md §4). The tap on
+ * « J'accepte » is timed and kept in memory; the consent and the families are recorded together, in one
+ * write, when the families are confirmed: before any redirection to the system settings, and never one
+ * without the other, so that no capture can start on families the user did not choose (INV-04).
+ * Refusing, closing or going back from the disclosure or the families is a refusal: nothing is recorded
+ * but the fact that the flow was gone through.
  */
 class OnboardingViewModel(
     private val settings: SettingsRepository,
@@ -49,6 +51,9 @@ class OnboardingViewModel(
 
     // The writes of the flow run one after the other: a tap never overtakes the previous one.
     private val writes = Mutex()
+
+    /** Time of the tap on « J'accepte », recorded with the families. */
+    private var acceptedAt: Long? = null
     private var enabled = false
 
     init {
@@ -91,10 +96,10 @@ class OnboardingViewModel(
         }
     }
 
-    /** « J'accepte »: the consent (version, time of the tap), then the families. */
+    /** « J'accepte »: the time of the tap is kept; nothing is recorded before the families. */
     fun accept() = write {
         if (mutable.value.step != OnboardingStep.DISCLOSURE) return@write
-        settings.acceptConsent(Consent(DISCLOSURE_VERSION, now()))
+        acceptedAt = now()
         val families = settings.current().enabledFamilies
         mutable.update { it.copy(step = OnboardingStep.FAMILIES, families = families) }
     }
@@ -110,11 +115,12 @@ class OnboardingViewModel(
         if (it.step != OnboardingStep.FAMILIES) it else it.copy(families = it.families.toggled(family))
     }
 
-    /** « Continuer »: the families are recorded before the activation screen, hence before any redirection. */
+    /** « Continuer »: the consent and the families, in one write, before the activation screen. */
     fun confirmFamilies() = write {
         val current = mutable.value
-        if (current.step != OnboardingStep.FAMILIES) return@write
-        settings.setEnabledFamilies(current.families)
+        val at = acceptedAt
+        if (current.step != OnboardingStep.FAMILIES || at == null) return@write
+        settings.acceptConsent(Consent(DISCLOSURE_VERSION, at), current.families)
         val next = if (enabled) OnboardingStep.CONFIRMED else OnboardingStep.ACTIVATE
         mutable.update { it.copy(step = next) }
     }
@@ -135,10 +141,11 @@ class OnboardingViewModel(
         finishLocked()
     }
 
-    /** Back after the disclosure was accepted: the flow ends, what was chosen stays. */
+    /** Back: before the families are confirmed, a refusal; afterwards, the flow ends and what was chosen stays. */
     fun leave() = write {
         when (mutable.value.step) {
-            OnboardingStep.DISCLOSURE -> {
+            OnboardingStep.DISCLOSURE, OnboardingStep.FAMILIES -> {
+                acceptedAt = null
                 settings.setOnboardingDone()
                 mutable.update { it.copy(step = OnboardingStep.DONE, refused = true) }
             }

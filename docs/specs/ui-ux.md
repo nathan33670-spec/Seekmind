@@ -57,8 +57,11 @@ Barre inférieure à trois destinations : **Recherche**, **Journal**, **Réglage
 Au retour des réglages système (`onResume`), l'état du service est relu : actif → confirmation ; inactif
 → l'écran reste, avec un lien « Je n'y arrive pas » (aide par constructeur).
 
-Le consentement est enregistré (`version`, `date`) à l'instant du tap sur « J'accepte », et le choix
-des familles à la validation de son écran : tous deux avant la redirection vers les réglages système.
+Le consentement porte la date du tap sur « J'accepte » ; il est enregistré (`version`, `date`) avec le
+choix des familles, en une seule écriture, à la validation de l'écran des familles : avant la
+redirection vers les réglages système, et jamais l'un sans l'autre (INV-04). Un retour arrière sur
+l'écran des familles vaut refus. Sur les pages de présentation, il ferme l'application, et le parcours
+reprend au lancement suivant.
 
 Le consentement **publicitaire** n'apparaît pas dans ce parcours : la fenêtre de Google s'affiche à la
 première demande de publicité ([monetisation §3.3](monetisation.md)).

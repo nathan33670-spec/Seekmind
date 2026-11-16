@@ -83,13 +83,31 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `accepting records the consent of this version at the tap, before the families`() {
+    fun `nothing is recorded at the tap, the consent and the families come together at their confirmation`() {
         val model = model(OnboardingStart.DISCLOSURE)
         assertThat(model.mayOpenSystemSettings()).isFalse()
         model.accept()
         model.await(OnboardingStep.FAMILIES)
-        assertThat(current().consent).isEqualTo(Consent(DISCLOSURE_VERSION, NOW))
+        // Between « J'accepte » and the families, the capture has no consent: it cannot start on families
+        // the user did not choose (INV-04).
+        assertThat(current().hasCurrentConsent()).isFalse()
         assertThat(model.mayOpenSystemSettings()).isFalse()
+        model.toggleFamily(AppFamily.MESSAGING)
+        model.confirmFamilies()
+        model.await(OnboardingStep.ACTIVATE)
+        assertThat(current().consent).isEqualTo(Consent(DISCLOSURE_VERSION, NOW))
+        assertThat(current().enabledFamilies).doesNotContain(AppFamily.MESSAGING)
+    }
+
+    @Test
+    fun `back from the families is a refusal`() {
+        val model = model(OnboardingStart.DISCLOSURE)
+        model.accept()
+        model.await(OnboardingStep.FAMILIES)
+        model.leave()
+        model.await(OnboardingStep.DONE)
+        assertThat(current().consent).isNull()
+        assertThat(model.state.value.refused).isTrue()
     }
 
     @Test

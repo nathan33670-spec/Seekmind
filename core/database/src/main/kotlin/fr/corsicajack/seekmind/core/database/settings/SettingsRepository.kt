@@ -85,6 +85,18 @@ class SettingsRepository(private val store: DataStore<Preferences>, private val 
         }
     }
 
+    /**
+     * The end of the welcome flow's choices (INV-04): the consent and the families, in one write. The
+     * capture never sees one without the other.
+     */
+    suspend fun acceptConsent(consent: Consent, families: Set<AppFamily>) {
+        store.edit {
+            it[ENABLED_FAMILIES] = families.mapTo(mutableSetOf()) { family -> family.name }
+            it[CONSENT_VERSION] = consent.version
+            it[CONSENT_AT] = consent.acceptedAt
+        }
+    }
+
     suspend fun setEnabledFamilies(families: Set<AppFamily>) {
         store.edit { prefs ->
             prefs[ENABLED_FAMILIES] = families.mapTo(mutableSetOf()) { it.name }
