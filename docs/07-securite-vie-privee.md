@@ -109,7 +109,9 @@ Plan du document à publier sur le site (rédaction : ticket M11-02, relecture j
 
 1. Qui édite l'application ; contact.
 2. Ce que l'application lit, pourquoi, et ce qu'elle ne lit pas (reprend la divulgation).
-3. Où sont les données : sur l'appareil, chiffrées ; aucune transmission ; aucun compte.
+3. Où sont les données : sur l'appareil, chiffrées ; aucune transmission ; aucun compte. Seul élément
+   hors de la base chiffrée : l'identifiant d'installation de la bibliothèque de reconnaissance de texte
+   (ML Kit), sans aucun contenu et jamais envoyé ([ocr §4.1](specs/ocr.md)).
 4. Ce que l'éditeur reçoit : rien. Aucune statistique, aucun rapport de plantage.
 5. **Publicité** : annonces récompensées fournies par Google (AdMob), affichées uniquement à votre
    demande ; données que le SDK de Google collecte à cette occasion (identifiant publicitaire, données

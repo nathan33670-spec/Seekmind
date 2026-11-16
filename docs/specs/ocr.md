@@ -175,6 +175,14 @@ variante `ads`, ML Kit émettait environ 2 Ko après 100 reconnaissances ; en va
 
 La variante `offline` retire en outre `ACCESS_NETWORK_STATE`, qu'aucun composant restant n'utilise.
 
+ML Kit écrit dans le stockage privé de l'application un seul fichier hors de la base :
+`shared_prefs/com.google.mlkit.internal.xml`. Sa seule clé est `ml_sdk_instance_id`, un identifiant
+d'installation de la bibliothèque, réécrit à chaque démarrage du reconnaisseur. Le fichier ne contient
+aucun contenu capturé (INV-06). Avec l'option B, rien n'est envoyé, l'identifiant compris. Il est exclu
+des sauvegardes, comme tout le stockage (INV-09), et effacé avec l'application. E2E-06 l'admet
+nommément, tant qu'il ne contient que cette clé (décision du porteur, 16 novembre 2026). Le plan de la
+politique de confidentialité le mentionne ([sécurité §7](../07-securite-vie-privee.md)).
+
 Chaque montée de version de ML Kit rejoue le test `MlKitTelemetryPrototypeTest` (aucun octet émis,
 aucune erreur de transport). Si une version future rendait l'option B instable (risque R-11), le moteur
 de repli est un modèle de reconnaissance exécuté par ONNX Runtime, déjà embarqué ; `OcrEngine` isole ce
