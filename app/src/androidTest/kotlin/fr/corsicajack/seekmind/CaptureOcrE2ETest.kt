@@ -57,6 +57,9 @@ class CaptureOcrE2ETest {
         accessibility = setting("accessibility_enabled")
         // The receiver is subscribed before anything can be captured.
         scope.launch { graph.pipeline().events.collect { events.send(it) } }
+        // Each test starts without remembered probes: on API 30-33 a secure result is kept 10 min for
+        // (package, activity), and for the whole package when the activity is unknown (ocr §3.2).
+        database().secureProbes.deleteOlderThan(Long.MAX_VALUE)
         graph.settings().acceptConsent(Consent(version = 1, acceptedAt = System.currentTimeMillis()))
         shell("settings put secure enabled_accessibility_services $service")
         shell("settings put secure accessibility_enabled 1")
