@@ -104,9 +104,15 @@ class CaptureOcrE2ETest {
         assertThat(database().search.lexical("\"4821\"", SearchFilters(), 10).map { it.captureId })
             .contains(stored.captureId)
 
-        // E2E-06: no file outside the database files.
-        val created = files() - before
-        assertWithMessage("files created during the capture").that(created).isEmpty()
+        // E2E-06: no file outside the database files, created or rewritten.
+        val written = files().filter { (path, state) -> before[path] != state }.keys
+            // Admitted by name (decision of the project owner, 16 November 2026): ML Kit rewrites its
+            // installation identifier when the recognizer starts. Admitted only while that is its sole
+            // key: no captured content, and its uploads are neutralised (ocr §4.1).
+            .filterNot { it == ML_KIT_PREFERENCES && preferenceKeys(setOf(it))[it] == listOf(ML_KIT_KEY) }
+            .toSet()
+        assertWithMessage("files written during the capture; keys of the preferences: ${preferenceKeys(written)}")
+            .that(written).isEmpty()
     }
 
     private fun database() = (graph.database() as DatabaseState.Ready).database
@@ -132,14 +138,24 @@ class CaptureOcrE2ETest {
         }
     }
 
-    /** Every file of the application's data directory but the databases (Room, SQLCipher, WorkManager). */
-    private fun files(): Set<String> {
+    /** The key names (never the values) of the written preference files, to tell what a library keeps. */
+    private fun preferenceKeys(paths: Set<String>): Map<String, List<String>> =
+        paths.filter { it.startsWith("shared_prefs/") && it.endsWith(".xml") }.associateWith { path ->
+            KEY.findAll(File(context.dataDir, path).readText()).map { it.groupValues[1] }.toList()
+        }
+
+    /**
+     * Every file of the application's data directory but the databases (Room, SQLCipher, WorkManager),
+     * with its size and modification time: a file rewritten during the capture counts as written.
+     */
+    private fun files(): Map<String, Pair<Long, Long>> {
         val root = context.dataDir
         return root.walkTopDown()
             .onEnter { it.name != "databases" }
             .filter(File::isFile)
-            .map { it.relativeTo(root).path }
-            .toSet()
+            // WorkManager keeps its database in no_backup/ (androidx.work.workdb and its journals).
+            .filterNot { it.parentFile?.name == "no_backup" && it.name.startsWith("androidx.work.workdb") }
+            .associate { it.relativeTo(root).path to (it.length() to it.lastModified()) }
     }
 
     private fun setting(name: String): String? = shell("settings get secure $name").trim().takeIf {
@@ -159,5 +175,8 @@ class CaptureOcrE2ETest {
     private companion object {
         const val FIXTURE = "fr.corsicajack.seekmind.fixture"
         const val TIMEOUT_MS = 60_000L
+        const val ML_KIT_PREFERENCES = "shared_prefs/com.google.mlkit.internal.xml"
+        const val ML_KIT_KEY = "ml_sdk_instance_id"
+        val KEY = Regex("""name="([^"]+)"""")
     }
 }

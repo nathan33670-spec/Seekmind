@@ -53,7 +53,10 @@ sealed interface Authorization {
 | Solde ≥ 1 | `Granted(true)` | Débit de 1 **si** `resultCount > 0` |
 | Solde nul | `NoCredit` → feuille de crédits | — |
 
-- `queryKey` = texte normalisé de la requête + filtres ([recherche §9](recherche.md)).
+- `queryKey` = texte normalisé de la requête + filtres ([recherche §9](recherche.md)). Le registre n'en garde que
+  l'empreinte SHA-256 (`credit_ledger.ref`), jamais le texte (décision du porteur, 16 novembre 2026) : la
+  règle des 10 minutes n'a besoin que d'une égalité, et le texte survivrait à l'historique des
+  recherches, même désactivé.
 - Une recherche sans résultat n'est jamais débitée (EF-MON-04). Une recherche assouplie qui trouve des résultats l'est.
 - En formule gratuite, la recherche part sur validation explicite ; en formule activée, elle part aussi
   au fil de la frappe, après 300 ms de pause.

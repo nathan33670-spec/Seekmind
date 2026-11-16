@@ -7,6 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import fr.corsicajack.seekmind.capture.ConnectedOcrEngine
 import fr.corsicajack.seekmind.capture.ConnectedScreenshots
 import fr.corsicajack.seekmind.core.common.Clock
 import fr.corsicajack.seekmind.core.database.DatabaseState
@@ -202,7 +203,7 @@ object PipelineModule {
     ): ScreenshotStep {
         val probe = ScreenshotSecureWindowProbe(
             shots = ConnectedScreenshots(connected, ocr, clock),
-            ocr = MlKitOcrEngine(ocr),
+            ocr = ConnectedOcrEngine(connected, { MlKitOcrEngine(ocr) }, MlKitOcrEngine::close),
             store = { (database.get() as? DatabaseState.Ready)?.database?.secureProbes },
             config = ocr,
             clock = clock,

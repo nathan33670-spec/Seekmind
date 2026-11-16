@@ -95,6 +95,17 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun theConsentAndTheFamiliesAreWrittenTogether() = runBlocking<Unit> {
+        repository.acceptConsent(Consent(DISCLOSURE_VERSION, 1_000), setOf(AppFamily.MESSAGING))
+        val current = repository.current()
+        assertThat(current.hasCurrentConsent()).isTrue()
+        assertThat(current.enabledFamilies).containsExactly(AppFamily.MESSAGING)
+        assertThat(current.onboardingDone).isFalse()
+        repository.setOnboardingDone()
+        assertThat(repository.current().onboardingDone).isTrue()
+    }
+
+    @Test
     fun onlyTheKnownKeysAreEverWritten() = runBlocking<Unit> {
         repository.acceptConsent(Consent(1, 1_000))
         repository.setEnabledFamilies(setOf(AppFamily.OTHER))
@@ -105,9 +116,10 @@ class SettingsRepositoryTest {
         repository.setLockGraceMs(1)
         repository.setActiveModelId("fr")
         repository.setHistoryEnabled(true)
+        repository.setOnboardingDone()
         val written = dataStore.data.first().asMap().keys.map { it.name }.toSet()
         assertThat(written).isEqualTo(SettingsRepository.KEYS)
         // INV-06: switches, numbers and identifiers only; nothing captured can be stored here.
-        assertThat(SettingsRepository.KEYS).hasSize(10)
+        assertThat(SettingsRepository.KEYS).hasSize(11)
     }
 }
