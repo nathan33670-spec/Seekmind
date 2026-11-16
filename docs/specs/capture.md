@@ -275,8 +275,8 @@ Implémentation (M2-06), paquet `fr.corsicajack.seekmind.engine.capture.pipeline
 |---|---|
 | `CapturePipeline` | Les neuf étapes, `events` et le rappel des issues. Compteurs : `capture_stored`, `capture_deduplicated`, `capture_dropped_<motif>` (motif en minuscules), au jour local. Une panne des compteurs ne change pas l'issue. La contre-pression (un seul déclenchement en attente) est celle de `Debouncer` (§3). |
 | `ScreenSource`, `A11yScreenSource` | Étapes 1 et 2 : verrouillage (`KeyguardManager.isKeyguardLocked`), fenêtre active (`A11yUiNode.activeWindow`) du service connecté (`ConnectedService`, posé par `EventRouter`). |
-| `ScreenshotStep` | Étape 6. `NotProbed` (aucune sonde, aucun OCR) jusqu'à M3-05, qui branche la sonde et `OcrPolicy`. |
-| `LineMerger` | Étape 7 : fusion des lignes de l'arbre et de l'OCR. `Append` jusqu'à M3-05 (`OcrMerge`). |
+| `ScreenshotStep`, `ProbeScreenshotStep` | Étape 6 (M3-05). `OcrPolicy.shouldOcr` décide si l'image est nécessaire. `SecureWindowProbe.probe` prend alors une seule capture, pour la sonde et l'OCR. Un rejet de la sonde (`rejects`) donne `SECURE_WINDOW` ; un `Unknown` non rejeté continue sans OCR. `:app` fournit les captures du service connecté (`ConnectedScreenshots`, une source par connexion). `NotProbed` sert aux tests. |
+| `LineMerger` | Étape 7 : fusion des lignes de l'arbre et de l'OCR, par `OcrMerge` dans `:app` ([ocr §7](ocr.md)). Elle donne aussi l'origine du texte (`TextSource`). `Append` sert aux tests. |
 
 `:app` (`PipelineModule`) lie le pipeline comme `StableScreenHandler`. Il crée aussi `DefaultPrivacyGate`, avec les règles de la base et les familles des réglages, et l'écriture par `IngestService` une fois la base ouverte : une capture avant cela compte comme `ERROR`.
 

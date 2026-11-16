@@ -1,7 +1,6 @@
 package fr.corsicajack.seekmind.engine.capture.pipeline
 
 import fr.corsicajack.seekmind.core.common.Clock
-import fr.corsicajack.seekmind.core.common.IntRect
 import fr.corsicajack.seekmind.core.common.Outcome
 import fr.corsicajack.seekmind.core.common.SmLog
 import fr.corsicajack.seekmind.core.model.DropReason
@@ -11,6 +10,7 @@ import fr.corsicajack.seekmind.core.model.OcrLine
 import fr.corsicajack.seekmind.core.model.PipelineEvent
 import fr.corsicajack.seekmind.core.model.RawCapture
 import fr.corsicajack.seekmind.core.model.ScreenMeta
+import fr.corsicajack.seekmind.core.model.TextLine
 import fr.corsicajack.seekmind.core.model.TextSource
 import fr.corsicajack.seekmind.core.model.TreeExtraction
 import fr.corsicajack.seekmind.core.model.config.CaptureConfig
@@ -46,7 +46,7 @@ sealed interface ScreenshotOutcome {
 
 /**
  * Step 6 (docs/specs/capture.md §6, ocr.md §3): the secure-window probe and, when the OCR policy asks
- * for it, the OCR, on a single screenshot. [NotProbed] until ticket M3-05 binds the real one.
+ * for it, the OCR, on a single screenshot ([ProbeScreenshotStep]); [NotProbed] probes nothing.
  */
 fun interface ScreenshotStep {
     suspend fun run(meta: ScreenMeta, extraction: TreeExtraction, treeSimHash: Long): ScreenshotOutcome
@@ -57,13 +57,18 @@ fun interface ScreenshotStep {
     }
 }
 
-/** Merges the tree's lines with the OCR's (step 7). Without OCR lines, the tree's alone. */
+/** The lines of a screen once merged, and their origin (bits of [TextSource]). */
+data class MergedLines(val lines: List<String>, val textSource: Int)
+
+/** Merges the tree's lines with the OCR's (step 7, docs/specs/ocr.md §7). */
 fun interface LineMerger {
-    fun merge(tree: List<String>, ocr: List<OcrLine>, windowBounds: IntRect): List<String>
+    fun merge(tree: List<TextLine>, ocr: List<OcrLine>): MergedLines
 
     companion object {
-        /** Until M3-05: the OCR lines after the tree's, without deduplication. */
-        val Append = LineMerger { tree, ocr, _ -> tree + ocr.map { it.text } }
+        /** The OCR lines after the tree's, without deduplication: for tests. */
+        val Append = LineMerger { tree, ocr ->
+            MergedLines(tree.map { it.text } + ocr.map { it.text }, TextSource.TREE or TextSource.OCR)
+        }
     }
 }
 
@@ -160,24 +165,19 @@ class CapturePipeline(
         }
 
         // 7. Merge, URL, redaction.
-        val lines = if (ocrLines.isNullOrEmpty()) {
-            treeLines
+        val merged = if (ocrLines.isNullOrEmpty()) {
+            MergedLines(treeLines, TextSource.TREE)
         } else {
-            merger.merge(
-                treeLines,
-                ocrLines,
-                extraction.windowBounds,
-            )
+            merger.merge(extraction.lines, ocrLines)
         }
-        val text = privacy.redact(lines.joinToString("\n")).text
+        val text = privacy.redact(merged.lines.joinToString("\n")).text
         val pageUrl = url(meta.packageName, window.root, extraction.pageTitle)
 
         // 8. Minimal length.
         if (text.trim().length < config.minTextChars) return dropped(DropReason.TOO_SHORT)
 
         // 9. Deduplication and storage.
-        val source = TextSource.TREE or (if (ocrLines.isNullOrEmpty()) 0 else TextSource.OCR)
-        return when (val result = sink.ingest(RawCapture(meta, pageUrl, text, source, treeSimHash))) {
+        return when (val result = sink.ingest(RawCapture(meta, pageUrl, text, merged.textSource, treeSimHash))) {
             is IngestResult.Stored -> PipelineEvent.Stored(result.captureId)
             is IngestResult.Deduplicated -> PipelineEvent.Deduplicated(result.captureId)
         }

@@ -103,7 +103,7 @@ consigner le tableau dans la PR.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M3-02, M3-04, M2-06 | `engine:capture`, `app`, `fixtureapp` | [capture §6](../specs/capture.md) · [tests §4](../06-qualite-tests-ci.md#4-tests-de-bout-en-bout) |
+| Fait | M3-02, M3-04, M2-06 | `engine:capture`, `app`, `fixtureapp` | [capture §6](../specs/capture.md) · [tests §4](../06-qualite-tests-ci.md#4-tests-de-bout-en-bout) |
 
 **À faire**
 
@@ -112,7 +112,7 @@ consigner le tableau dans la PR.
 
 **Critères d'acceptation**
 
-- [ ] E2E-03 : `SecureActivity` → `Dropped(SECURE_WINDOW)`, sur les trois niveaux d'API.
-- [ ] E2E-05 : le texte de `ImageTextActivity` est stocké avec l'origine OCR et retrouvé par la recherche.
-- [ ] E2E-06 : aucun fichier créé hors des fichiers de la base.
-- [ ] Gouverneur en état « suspendu » : aucun OCR, la capture du texte de l'arbre continue.
+- [x] E2E-03 : `SecureActivity` → `Dropped(SECURE_WINDOW)`, sur les trois niveaux d'API (`CaptureOcrE2ETest`).
+- [x] E2E-05 : le texte de `ImageTextActivity` est stocké avec l'origine OCR et retrouvé par la recherche (`CaptureOcrE2ETest`).
+- [x] E2E-06 : aucun fichier créé hors des fichiers de la base (`CaptureOcrE2ETest`).
+- [x] Gouverneur en état « suspendu » : aucun OCR, la capture du texte de l'arbre continue (`ProbeScreenshotStepTest`).

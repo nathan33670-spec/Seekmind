@@ -6,6 +6,8 @@ plugins {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:database"))
+    // Step 6 of the pipeline: the secure-window probe and the OCR policy (docs/specs/capture.md §6).
+    implementation(project(":engine:ocr"))
 
     testImplementation(project(":core:testing"))
     testImplementation(libs.junit)
