@@ -39,6 +39,7 @@ class AdMobRewardProviderTest {
         var consent: ConsentResult = ConsentResult.Updated(privacyOptionsRequired = false)
         var canRequest = true
         var load: suspend () -> LoadResult = { LoadResult.Loaded(Ad) }
+        var initialize: suspend () -> Unit = {}
         var showScript: (ShowEvents) -> Unit = {
             it.onRewardEarned()
             it.onDismissed()
@@ -53,6 +54,7 @@ class AdMobRewardProviderTest {
         override fun canRequestAds(activity: Activity) = canRequest
 
         override suspend fun initialize(activity: Activity, config: AdsConfig) {
+            initialize()
             initializations++
             calls += "initialize"
         }
@@ -126,6 +128,16 @@ class AdMobRewardProviderTest {
         assertThat(provider.prepare(activity)).isEqualTo(RewardReadiness.OFFLINE)
         assertThat(currentTime).isEqualTo(config.loadTimeoutMs)
         assertThat(provider.show(activity)).isEqualTo(RewardOutcome.FAILED)
+    }
+
+    @Test
+    fun `a start of the SDK longer than the maximal delay is abandoned, and tried again`() = test {
+        sdk.initialize = { awaitCancellation() }
+        assertThat(provider.prepare(activity)).isEqualTo(RewardReadiness.OFFLINE)
+        assertThat(currentTime).isEqualTo(config.loadTimeoutMs)
+        sdk.initialize = {}
+        assertThat(provider.prepare(activity)).isEqualTo(RewardReadiness.READY)
+        assertThat(sdk.initializations).isEqualTo(1)
     }
 
     @Test

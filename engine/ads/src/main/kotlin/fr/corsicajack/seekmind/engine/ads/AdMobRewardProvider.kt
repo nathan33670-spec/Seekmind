@@ -49,12 +49,14 @@ class AdMobRewardProvider internal constructor(
                 RewardReadiness.NOT_ALLOWED
             }
         }
-        if (!initialized) {
-            withContext(dispatchers.io) { sdk.initialize(activity, config) }
-            initialized = true
+        // The start of the SDK and the load share the maximal delay.
+        val result = withTimeoutOrNull(config.loadTimeoutMs) {
+            if (!initialized) {
+                withContext(dispatchers.io) { sdk.initialize(activity, config) }
+                initialized = true
+            }
+            withContext(dispatchers.main) { sdk.load(activity, config) }
         }
-        val result =
-            withTimeoutOrNull(config.loadTimeoutMs) { withContext(dispatchers.main) { sdk.load(activity, config) } }
         when (result) {
             null -> {
                 SmLog.i(TAG, "ad_load_timeout", "timeoutMs" to config.loadTimeoutMs)

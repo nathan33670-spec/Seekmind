@@ -38,7 +38,8 @@ import org.junit.runner.RunWith
 /**
  * The network silence of the `ads` variant (docs/specs/monetisation.md §3.4, INV-01): the application
  * starts, the service captures a screen and a search runs without a single byte sent by the
- * application's uid. Only [RewardProvider.prepare][fr.corsicajack.seekmind.core.model.port.RewardProvider.prepare]
+ * application's uid. It runs alone, in its own instrumentation run (device-tests.yml): the SDK it starts
+ * would otherwise keep sending in the process of the tests that follow. Only [RewardProvider.prepare][fr.corsicajack.seekmind.core.model.port.RewardProvider.prepare]
  * moves the counter.
  */
 @RunWith(AndroidJUnit4::class)
@@ -87,8 +88,11 @@ class NetworkSilenceTest {
         val atStart = TrafficStats.getUidTxBytes(uid)
         assertWithMessage("per-uid traffic statistics are unavailable on this device")
             .that(atStart).isNotEqualTo(TrafficStats.UNSUPPORTED.toLong())
-        // Since the start of the process: the SDK's start-up component would have run before this test.
-        assertWithMessage("bytes sent by the application before the test").that(atStart).isEqualTo(0L)
+        // The counter covers this uid since the device started: the SDK's start-up component would have
+        // run before this test, at the start of the process. Run alone, nothing else of the application
+        // can have sent anything (device-tests.yml).
+        assertWithMessage("bytes sent by this uid before the test (start of the process, or an earlier run)")
+            .that(atStart).isEqualTo(0L)
 
         val scenario = ActivityScenario.launch(MainActivity::class.java)
         shell("settings put secure enabled_accessibility_services $service")
