@@ -5,6 +5,9 @@ plugins {
 
 dependencies {
     implementation(project(":core:database"))
+    implementation(project(":core:model"))
+    // The activation by code (docs/specs/monetisation.md §5.4).
+    implementation(project(":engine:monetization"))
     implementation(project(":core:designsystem"))
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

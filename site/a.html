@@ -1,0 +1,78 @@
+<!doctype html>
+<!-- Relay page of the activation links (docs/specs/monetisation.md §5.5). It reads the code from the
+     fragment, which browsers never send to the server, and offers a link that opens SeekMind. No
+     external resource, no request: the policy below allows nothing but this inline script and style. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-EItZ5Vbmqw5S/4AboIg9orkZqRZq3bU66tqRoAs3ECQ='; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>SeekMind</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; max-width: 560px; line-height: 1.5; color: #1b1b1f; background: #fefbff; }
+  @media (prefers-color-scheme: dark) { body { color: #e4e1e6; background: #1b1b1f; } }
+  a.button { display: inline-block; padding: 14px 24px; border-radius: 24px; background: #3f51b5; color: #fff; text-decoration: none; font-size: 1.1em; }
+  textarea { width: 100%; min-height: 6em; font-family: monospace; font-size: 0.8em; }
+  .small { font-size: 0.9em; opacity: 0.8; }
+</style>
+</head>
+<body>
+<h1 id="title">SeekMind</h1>
+<p id="message">Activez JavaScript pour ouvrir ce lien. / Enable JavaScript to open this link.</p>
+<p><a id="activate" class="button" hidden></a></p>
+<p id="manual" class="small"></p>
+<textarea id="code" readonly hidden aria-labelledby="manual"></textarea>
+<p id="privacy" class="small"></p>
+<script>
+(function () {
+  "use strict";
+  var PACKAGE = "fr.corsicajack.seekmind";
+  var MAX_LENGTH = 2048;
+  var CODE = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+  var fr = (navigator.language || "").toLowerCase().indexOf("fr") === 0;
+  document.documentElement.lang = fr ? "fr" : "en";
+  var texts = fr ? {
+    title: "Activer SeekMind",
+    ready: "Touchez le bouton sur le téléphone où SeekMind est installé. SeekMind vous demandera de confirmer.",
+    button: "Activer SeekMind",
+    manual: "Le bouton ne fonctionne pas ? Copiez ce code et collez-le dans SeekMind, Réglages › Activation.",
+    invalid: "Ce lien ne contient pas de code d'activation valide. Vérifiez que vous l'avez ouvert en entier.",
+    privacy: "Cette page ne transmet rien : le code reste dans votre navigateur."
+  } : {
+    title: "Activate SeekMind",
+    ready: "Tap the button on the phone where SeekMind is installed. SeekMind will ask you to confirm.",
+    button: "Activate SeekMind",
+    manual: "The button does not work? Copy this code and paste it in SeekMind, Settings › Activation.",
+    invalid: "This link holds no valid activation code. Check that you opened it in full.",
+    privacy: "This page sends nothing: the code stays in your browser."
+  };
+  // The fragment is never sent to the server; it is read here, then removed from the address bar.
+  var code;
+  try {
+    code = decodeURIComponent((location.hash || "").replace(/^#/, ""));
+  } catch (e) {
+    code = "";
+  }
+  if (history.replaceState) history.replaceState(null, "", location.pathname);
+  document.title = texts.title;
+  document.getElementById("title").textContent = texts.title;
+  document.getElementById("privacy").textContent = texts.privacy;
+  if (code.length === 0 || code.length > MAX_LENGTH || !CODE.test(code)) {
+    document.getElementById("message").textContent = texts.invalid;
+    return;
+  }
+  document.getElementById("message").textContent = texts.ready;
+  var link = document.getElementById("activate");
+  link.textContent = texts.button;
+  link.href = "intent://activate?t=" + code + "#Intent;scheme=seekmind;package=" + PACKAGE + ";end";
+  link.hidden = false;
+  document.getElementById("manual").textContent = texts.manual;
+  var field = document.getElementById("code");
+  field.value = code;
+  field.hidden = false;
+})();
+</script>
+</body>
+</html>

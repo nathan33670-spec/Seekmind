@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Common manifest of both variants (docs/03-architecture.md §10.1).
-     LinkActivity is declared by its own ticket (M8-05). -->
+<!-- Common manifest of both variants (docs/03-architecture.md §10.1). -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -43,6 +42,23 @@
             <!-- Long press on the quick settings tile (docs/specs/capture.md §7). -->
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+            </intent-filter>
+        </activity>
+
+        <!-- Activation links seekmind://activate?t=<code> (docs/specs/monetisation.md §5.4): exported for
+             this link only, every input validated, nothing done before the user confirms (INV-12). -->
+        <activity
+            android:name=".link.LinkActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="activate"
+                    android:scheme="seekmind" />
             </intent-filter>
         </activity>
 

@@ -58,6 +58,8 @@ android {
         // Embedding models are memory-mapped from the APK: they must stay uncompressed.
         noCompress += "onnx"
     }
+    // The licence test vectors (testdata/tokens), read by the instrumented test of LinkActivity (M8-05).
+    sourceSets.getByName("androidTest").assets.directories += rootProject.file("testdata/tokens").path
     // The multilingual model, downloaded on demand from Google Play (docs/specs/embeddings.md §5.2).
     assetPacks += ":modelpack_multi"
 }

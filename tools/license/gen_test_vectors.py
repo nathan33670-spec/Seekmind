@@ -16,6 +16,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from jws import b64url, b64url_decode, encode_json, load_private_pkcs8_b64, sign, spki_b64  # noqa: E402
+from seekmind_license import issue_code  # noqa: E402
 
 ROOT = HERE.parent.parent
 OUT = ROOT / "testdata" / "tokens"
@@ -42,6 +43,11 @@ def vectors() -> list[dict]:
     out = [
         ("valid", valid, "VALID"),
         ("valid_with_future_exp", sign(key, header, license_payload(exp=IAT + 10 * 365 * 86400)), "VALID"),
+        # Valid for the verifier; refused by the activator (docs/specs/monetisation.md §5.4).
+        ("valid_with_past_exp", sign(key, header, license_payload(exp=IAT - 86400)), "VALID"),
+        ("valid_revoked", sign(key, header, license_payload(lid="TEST-REVOKED")), "VALID"),
+        # Issued as seekmind_license.py issues codes: the application must accept it (M8-05).
+        ("issued_by_tool", issue_code(key, TEST_KID, "lifetime", "SM-TEST000001", IAT, None), "VALID"),
         ("altered_signature", f"{head}.{body}.{flip_last(signature)}", "BAD_SIGNATURE"),
         ("altered_payload", f"{head}.{encode_json(license_payload(plan='other'))}.{signature}", "BAD_SIGNATURE"),
         ("alg_none", f"{encode_json({'alg': 'none', 'kid': TEST_KID})}.{body}.", "MALFORMED"),

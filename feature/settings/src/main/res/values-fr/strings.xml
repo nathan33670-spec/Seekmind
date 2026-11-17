@@ -28,4 +28,25 @@
     <string name="settings_help_other">Autres téléphones</string>
     <string name="settings_help_other_steps">Paramètres › Applications › SeekMind › Batterie : choisissez « Non restreinte » (ou « Non optimisée »).</string>
     <string name="settings_help_versions">Les noms des menus varient selon la version d\'Android et de l\'interface du constructeur : cherchez l\'intitulé le plus proche.</string>
+    <string name="settings_activation_title">Activation</string>
+    <string name="settings_activation_free">Formule gratuite</string>
+    <plurals name="settings_activation_balance">
+        <item quantity="one">%d recherche restante</item>
+        <item quantity="many">%d recherches restantes</item>
+        <item quantity="other">%d recherches restantes</item>
+    </plurals>
+    <string name="settings_activation_activated">SeekMind est activé</string>
+    <string name="settings_activation_license">Licence %1$s : recherches illimitées</string>
+    <string name="settings_activation_code">Code d\'activation</string>
+    <string name="settings_activation_paste">Coller</string>
+    <string name="settings_activation_activate">Activer</string>
+    <string name="settings_activation_done">SeekMind est activé.</string>
+    <string name="settings_activation_remove">Retirer l\'activation</string>
+    <string name="settings_activation_remove_title">Retirer l\'activation ?</string>
+    <string name="settings_activation_remove_text">SeekMind revient à la formule gratuite, avec les recherches qu\'il vous restait. Il faudra le code pour l\'activer de nouveau.</string>
+    <string name="settings_activation_removed">L\'activation est retirée.</string>
+    <string name="settings_activation_unreadable">Ce n\'est pas un code d\'activation. Copiez le code en entier, ou ouvrez le lien d\'activation.</string>
+    <string name="settings_activation_invalid">Ce code n\'est pas valide : sa signature ne correspond pas.</string>
+    <string name="settings_activation_expired">Ce code a expiré.</string>
+    <string name="settings_activation_revoked">Ce code a été révoqué.</string>
 </resources>

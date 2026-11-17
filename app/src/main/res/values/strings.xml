@@ -8,4 +8,12 @@
     <string name="app_lock_prompt_title">Unlock SeekMind</string>
     <string name="app_lock_message">SeekMind is locked.</string>
     <string name="app_lock_unlock">Unlock</string>
+    <string name="link_confirm_title">Activate SeekMind on this phone?</string>
+    <string name="link_confirm_text">SeekMind will search without counting your searches. You can remove the activation at any time in Settings › Activation.</string>
+    <string name="link_confirm">Activate</string>
+    <string name="link_decline">Not now</string>
+    <string name="link_activated">SeekMind is activated.</string>
+    <string name="link_invalid">This link is not a valid activation link. Nothing was changed.</string>
+    <string name="link_open">Open SeekMind</string>
+    <string name="link_close">Close</string>
 </resources>
