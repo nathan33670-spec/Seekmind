@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -23,6 +24,8 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import fr.corsicajack.seekmind.core.designsystem.component.ConfirmDialog
 import fr.corsicajack.seekmind.core.designsystem.component.SettingRow
 import fr.corsicajack.seekmind.core.designsystem.preview.SeekMindPreviews
@@ -86,6 +89,12 @@ fun ActivationSettingsSection(
                     onValueChange = onInputChange,
                     label = { Text(text = stringResource(R.string.settings_activation_code)) },
                     maxLines = 3,
+                    // A code is not a word: no correction, no suggestion, nothing learnt by the keyboard.
+                    keyboardOptions = KeyboardOptions(
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done,
+                    ),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.l).testTag(ACTIVATION_INPUT_TAG),
                 )
                 Row(
