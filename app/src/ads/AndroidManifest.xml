@@ -19,5 +19,12 @@
         <meta-data
             android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
             android:value="true" />
+        <!-- The SDK's start-up component would run at every start of the process, before any ad is
+             asked for: the SDK is started by AdMobRewardProvider.prepare() instead (monetisation §3.4). -->
+        <provider
+            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+            android:authorities="${applicationId}.mobileadsinitprovider"
+            tools:ignore="MissingClass"
+            tools:node="remove" />
     </application>
 </manifest>

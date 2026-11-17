@@ -8,6 +8,7 @@ androidx.annotation:*
 androidx.appcompat:*
 androidx.arch.core:*
 androidx.autofill:*
+androidx.browser:*                                                  # ads SDK (M8-03): custom tabs for ad clicks
 androidx.collection:*
 androidx.compose.animation:*
 androidx.compose.foundation:*
@@ -31,6 +32,7 @@ androidx.lifecycle:*
 androidx.loader:*
 androidx.navigation:*
 androidx.navigationevent:*
+androidx.privacysandbox.ads:*                                       # ads SDK (M8-03); attribution and topics permissions removed
 androidx.profileinstaller:*
 androidx.resourceinspection:*
 androidx.room:*
@@ -41,6 +43,7 @@ androidx.tracing:*
 androidx.vectordrawable:*
 androidx.versionedparcelable:*
 androidx.viewpager:*
+androidx.webkit:*                                                   # ads SDK (M8-03): the ad is rendered by the SDK, never by SeekMind code
 androidx.window:*
 androidx.work:*
 org.jetbrains:*
@@ -83,4 +86,17 @@ javax.inject:javax.inject                                           # Dagger
 net.zetetic:sqlcipher-android                                       # SQLCipher, encrypted database with FTS5 (ADR-0004, M1-03)
 org.jspecify:jspecify                                               # AndroidX nullness annotations
 
-# Ads SDK and consent SDK arrive with ticket M8-03 (:engine:ads only).
+# Ads SDK and consent SDK (:engine:ads only, M8-03, docs/specs/monetisation.md §3.3, ADR-0009).
+com.google.android.gms:play-services-ads                            # ads SDK, rewarded ads only (M8-03)
+com.google.android.gms:play-services-ads-api                        # ads SDK (M8-03)
+com.google.android.gms:play-services-ads-identifier                 # ads SDK (M8-03): advertising id, AD_ID permission
+com.google.android.gms:play-services-appset                         # ads SDK (M8-03): app set id
+com.google.android.gms:play-services-measurement-base               # ads SDK (M8-03); measurement init delayed in the manifest
+com.google.android.gms:play-services-measurement-sdk-api            # ads SDK (M8-03); measurement init delayed in the manifest
+com.google.android.play:hsdp                                        # ads SDK (M8-03)
+com.google.android.ump:user-messaging-platform                      # consent SDK (M8-03)
+com.google.guava:guava                                              # ads SDK, via androidx.privacysandbox.ads (M8-03)
+com.google.guava:failureaccess                                      # Guava (M8-03)
+com.google.errorprone:error_prone_annotations                       # Guava, annotations only (M8-03)
+com.google.j2objc:j2objc-annotations                                # Guava, annotations only (M8-03)
+org.checkerframework:checker-qual                                   # Guava, annotations only (M8-03)

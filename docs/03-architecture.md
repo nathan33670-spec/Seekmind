@@ -431,6 +431,9 @@ publicitaires inutiles retirées :
 <application>
     <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="${admobAppId}" />
     <meta-data android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT" android:value="true" />
+    <!-- Initialisation automatique du SDK retirée : il démarre à la première demande d'annonce. -->
+    <provider android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+        android:authorities="${applicationId}.mobileadsinitprovider" tools:node="remove" />
 </application>
 ```
 

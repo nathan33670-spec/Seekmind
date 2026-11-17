@@ -66,7 +66,7 @@ charges réalisables ; variante `offline` vérifiée.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M1-01, M0-04 | `engine:ads`, `app` (variante `ads`) | [monetisation §3](../specs/monetisation.md) · [architecture §3.2, §10.2 à §10.4](../03-architecture.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) · EF-MON-02, 09, 10 · INV-01 |
+| Fait — validation manuelle reportée à M10-01 | M1-01, M0-04 | `engine:ads`, `app` (variante `ads`) | [monetisation §3](../specs/monetisation.md) · [architecture §3.2, §10.2 à §10.4](../03-architecture.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) · EF-MON-02, 09, 10 · INV-01 |
 
 **À faire**
 
@@ -85,14 +85,14 @@ charges réalisables ; variante `offline` vérifiée.
 
 **Critères d'acceptation**
 
-- [ ] `engine:ads` ne dépend que de `core:common` et `core:model` (garde-fou) ; son interface publique ne
+- [x] `engine:ads` ne dépend que de `core:common` et `core:model` (garde-fou) ; son interface publique ne
       comporte aucun paramètre de donnée utilisateur.
-- [ ] `NetworkSilenceTest` : démarrage de l'application, service actif, capture, recherche → **zéro octet
+- [x] `NetworkSilenceTest` : démarrage de l'application, service actif, capture, recherche → **zéro octet
       émis** ; le compteur ne bouge qu'après `prepare()`.
-- [ ] Tests JVM avec un SDK simulé : correspondance des codes d'erreur vers `NO_FILL`, `OFFLINE`,
+- [x] Tests JVM avec un SDK simulé : correspondance des codes d'erreur vers `NO_FILL`, `OFFLINE`,
       `ERROR` ; `EARNED` seulement si la récompense a été signalée avant la fermeture ; délai maximal de chargement.
-- [ ] `:app:verifyAdsReleaseManifest` vert : `ACCESS_ADSERVICES_ATTRIBUTION` et `ACCESS_ADSERVICES_TOPICS` absentes.
-- [ ] Le service d'accessibilité ne capture pas l'écran de l'annonce (paquet de l'application ignoré).
+- [x] `:app:verifyAdsReleaseManifest` vert : `ACCESS_ADSERVICES_ATTRIBUTION` et `ACCESS_ADSERVICES_TOPICS` absentes.
+- [x] Le service d'accessibilité ne capture pas l'écran de l'annonce (paquet de l'application ignoré).
 
 **Validation manuelle** — sur le téléphone de test, build `debug` : annonce de test affichée et
 récompense signalée ; fenêtre de consentement affichée (région Europe) ; formulaire des choix de
