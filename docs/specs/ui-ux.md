@@ -218,7 +218,12 @@ modèle embarqué de ML Kit ne demande jamais, et ne pourrait pas poser `FLAG_SE
 de Play Asset Delivery ([ADR-0012](../adr/0012-composants-exportes-de-play-asset-delivery.md)).
 Transparente et non exportée, elle ne fait que lancer la confirmation du Play Store pour un pack de
 langue et n'affiche aucun contenu de SeekMind ; la retirer casserait cette confirmation.
-`SecureActivitiesTest` la nomme.
+Dans la variante `ads` seulement, les activités non exportées du SDK publicitaire sont aussi admises
+(décision du porteur, 17 novembre 2026, ticket M8-03) : `com.google.android.gms.ads.AdActivity`,
+`OutOfContextTestingActivity`, `NotificationHandlerActivity` et
+`com.google.android.play.core.hsdp.service.HsdpShimActivity`. Elles affichent l'annonce ou des écrans de
+Google, jamais de contenu de SeekMind ; les retirer risquerait de faire planter le SDK pendant une annonce.
+`SecureActivitiesTest` les nomme toutes.
 
 ### 3.7 Résultats de `LinkActivity`
 

@@ -11,6 +11,11 @@ plugins {
 val admobAppId: String = providers.gradleProperty("seekmind.admob.appId")
     .getOrElse("ca-app-pub-3940256099942544~3347511713")
 
+// Rewarded ad unit (docs/specs/monetisation.md §3.3): Google's public test unit unless the
+// `seekmind.admob.rewardedUnitId` property is provided.
+val admobRewardedUnitId: String = providers.gradleProperty("seekmind.admob.rewardedUnitId")
+    .getOrElse("ca-app-pub-3940256099942544/5224354917")
+
 android {
     namespace = "fr.corsicajack.seekmind"
 
@@ -29,6 +34,7 @@ android {
         create("ads") {
             dimension = "network"
             manifestPlaceholders["admobAppId"] = admobAppId
+            buildConfigField("String", "ADMOB_REWARDED_UNIT_ID", "\"$admobRewardedUnitId\"")
         }
         create("offline") {
             dimension = "network"
@@ -52,6 +58,10 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
         }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     androidResources {

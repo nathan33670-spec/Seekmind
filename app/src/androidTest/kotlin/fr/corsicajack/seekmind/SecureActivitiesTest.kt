@@ -30,7 +30,7 @@ class SecureActivitiesTest {
                 .isTrue()
         }
         // Any other activity would escape the rule above.
-        assertThat(DEBUG_TOOLING + PLAY_DIALOG).containsAtLeastElementsIn(others)
+        assertThat(DEBUG_TOOLING + PLAY_DIALOG + ADS_SDK).containsAtLeastElementsIn(others)
     }
 
     private companion object {
@@ -43,5 +43,17 @@ class SecureActivitiesTest {
          * SeekMind; removing it would break the pack's confirmation on mobile data.
          */
         val PLAY_DIALOG = setOf("com.google.android.play.core.common.PlayCoreDialogWrapperActivity")
+
+        /**
+         * The ads SDK, variant `ads` only (M8-03, decision of the project owner, 17 November 2026): its
+         * non-exported activities show the ad or Google's own screens, never content of SeekMind.
+         * Removing them could crash the SDK during an ad.
+         */
+        val ADS_SDK = setOf(
+            "com.google.android.gms.ads.AdActivity",
+            "com.google.android.gms.ads.OutOfContextTestingActivity",
+            "com.google.android.gms.ads.NotificationHandlerActivity",
+            "com.google.android.play.core.hsdp.service.HsdpShimActivity",
+        )
     }
 }
