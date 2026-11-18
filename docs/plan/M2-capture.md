@@ -177,7 +177,7 @@ identifiants pour les sept pays, tous vérifiés par `tools/privacy/verify_sensi
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M2-06, M2-07 | `app`, `fixtureapp` | [tests §3, §4](../06-qualite-tests-ci.md) |
+| En cours — restent E2E-13, E2E-14 et E2E-18 | M2-06, M2-07 | `app`, `fixtureapp` | [tests §3, §4](../06-qualite-tests-ci.md) |
 
 **À faire**
 
