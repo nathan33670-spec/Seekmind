@@ -83,7 +83,15 @@ class OfflineVariantTest {
                 context.resources.getIdentifier("a11y_service_description", "string", context.packageName),
             )
             assertThat(description).contains(text)
-            assertThat(description.lowercase()).doesNotContain(if (locale == Locale.FRENCH) "publicit" else " ads ")
+            assertThat(description.lowercase()).doesNotContainMatch(
+                if (locale ==
+                    Locale.FRENCH
+                ) {
+                    "publicit"
+                } else {
+                    "\\bads?\\b"
+                },
+            )
         }
     }
 }
