@@ -96,9 +96,17 @@ Configurator.getInstance().uiAutomationFlags =
 | E2E-20 | Variante `ads` : démarrer l'application, capturer un écran, lancer une recherche | Aucun octet émis par l'application (`NetworkSilenceTest`) |
 | E2E-21 | Importer un pack de test (`FileModelPackInstaller`) et l'activer | Vecteurs recalculés avec le nouveau modèle ; recherche lexicale disponible pendant le recalcul |
 
+Les tests qui remplacent une liaison (`@HiltAndroidTest`, E2E-15) tournent à part, avec l'application
+de test de Hilt (`-Pseekmind.hiltTests=true`, lanceur `SeekMindHiltTestRunner`). La classe de
+l'application est choisie une fois par processus : les autres tests de `:app` gardent l'application
+réelle, et ceux-là sont exclus de leur exécution (`notAnnotation`). Chaque test `@HiltAndroidTest` crée son propre graphe, or les
+singletons du processus qu'il ouvre (DataStore des réglages, base) ne peuvent pas l'être deux fois : un
+seul test Hilt par variante, dont les scénarios s'enchaînent.
+
 Matrice : API 30, 34 et 36, variante `ads`. E2E-03 s'appuie sur le code d'erreur système à partir de
 l'API 34 et sur l'heuristique d'image noire en API 30 (ADR-0008). La variante `offline` exécute E2E-01,
-02 et 15 (sans publicité : crédits quotidiens) sur l'API 34.
+02 et 15 (sans publicité : crédits quotidiens, `DailyCreditsE2ETest`) ; ses tests tournent sur les
+trois niveaux d'API.
 
 ## 5. Jeux de référence
 

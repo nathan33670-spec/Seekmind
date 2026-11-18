@@ -23,6 +23,11 @@ android {
         applicationId = "fr.corsicajack.seekmind"
         versionCode = 1
         versionName = "0.1.0"
+        // The end-to-end tests that replace a binding (@HiltAndroidTest) run apart, with the Hilt test
+        // application (docs/06-qualite-tests-ci.md §4): -Pseekmind.hiltTests=true.
+        if (providers.gradleProperty("seekmind.hiltTests").orNull == "true") {
+            testInstrumentationRunner = "fr.corsicajack.seekmind.SeekMindHiltTestRunner"
+        }
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
@@ -114,6 +119,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 
     androidTestImplementation(project(":core:testing"))
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.truth)

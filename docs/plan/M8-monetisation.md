@@ -193,7 +193,7 @@ découpe alors en quatre tickets (son §8).
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M8-04, M8-05, M8-06 | `app`, `fixtureapp` | [tests §4](../06-qualite-tests-ci.md#4-tests-de-bout-en-bout) · [monetisation §8](../specs/monetisation.md) |
+| Fait | M8-04, M8-05, M8-06 | `app`, `fixtureapp` | [tests §4](../06-qualite-tests-ci.md#4-tests-de-bout-en-bout) · [monetisation §8](../specs/monetisation.md) |
 
 **À faire**
 
@@ -203,6 +203,6 @@ découpe alors en quatre tickets (son §8).
 
 **Critères d'acceptation**
 
-- [ ] E2E-15 vert sur les trois niveaux d'API : +5 après une annonce vue, rien après une annonce fermée, +1 sans annonce.
-- [ ] Capture, journal, réglages et suppression restent accessibles avec un solde nul (EF-MON-07).
-- [ ] E2E-20 vert.
+- [x] E2E-15 vert sur les trois niveaux d'API : +5 après une annonce vue, rien après une annonce fermée, +1 sans annonce.
+- [x] Capture, journal, réglages et suppression restent accessibles avec un solde nul (EF-MON-07).
+- [x] E2E-20 vert.
