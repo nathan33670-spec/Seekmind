@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.database.store.CreditMovement
 import fr.corsicajack.seekmind.core.database.store.CreditReason
 import fr.corsicajack.seekmind.core.testing.FakeClock
-import fr.corsicajack.seekmind.engine.monetization.FakeMonetizationStore
+import fr.corsicajack.seekmind.core.testing.FakeMonetizationStore
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 

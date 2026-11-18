@@ -104,7 +104,7 @@ confidentialité accessible.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M8-01, M8-03, M6-03 | `engine:monetization`, `feature:paywall`, `feature:search`, `feature:settings` | [monetisation §3.2, §6](../specs/monetisation.md) · [ui-ux §3.2, §3.5](../specs/ui-ux.md) · EF-MON-02, 03, 11 |
+| Fait | M8-01, M8-03, M6-03 | `engine:monetization`, `feature:paywall`, `feature:search`, `feature:settings` | [monetisation §3.2, §6](../specs/monetisation.md) · [ui-ux §3.2, §3.5](../specs/ui-ux.md) · EF-MON-02, 03, 11 |
 
 **À faire**
 
@@ -117,11 +117,11 @@ confidentialité accessible.
 
 **Critères d'acceptation**
 
-- [ ] Avec un `FakeRewardProvider` : chaque issue du tableau de la spec §3.2 produit le bon mouvement et le bon message.
-- [ ] Solde nul → la feuille s'ouvre à la validation d'une recherche ; la recherche part après une récompense.
-- [ ] Mention « Cette recherche ne vous a pas été décomptée » quand il n'y a aucun résultat.
-- [ ] Formule activée : aucun indicateur de crédits, aucune feuille, aucune annonce chargée.
-- [ ] Si `RewardProvider.isSupported` est faux, aucun bouton de publicité n'est composé.
+- [x] Avec un `FakeRewardProvider` : chaque issue du tableau de la spec §3.2 produit le bon mouvement et le bon message.
+- [x] Solde nul → la feuille s'ouvre à la validation d'une recherche ; la recherche part après une récompense.
+- [x] Mention « Cette recherche ne vous a pas été décomptée » quand il n'y a aucun résultat.
+- [x] Formule activée : aucun indicateur de crédits, aucune feuille, aucune annonce chargée.
+- [x] Si `RewardProvider.isSupported` est faux, aucun bouton de publicité n'est composé.
 
 ---
 

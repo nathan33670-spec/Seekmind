@@ -1,4 +1,4 @@
-package fr.corsicajack.seekmind.engine.monetization
+package fr.corsicajack.seekmind.core.testing
 
 import fr.corsicajack.seekmind.core.database.store.CreditMovement
 import fr.corsicajack.seekmind.core.database.store.CreditReason

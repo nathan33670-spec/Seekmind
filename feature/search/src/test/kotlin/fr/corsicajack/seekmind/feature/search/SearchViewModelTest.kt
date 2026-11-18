@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -315,6 +316,58 @@ class SearchViewModelTest {
     }
 
     @Test
+    fun theBalanceIsShown() = runTest(dispatcher) {
+        val vm = viewModel()
+        advanceUntilIdle()
+        assertThat(vm.state.value.entitlement).isEqualTo(Entitlement.Free(5))
+        gate.state.value = Entitlement.Activated("SM-1", "lifetime")
+        advanceUntilIdle()
+        assertThat(vm.state.value.entitlement).isEqualTo(Entitlement.Activated("SM-1", "lifetime"))
+    }
+
+    @Test
+    fun theFreePlanSearchesOnlyWhenSubmitted() = runTest(dispatcher) {
+        val vm = viewModel()
+        advanceUntilIdle()
+        vm.onQueryChange("tarte")
+        advanceUntilIdle()
+        assertThat(engine.requests).isEmpty()
+        vm.submit()
+        advanceUntilIdle()
+        assertThat(engine.requests).hasSize(1)
+    }
+
+    @Test
+    fun theActivatedPlanSearchesAsTheUserTypes() = runTest(dispatcher) {
+        gate.state.value = Entitlement.Activated("SM-1", "lifetime")
+        val vm = viewModel()
+        advanceUntilIdle()
+        vm.onQueryChange("tar")
+        advanceTimeBy(100)
+        vm.onQueryChange("tarte")
+        advanceUntilIdle()
+        // One search, for the last text only, once the typing pauses.
+        assertThat(engine.requests.map { it.rawQuery }).containsExactly("tarte")
+    }
+
+    @Test
+    fun aSearchRefusedForLackOfCreditGoesOnOnceCredited() = runTest(dispatcher) {
+        gate.authorization = Authorization.NoCredit
+        val vm = viewModel()
+        vm.submit("tarte")
+        advanceUntilIdle()
+        assertThat(vm.state.value.phase).isEqualTo(SearchPhase.NO_CREDIT)
+        gate.authorization = Authorization.Granted(willCharge = true)
+        vm.onCredited()
+        advanceUntilIdle()
+        assertThat(engine.requests.map { it.rawQuery }).containsExactly("tarte")
+        // Credits added while nothing waits start no search.
+        vm.onCredited()
+        advanceUntilIdle()
+        assertThat(engine.requests).hasSize(1)
+    }
+
+    @Test
     fun databaseUnavailable() = runTest(dispatcher) {
         available = false
         val vm = viewModel()
@@ -483,7 +536,7 @@ class SearchViewModelTest {
     }
 
     private class FakeGate : EntitlementGate {
-        override val state: StateFlow<Entitlement> = MutableStateFlow(Entitlement.Free(5))
+        override val state = MutableStateFlow<Entitlement>(Entitlement.Free(5))
         var authorization: Authorization = Authorization.Granted(willCharge = false)
         var willCharge = false
         var authorizeFailure: Exception? = null

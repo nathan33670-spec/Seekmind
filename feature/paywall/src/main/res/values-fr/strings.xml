@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paywall_title">Continuer à chercher</string>
+    <string name="paywall_watch">Regarder une publicité (+5 recherches)</string>
+    <string name="paywall_code">J\'ai un code d\'activation</string>
+    <string name="paywall_privacy">Ce que SeekMind a mémorisé reste sur votre téléphone : rien n\'en est transmis au réseau publicitaire.</string>
+    <string name="paywall_ceiling">Vous avez regardé le maximum de publicités pour aujourd\'hui. Revenez demain, ou utilisez un code d\'activation.</string>
+    <string name="paywall_dismissed">Regardez la publicité jusqu\'au bout pour obtenir vos recherches.</string>
+    <string name="paywall_unavailable">Publicité indisponible pour le moment.</string>
+    <plurals name="paywall_earned">
+        <item quantity="one">+%d recherche</item>
+        <item quantity="many">+%d recherches</item>
+        <item quantity="other">+%d recherches</item>
+    </plurals>
+    <plurals name="paywall_courtesy">
+        <item quantity="one">Aucune publicité disponible : %d recherche offerte</item>
+        <item quantity="many">Aucune publicité disponible : %d recherches offertes</item>
+        <item quantity="other">Aucune publicité disponible : %d recherches offertes</item>
+    </plurals>
+    <plurals name="paywall_daily_free">
+        <item quantity="one">%d recherche offerte chaque jour</item>
+        <item quantity="many">%d recherches offertes chaque jour</item>
+        <item quantity="other">%d recherches offertes chaque jour</item>
+    </plurals>
+</resources>

@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -31,11 +34,15 @@ import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
 import fr.corsicajack.seekmind.core.designsystem.theme.SeekMindTheme
 import fr.corsicajack.seekmind.core.model.AppFamily
 import fr.corsicajack.seekmind.core.model.CaptureStatus
+import fr.corsicajack.seekmind.core.model.Entitlement
 import fr.corsicajack.seekmind.core.model.SourceRef
+import fr.corsicajack.seekmind.core.model.config.MonetizationConfig
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
+import fr.corsicajack.seekmind.core.model.port.RewardProvider
 import fr.corsicajack.seekmind.di.ApplicationScope
 import fr.corsicajack.seekmind.engine.capture.pause.PauseController
 import fr.corsicajack.seekmind.engine.capture.status.CaptureStatusRepository
+import fr.corsicajack.seekmind.engine.monetization.RewardFlow
 import fr.corsicajack.seekmind.engine.monetization.license.LicenseActivator
 import fr.corsicajack.seekmind.engine.privacy.apps.AppFamilies
 import fr.corsicajack.seekmind.engine.source.LaunchResult
@@ -47,6 +54,8 @@ import fr.corsicajack.seekmind.feature.onboarding.FamilyApp
 import fr.corsicajack.seekmind.feature.onboarding.OnboardingRoute
 import fr.corsicajack.seekmind.feature.onboarding.OnboardingStart
 import fr.corsicajack.seekmind.feature.onboarding.OnboardingViewModel
+import fr.corsicajack.seekmind.feature.paywall.CreditsSheet
+import fr.corsicajack.seekmind.feature.paywall.CreditsSheetViewModel
 import fr.corsicajack.seekmind.feature.search.SearchRoute
 import fr.corsicajack.seekmind.feature.search.SearchViewModel
 import fr.corsicajack.seekmind.feature.search.StatusAction
@@ -61,15 +70,19 @@ import fr.corsicajack.seekmind.lock.AppLock
 import fr.corsicajack.seekmind.lock.BiometricAuthenticator
 import fr.corsicajack.seekmind.lock.LockGate
 import fr.corsicajack.seekmind.lock.LockState
+import fr.corsicajack.seekmind.navigation.TopLevelDestination
+import fr.corsicajack.seekmind.navigation.navigateToTopLevel
 import fr.corsicajack.seekmind.onboarding.InstalledFamilyApps
 import fr.corsicajack.seekmind.search.SearchStack
 import fr.corsicajack.seekmind.ui.SeekMindRoot
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.Optional
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -96,6 +109,13 @@ class MainActivity : SecureActivity() {
     @Inject lateinit var entitlements: EntitlementGate
 
     @Inject lateinit var activator: dagger.Lazy<LicenseActivator>
+
+    @Inject lateinit var rewardFlow: RewardFlow
+
+    /** Absent in the `offline` variant (RewardModule). */
+    @Inject lateinit var rewardProvider: Optional<RewardProvider>
+
+    @Inject lateinit var monetizationConfig: MonetizationConfig
 
     @Inject lateinit var wipe: WipeService
 
@@ -138,7 +158,9 @@ class MainActivity : SecureActivity() {
                     }
                     SeekMindRoot(
                         navController = navController,
-                        searchContent = { open, help -> SearchContent(open, help) },
+                        searchContent = { open, help ->
+                            SearchContent(open, help) { navController.navigateToTopLevel(TopLevelDestination.SETTINGS) }
+                        },
                         journalContent = { open -> JournalContent(open) },
                         captureContent = { id, close -> CaptureContent(id, close) },
                         helpContent = { ServiceHelpScreen() },
@@ -150,7 +172,7 @@ class MainActivity : SecureActivity() {
     }
 
     @Composable
-    private fun SearchContent(openCapture: (Long) -> Unit, openHelp: () -> Unit) {
+    private fun SearchContent(openCapture: (Long) -> Unit, openHelp: () -> Unit, openSettings: () -> Unit) {
         val labels = PackageManagerAppLabels(packageManager)
         val searchViewModel = viewModel {
             SearchViewModel(
@@ -170,6 +192,29 @@ class MainActivity : SecureActivity() {
                     val captures = (database.get() as? DatabaseState.Ready)?.database?.captures
                     captures?.get(hit.captureId)?.let(sourceReturn.get().resolver::resolve)
                 },
+                liveSearchDebounceMs = monetizationConfig.liveSearchDebounceMs,
+            )
+        }
+        // The credits sheet (docs/specs/monetisation.md §6): its ad is prepared when it opens, not before.
+        var sheet by rememberSaveable { mutableStateOf(false) }
+        if (sheet) {
+            val credits = viewModel(key = "credits-sheet") {
+                CreditsSheetViewModel(rewardFlow) {
+                    sheet = false
+                    searchViewModel.onCredited()
+                }
+            }
+            val sheetState by credits.state.collectAsStateWithLifecycle()
+            LaunchedEffect(credits) { credits.open(this@MainActivity) }
+            CreditsSheet(
+                state = sheetState,
+                dailyFreeCredits = monetizationConfig.dailyFreeCredits,
+                onWatch = { credits.watch(this@MainActivity) },
+                onCode = {
+                    sheet = false
+                    openSettings()
+                },
+                onDismiss = { sheet = false },
             )
         }
         val state by searchViewModel.state.collectAsStateWithLifecycle()
@@ -196,6 +241,7 @@ class MainActivity : SecureActivity() {
                 }
             },
             canEnableCapture = true,
+            onCredits = { if (entitlements.state.value is Entitlement.Free) sheet = true },
         )
     }
 
@@ -332,7 +378,15 @@ class MainActivity : SecureActivity() {
         }
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             SecuritySettingsRoute(viewModel = security)
-            ActivationSettingsRoute(viewModel = activation)
+            val privacy = rewardProvider.orElse(null)
+            val privacyRequired by (privacy?.privacyOptionsRequired ?: remember { MutableStateFlow(false) })
+                .collectAsStateWithLifecycle()
+            val scope = rememberCoroutineScope()
+            ActivationSettingsRoute(
+                viewModel = activation,
+                privacyOptionsRequired = privacyRequired,
+                onPrivacyOptions = { scope.launch { privacy?.showPrivacyOptions(this@MainActivity) } },
+            )
         }
     }
 

@@ -1,6 +1,7 @@
 package fr.corsicajack.seekmind.feature.search
 
 import fr.corsicajack.seekmind.core.model.CaptureStatus
+import fr.corsicajack.seekmind.core.model.Entitlement
 import fr.corsicajack.seekmind.core.model.Relaxation
 import fr.corsicajack.seekmind.core.model.SearchFilters
 import fr.corsicajack.seekmind.core.model.SearchHit
@@ -104,6 +105,8 @@ data class SearchUiState(
     val failedAfterResults: Boolean = false,
     /** Words of the last query, highlighted in the detail of a result. */
     val terms: List<String> = emptyList(),
+    /** The balance or the activation (docs/specs/monetisation.md §6); null until known. */
+    val entitlement: Entitlement? = null,
 )
 
 /**

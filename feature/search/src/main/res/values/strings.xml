@@ -79,4 +79,5 @@
         <item quantity="one">Last remembered %1$d day ago</item>
         <item quantity="other">Last remembered %1$d days ago</item>
     </plurals>
+    <string name="search_no_credit_action">Get more searches</string>
 </resources>

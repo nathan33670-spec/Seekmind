@@ -5,6 +5,7 @@ import fr.corsicajack.seekmind.core.database.store.CreditMovement
 import fr.corsicajack.seekmind.core.database.store.CreditReason
 import fr.corsicajack.seekmind.core.model.config.MonetizationConfig
 import fr.corsicajack.seekmind.core.testing.FakeClock
+import fr.corsicajack.seekmind.core.testing.FakeMonetizationStore
 import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlinx.coroutines.runBlocking

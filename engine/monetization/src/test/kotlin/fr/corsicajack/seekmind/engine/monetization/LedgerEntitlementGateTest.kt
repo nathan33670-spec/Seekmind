@@ -7,6 +7,7 @@ import fr.corsicajack.seekmind.core.model.Authorization
 import fr.corsicajack.seekmind.core.model.Entitlement
 import fr.corsicajack.seekmind.core.model.config.MonetizationConfig
 import fr.corsicajack.seekmind.core.testing.FakeClock
+import fr.corsicajack.seekmind.core.testing.FakeMonetizationStore
 import java.time.ZoneOffset
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
