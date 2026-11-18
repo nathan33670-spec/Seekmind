@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Divulgation de la variante offline (docs/05-conformite-play-store.md §4.4) : remplace le deuxième
+     point de « Ce que deviennent ces données » de :feature:onboarding. -->
+<resources>
+    <string name="onboarding_disclosure_data_2">L\'application n\'a pas l\'autorisation d\'accéder à Internet.</string>
+    <!-- Description du service d'accessibilité (Réglages › Accessibilité) : sans la phrase sur la publicité. -->
+    <string name="a11y_service_description">SeekMind lit le texte affiché dans les applications que vous utilisez, le nom de l\'application, le titre de l\'écran et l\'adresse des pages web. Quand un écran contient surtout des images, il analyse ponctuellement l\'image de l\'écran en mémoire, sans jamais l\'enregistrer.\n\nCela sert uniquement à constituer, sur ce téléphone, votre index de recherche personnel, dans une base chiffrée. Rien n\'est jamais envoyé, partagé ni vendu. L\'application n\'a pas l\'autorisation d\'accéder à Internet.\n\nSeekMind ne lit pas les champs de mot de passe, la navigation privée, les écrans protégés ni les applications sensibles, et n\'effectue jamais d\'action dans les autres applications. Vous pouvez le mettre en pause, exclure des applications et tout supprimer à tout moment.</string>
+</resources>

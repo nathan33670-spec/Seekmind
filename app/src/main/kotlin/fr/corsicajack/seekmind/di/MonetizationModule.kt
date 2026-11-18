@@ -20,14 +20,13 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
-/** Credits and entitlements (docs/specs/monetisation.md §2). */
+/**
+ * Credits and entitlements (docs/specs/monetisation.md §2). [MonetizationConfig] is provided by each
+ * variant (`src/ads`, `src/offline`): the offline one offers daily free credits (§4).
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object MonetizationModule {
-    @Provides
-    @Singleton
-    fun monetizationConfig(): MonetizationConfig = MonetizationConfig()
-
     /** Opens the database on first use, off the main thread. */
     @Provides
     @Singleton

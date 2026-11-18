@@ -157,6 +157,9 @@ Aucun autre attribut `can*` ; pas de `isAccessibilityTool`. La description du se
 Le deuxième point de « Ce que deviennent ces données » est remplacé par : « L'application n'a pas
 l'autorisation d'accéder à Internet. » (« The app does not have permission to access the Internet. »)
 Le texte propre à chaque variante est une ressource de la variante ; le numéro de version est commun.
+La description du service d'accessibilité (`a11y_service_description`) suit la même règle : dans la
+variante `offline`, la phrase sur la publicité y est remplacée par « L'application n'a pas l'autorisation
+d'accéder à Internet. ».
 
 ## 5. Déclarations dans la Play Console
 

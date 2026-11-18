@@ -12,8 +12,9 @@ import java.util.Optional
 import javax.inject.Singleton
 
 /**
- * The rewarded ads (docs/specs/monetisation.md §3.2). [RewardProvider] is bound in `src/ads` only: in the
- * `offline` variant it is absent and [RewardFlow] offers no ad.
+ * The rewarded ads (docs/specs/monetisation.md §3.2). [RewardProvider] is bound by each variant:
+ * `AdMobRewardProvider` in `src/ads`, `NoRewardProvider` in `src/offline`, whose `isSupported` is false
+ * so that [RewardFlow] offers no ad. Optional, so that a build without either binding still offers none.
  */
 @Module
 @InstallIn(SingletonComponent::class)
