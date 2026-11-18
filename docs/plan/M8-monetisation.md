@@ -156,7 +156,7 @@ confidentialité accessible.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M8-01, M6-02 | `app` (variante `offline`) | [monetisation §4](../specs/monetisation.md) · [conformité §4.4, §8](../05-conformite-play-store.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) · EF-MON-12 |
+| Fait | M8-01, M6-02 | `app` (variante `offline`) | [monetisation §4](../specs/monetisation.md) · [conformité §4.4, §8](../05-conformite-play-store.md) · [ADR-0009](../adr/0009-publicite-admob-et-variante-sans-reseau.md) · EF-MON-12 |
 
 **À faire**
 
@@ -169,11 +169,11 @@ confidentialité accessible.
 
 **Critères d'acceptation**
 
-- [ ] `:app:verifyOfflineReleaseManifest` vert : aucune permission `INTERNET`, ni publicitaire.
-- [ ] `engine:ads`, le SDK publicitaire et le SDK de consentement sont absents des dépendances de la variante.
-- [ ] Sur émulateur : capture, recherche, crédits quotidiens et activation par code fonctionnent ; aucun
+- [x] `:app:verifyOfflineReleaseManifest` vert : aucune permission `INTERNET`, ni publicitaire.
+- [x] `engine:ads`, le SDK publicitaire et le SDK de consentement sont absents des dépendances de la variante.
+- [x] Sur émulateur : capture, recherche, crédits quotidiens et activation par code fonctionnent ; aucun
       élément d'interface ne mentionne la publicité.
-- [ ] Le texte de divulgation affiché est celui de la variante.
+- [x] Le texte de divulgation affiché est celui de la variante.
 
 ---
 

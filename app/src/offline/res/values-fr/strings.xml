@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Divulgation de la variante offline (docs/05-conformite-play-store.md §4.4) : remplace le deuxième
+     point de « Ce que deviennent ces données » de :feature:onboarding. -->
+<resources>
+    <string name="onboarding_disclosure_data_2">L\'application n\'a pas l\'autorisation d\'accéder à Internet.</string>
+</resources>

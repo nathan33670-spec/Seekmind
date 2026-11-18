@@ -195,6 +195,8 @@ première demande de consentement.
 ## 4. Variante `offline`
 
 `NoRewardProvider.isSupported` vaut faux : la feuille de crédits ne propose que le code d'activation.
+`NoRewardProvider` et `MonetizationConfig(dailyFreeCredits = 5)` sont fournis par `app/src/offline`
+(`OfflineModule`) ; la variante `ads` fournit `MonetizationConfig()` et `AdMobRewardProvider`.
 Pour que l'application reste utilisable sans publicité, le solde est complété chaque jour civil, à la
 première recherche, jusqu'à `dailyFreeCredits` (5, non cumulables ; mouvement `DAILY`). Dans la variante
 `ads`, `dailyFreeCredits` vaut 0.
