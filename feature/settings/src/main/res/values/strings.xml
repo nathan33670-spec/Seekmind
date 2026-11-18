@@ -27,4 +27,24 @@
     <string name="settings_help_other">Other phones</string>
     <string name="settings_help_other_steps">Settings › Apps › SeekMind › Battery: choose “Unrestricted” (or “Not optimised”).</string>
     <string name="settings_help_versions">Menu names vary with the version of Android and of the manufacturer\'s interface: look for the closest wording.</string>
+    <string name="settings_activation_title">Activation</string>
+    <string name="settings_activation_free">Free plan</string>
+    <plurals name="settings_activation_balance">
+        <item quantity="one">%d search left</item>
+        <item quantity="other">%d searches left</item>
+    </plurals>
+    <string name="settings_activation_activated">SeekMind is activated</string>
+    <string name="settings_activation_license">Licence %1$s: unlimited searches</string>
+    <string name="settings_activation_code">Activation code</string>
+    <string name="settings_activation_paste">Paste</string>
+    <string name="settings_activation_activate">Activate</string>
+    <string name="settings_activation_done">SeekMind is activated.</string>
+    <string name="settings_activation_remove">Remove the activation</string>
+    <string name="settings_activation_remove_title">Remove the activation?</string>
+    <string name="settings_activation_remove_text">SeekMind goes back to the free plan, with the searches you had left. You will need the code to activate it again.</string>
+    <string name="settings_activation_removed">The activation is removed.</string>
+    <string name="settings_activation_unreadable">This is not an activation code. Copy the whole code, or open the activation link.</string>
+    <string name="settings_activation_invalid">This code is not valid: its signature does not match.</string>
+    <string name="settings_activation_expired">This code has expired.</string>
+    <string name="settings_activation_revoked">This code has been revoked.</string>
 </resources>

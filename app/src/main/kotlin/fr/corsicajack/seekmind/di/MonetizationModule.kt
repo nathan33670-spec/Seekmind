@@ -12,6 +12,9 @@ import fr.corsicajack.seekmind.core.model.config.MonetizationConfig
 import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import fr.corsicajack.seekmind.engine.monetization.CreditLedger
 import fr.corsicajack.seekmind.engine.monetization.LedgerEntitlementGate
+import fr.corsicajack.seekmind.engine.monetization.license.Keyring
+import fr.corsicajack.seekmind.engine.monetization.license.LicenseActivator
+import fr.corsicajack.seekmind.engine.monetization.license.TokenVerifier
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -40,4 +43,10 @@ object MonetizationModule {
     @Singleton
     fun entitlementGate(ledger: CreditLedger, store: MonetizationStore): EntitlementGate =
         LedgerEntitlementGate(ledger, store, CoroutineScope(SupervisorJob() + DefaultDispatcherProvider.default))
+
+    /** Activation by code (§5.4): the embedded keyring and revocation list, read on first use. */
+    @Provides
+    @Singleton
+    fun licenseActivator(store: MonetizationStore, clock: Clock): LicenseActivator =
+        LicenseActivator(TokenVerifier(Keyring.embedded()), LicenseActivator.embeddedRevocations(), store, clock)
 }

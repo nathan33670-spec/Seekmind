@@ -129,7 +129,7 @@ confidentialité accessible.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M8-02, M8-01 | `tools/license`, `engine:monetization`, `feature:settings`, `app`, `site` | [monetisation §5.3 à §5.6](../specs/monetisation.md) · [ADR-0007](../adr/0007-codes-d-activation-signes.md) · EF-MON-05, EF-MON-06 |
+| Fait | M8-02, M8-01 | `tools/license`, `engine:monetization`, `feature:settings`, `app`, `site` | [monetisation §5.3 à §5.6](../specs/monetisation.md) · [ADR-0007](../adr/0007-codes-d-activation-signes.md) · EF-MON-05, EF-MON-06 |
 
 **À faire**
 
@@ -143,12 +143,12 @@ confidentialité accessible.
 
 **Critères d'acceptation**
 
-- [ ] Un code émis par l'outil avec la clé de test est accepté par l'application `debug`.
-- [ ] Messages distincts : illisible, signature invalide, expiré, révoqué ; aucun changement d'état en cas d'échec.
-- [ ] L'activation survit au redémarrage ; « Retirer » ramène à la formule gratuite avec le solde antérieur.
-- [ ] Le lien d'activation ne fait rien sans confirmation de l'utilisateur ; entrées malformées ou
+- [x] Un code émis par l'outil avec la clé de test est accepté par l'application `debug`.
+- [x] Messages distincts : illisible, signature invalide, expiré, révoqué ; aucun changement d'état en cas d'échec.
+- [x] L'activation survit au redémarrage ; « Retirer » ramène à la formule gratuite avec le solde antérieur.
+- [x] Le lien d'activation ne fait rien sans confirmation de l'utilisateur ; entrées malformées ou
       surdimensionnées → message neutre, aucun effet, aucun plantage.
-- [ ] `:app:verifyAdsReleaseManifest` et `:app:verifyOfflineReleaseManifest` verts avec le nouveau composant exporté.
+- [x] `:app:verifyAdsReleaseManifest` et `:app:verifyOfflineReleaseManifest` verts avec le nouveau composant exporté.
 
 ---
 

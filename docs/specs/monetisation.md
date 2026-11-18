@@ -245,8 +245,8 @@ Outil en ligne de commande Python, exécuté par l'éditeur sur une machine de c
 | Commande | Effet |
 |---|---|
 | `seekmind_keys.py keygen --purpose license --kid l1 --out <répertoire hors du dépôt>` | Crée une paire ES256 ; écrit la clé privée (PEM, droits 0600, jamais écrasée) et la clé publique (`spki` en base64). Un répertoire du dépôt est refusé. |
-| `seekmind_license.py issue --key l1.pem --kid l1 --plan lifetime --count 50 --out codes.csv` | Émet des licences : identifiant, code, lien d'activation |
-| `seekmind_license.py verify --pub l1.spki <code>` | Vérifie un code |
+| `seekmind_license.py issue --key l1.pem --kid l1 --plan lifetime --count 50 --site <hôte> --out codes.csv` | Émet des licences : identifiant (`SM-` suivi de 10 chiffres hexadécimaux aléatoires), code, lien `https://<hôte>/a#<code>`. Le CSV est créé en 0600, jamais écrasé, et refusé dans le dépôt. `--valid-days` ajoute une expiration. |
+| `seekmind_license.py verify --pub l1.spki <code>` | Vérifie la signature d'un code et affiche ses données |
 | `gen_test_vectors.py` | Régénère `testdata/tokens/` avec les clés de test |
 
 Un **code** est le JWS d'une licence (environ 230 caractères) : il se colle ou s'ouvre par un lien, il ne
@@ -265,7 +265,20 @@ révocation embarquée (`revoked_licenses.json`, mise à jour avec l'application
 dans `license` → `Entitlement.Activated`. Échec → message précis : code illisible, signature invalide,
 code expiré, code révoqué.
 
-Réglages affiche l'identifiant de licence et propose « Retirer l'activation ».
+Réglages affiche l'identifiant de licence et propose « Retirer l'activation ». Le champ accepte aussi un
+lien collé (`seekmind://activate?t=…` ou `https://<site>/a#…`), dont il extrait le code
+(`ActivationCode`). Les refus du vérificateur sont regroupés en quatre messages :
+
+| Refus de `TokenVerifier` | Message |
+|---|---|
+| `TOO_LONG`, `MALFORMED`, `BAD_PAYLOAD` | Code illisible |
+| `BAD_ALGORITHM`, `UNKNOWN_KEY`, `WRONG_PURPOSE`, `BAD_SIGNATURE` | Signature invalide |
+| `exp` passé ou égal à l'instant présent | Code expiré |
+| `lid` dans `revoked_licenses.json` | Code révoqué |
+
+`LinkActivity` n'accepte que la forme exacte `seekmind://activate?t=<code>` : un seul paramètre, un
+code en alphabet base64url (points compris), au plus 2 048 caractères. Tout autre lien affiche un
+message neutre et ne fait rien.
 
 ### 5.5 Lien cliquable
 

@@ -8,12 +8,16 @@ import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
@@ -32,6 +36,7 @@ import fr.corsicajack.seekmind.core.model.port.EntitlementGate
 import fr.corsicajack.seekmind.di.ApplicationScope
 import fr.corsicajack.seekmind.engine.capture.pause.PauseController
 import fr.corsicajack.seekmind.engine.capture.status.CaptureStatusRepository
+import fr.corsicajack.seekmind.engine.monetization.license.LicenseActivator
 import fr.corsicajack.seekmind.engine.privacy.apps.AppFamilies
 import fr.corsicajack.seekmind.engine.source.LaunchResult
 import fr.corsicajack.seekmind.engine.source.SourceLinks
@@ -47,6 +52,8 @@ import fr.corsicajack.seekmind.feature.search.SearchViewModel
 import fr.corsicajack.seekmind.feature.search.StatusAction
 import fr.corsicajack.seekmind.feature.search.detail.CaptureDetailRoute
 import fr.corsicajack.seekmind.feature.search.detail.CaptureDetailViewModel
+import fr.corsicajack.seekmind.feature.settings.ActivationSettingsRoute
+import fr.corsicajack.seekmind.feature.settings.ActivationSettingsViewModel
 import fr.corsicajack.seekmind.feature.settings.SecuritySettingsRoute
 import fr.corsicajack.seekmind.feature.settings.SecuritySettingsViewModel
 import fr.corsicajack.seekmind.feature.settings.help.ServiceHelpScreen
@@ -87,6 +94,8 @@ class MainActivity : SecureActivity() {
     @Inject lateinit var search: SearchStack
 
     @Inject lateinit var entitlements: EntitlementGate
+
+    @Inject lateinit var activator: dagger.Lazy<LicenseActivator>
 
     @Inject lateinit var wipe: WipeService
 
@@ -314,7 +323,17 @@ class MainActivity : SecureActivity() {
         val security = viewModel {
             SecuritySettingsViewModel(settings, appLock::isDeviceSecure, appLock::onAuthenticated)
         }
-        SecuritySettingsRoute(viewModel = security)
+        val activation = viewModel {
+            ActivationSettingsViewModel(
+                entitlement = entitlements.state,
+                activate = { code -> withContext(Dispatchers.IO) { activator.get().activate(code) } },
+                deactivate = { withContext(Dispatchers.IO) { activator.get().deactivate() } },
+            )
+        }
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            SecuritySettingsRoute(viewModel = security)
+            ActivationSettingsRoute(viewModel = activation)
+        }
     }
 
     private companion object {

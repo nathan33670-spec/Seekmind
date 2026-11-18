@@ -7,4 +7,12 @@
     <string name="app_lock_prompt_title">Déverrouiller SeekMind</string>
     <string name="app_lock_message">SeekMind est verrouillé.</string>
     <string name="app_lock_unlock">Déverrouiller</string>
+    <string name="link_confirm_title">Activer SeekMind sur ce téléphone ?</string>
+    <string name="link_confirm_text">SeekMind cherchera sans décompter vos recherches. Vous pourrez retirer l\'activation à tout moment dans Réglages › Activation.</string>
+    <string name="link_confirm">Activer</string>
+    <string name="link_decline">Pas maintenant</string>
+    <string name="link_activated">SeekMind est activé.</string>
+    <string name="link_invalid">Ce lien n\'est pas un lien d\'activation valide. Rien n\'a été modifié.</string>
+    <string name="link_open">Ouvrir SeekMind</string>
+    <string name="link_close">Fermer</string>
 </resources>
