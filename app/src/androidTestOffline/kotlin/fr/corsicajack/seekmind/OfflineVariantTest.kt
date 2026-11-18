@@ -43,13 +43,11 @@ class OfflineVariantTest {
         )
     }
 
+    /** The ads SDK itself is kept out by :app:verifyDependencies (dependency allowlist of the variant). */
     @Test
     fun noAdsCodeIsShipped() {
-        listOf("fr.corsicajack.seekmind.engine.ads.AdMobRewardProvider", "com.google.android.gms.ads.MobileAds")
-            .forEach { name ->
-                val found = runCatching { Class.forName(name) }.isSuccess
-                assertWithMessage(name).that(found).isFalse()
-            }
+        val found = runCatching { Class.forName("fr.corsicajack.seekmind.engine.ads.AdMobRewardProvider") }.isSuccess
+        assertWithMessage("engine:ads in the offline variant").that(found).isFalse()
     }
 
     @Test
