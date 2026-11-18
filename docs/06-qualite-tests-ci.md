@@ -103,7 +103,8 @@ réelle, et ceux-là sont exclus de leur exécution (`notAnnotation`).
 
 Matrice : API 30, 34 et 36, variante `ads`. E2E-03 s'appuie sur le code d'erreur système à partir de
 l'API 34 et sur l'heuristique d'image noire en API 30 (ADR-0008). La variante `offline` exécute E2E-01,
-02 et 15 (sans publicité : crédits quotidiens) sur l'API 34.
+02 et 15 (sans publicité : crédits quotidiens, `DailyCreditsE2ETest`) ; ses tests tournent sur les
+trois niveaux d'API.
 
 ## 5. Jeux de référence
 

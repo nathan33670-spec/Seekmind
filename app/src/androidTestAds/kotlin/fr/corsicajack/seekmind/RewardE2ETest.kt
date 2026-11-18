@@ -70,16 +70,20 @@ class RewardE2ETest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private lateinit var scenario: ActivityScenario<MainActivity>
+    private var balanceBefore = 0
 
     @Before
     fun setUp() = runBlocking<Unit> {
         hilt.inject()
         ledger.ensureWelcome()
+        balanceBefore = ledger.balance()
     }
 
+    /** The balance as it was, for whatever runs after in this process. */
     @After
     fun tearDown() {
         if (::scenario.isInitialized) scenario.close()
+        setBalance(balanceBefore)
     }
 
     private fun balance() = runBlocking { ledger.balance() }
