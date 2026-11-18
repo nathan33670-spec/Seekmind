@@ -27,11 +27,7 @@ class CreditsSheetViewModelTest {
     private val store = FakeMonetizationStore()
     private val ledger = CreditLedger(store, MonetizationConfig(), FakeClock()) { ZoneOffset.UTC }
     private val ads = FakeRewardProvider()
-    private var credited = 0
-
-    private fun model(provider: FakeRewardProvider? = ads) = CreditsSheetViewModel(RewardFlow(ledger, provider)) {
-        credited++
-    }
+    private fun model(provider: FakeRewardProvider? = ads) = CreditsSheetViewModel(RewardFlow(ledger, provider))
 
     @Before
     fun setUp() {
@@ -60,7 +56,7 @@ class CreditsSheetViewModelTest {
         model.open(ACTIVITY)
         model.watch(ACTIVITY)
         assertThat(model.state.value.message).isEqualTo(RewardMessage.Earned(5))
-        assertThat(credited).isEqualTo(1)
+        assertThat(model.state.value.credited).isTrue()
     }
 
     @Test
@@ -71,7 +67,7 @@ class CreditsSheetViewModelTest {
         model.watch(ACTIVITY)
         assertThat(model.state.value).isEqualTo(CreditsSheetState(AdButton.READY, RewardMessage.Dismissed))
         assertThat(ads.prepares).isEqualTo(2)
-        assertThat(credited).isEqualTo(0)
+        assertThat(model.state.value.credited).isFalse()
     }
 
     @Test
@@ -81,7 +77,7 @@ class CreditsSheetViewModelTest {
         model.open(ACTIVITY)
         model.watch(ACTIVITY)
         assertThat(model.state.value.message).isEqualTo(RewardMessage.Courtesy(1))
-        assertThat(credited).isEqualTo(1)
+        assertThat(model.state.value.credited).isTrue()
     }
 
     @Test
@@ -93,6 +89,20 @@ class CreditsSheetViewModelTest {
         val none = model(null)
         none.open(ACTIVITY)
         assertThat(none.state.value.button).isEqualTo(AdButton.ABSENT)
+    }
+
+    @Test
+    fun `a closed sheet keeps no prepared ad, and the next opening prepares a fresh one`() {
+        val model = model()
+        model.open(ACTIVITY)
+        model.close()
+        assertThat(model.state.value).isEqualTo(CreditsSheetState(AdButton.LOADING))
+        model.watch(ACTIVITY)
+        assertThat(ads.shows).isEqualTo(0)
+        model.open(ACTIVITY)
+        assertThat(ads.prepares).isEqualTo(2)
+        model.watch(ACTIVITY)
+        assertThat(ads.shows).isEqualTo(1)
     }
 
     @Test

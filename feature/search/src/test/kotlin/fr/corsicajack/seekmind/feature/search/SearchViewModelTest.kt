@@ -351,6 +351,22 @@ class SearchViewModelTest {
     }
 
     @Test
+    fun theLiveSearchRecordsOnlyTheSubmittedQuery() = runTest(dispatcher) {
+        gate.state.value = Entitlement.Activated("SM-1", "lifetime")
+        val vm = viewModel()
+        advanceUntilIdle()
+        vm.onQueryChange("zan")
+        advanceUntilIdle()
+        vm.onQueryChange("zanzibar")
+        advanceUntilIdle()
+        assertThat(engine.requests.map { it.rawQuery }).containsExactly("zan", "zanzibar").inOrder()
+        assertThat(history.entries).isEmpty()
+        vm.submit()
+        advanceUntilIdle()
+        assertThat(history.entries.map { it.query }).containsExactly("zanzibar")
+    }
+
+    @Test
     fun aSearchRefusedForLackOfCreditGoesOnOnceCredited() = runTest(dispatcher) {
         gate.authorization = Authorization.NoCredit
         val vm = viewModel()

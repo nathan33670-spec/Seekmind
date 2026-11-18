@@ -42,7 +42,8 @@ import kotlinx.coroutines.withContext
  * - A new search cancels the previous one; the keyword results are shown as they arrive, then the
  *   hybrid results.
  * - The entitlement gate is asked before the search and told the result count after the final emission.
- * - The history records submitted queries only while the setting allows it, and is shown only then.
+ * - The history records submitted queries only while the setting allows it, and is shown only then:
+ *   the searches of the live search, as the user types, are never recorded.
  * - With the activated plan the search runs as the user types, after [liveSearchDebounceMs]; with the
  *   free plan only when submitted, since each search may cost a credit (docs/specs/monetisation.md §2).
  * - Removing a filter understood in the query searches again without it: the query becomes the text
@@ -128,7 +129,7 @@ class SearchViewModel(
         live = viewModelScope.launch {
             delay(liveSearchDebounceMs)
             pinned = SearchFilters()
-            run()
+            run(record = false)
         }
     }
 
@@ -175,7 +176,8 @@ class SearchViewModel(
         packages = state.app?.let { setOf(it) } ?: pinned.packages,
     )
 
-    private fun run() {
+    /** [record]: whether the search goes in the history; false for the searches made as the user types. */
+    private fun run(record: Boolean = true) {
         search?.cancel()
         resolving?.cancel()
         // Installed applications may have changed since the previous search.
@@ -218,7 +220,9 @@ class SearchViewModel(
                 }
                 authorization = gate.authorize(key)
                 if (authorization is Authorization.NoCredit) {
-                    _state.update { it.copy(phase = SearchPhase.NO_CREDIT, refining = false) }
+                    _state.update {
+                        it.copy(phase = SearchPhase.NO_CREDIT, refining = false, noCreditCount = it.noCreditCount + 1)
+                    }
                     return@launch
                 }
                 searchEngine.search(SearchRequest(query, filters, LIMIT, now(), zone())).collect { results ->
@@ -245,7 +249,7 @@ class SearchViewModel(
             try {
                 gate.commit(key, final.hits.size)
                 val willCharge = (authorization as Authorization.Granted).willCharge && final.hits.isNotEmpty()
-                if (recordHistory) {
+                if (record && recordHistory) {
                     withContext(io) {
                         history()?.add(SearchHistoryEntry(now(), query, key, final.hits.size, willCharge))
                     }

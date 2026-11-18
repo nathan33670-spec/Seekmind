@@ -107,6 +107,8 @@ data class SearchUiState(
     val terms: List<String> = emptyList(),
     /** The balance or the activation (docs/specs/monetisation.md §6); null until known. */
     val entitlement: Entitlement? = null,
+    /** Searches refused for lack of credit so far: each one opens the credits sheet once. */
+    val noCreditCount: Int = 0,
 )
 
 /**

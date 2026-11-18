@@ -197,24 +197,30 @@ class MainActivity : SecureActivity() {
         }
         // The credits sheet (docs/specs/monetisation.md §6): its ad is prepared when it opens, not before.
         var sheet by rememberSaveable { mutableStateOf(false) }
+        val credits = viewModel(key = "credits-sheet") { CreditsSheetViewModel(rewardFlow) }
         if (sheet) {
-            val credits = viewModel(key = "credits-sheet") {
-                CreditsSheetViewModel(rewardFlow) {
+            val sheetState by credits.state.collectAsStateWithLifecycle()
+            LaunchedEffect(credits) { credits.open(this@MainActivity) }
+            LaunchedEffect(sheetState.credited) {
+                if (sheetState.credited) {
                     sheet = false
+                    credits.close()
                     searchViewModel.onCredited()
                 }
             }
-            val sheetState by credits.state.collectAsStateWithLifecycle()
-            LaunchedEffect(credits) { credits.open(this@MainActivity) }
             CreditsSheet(
                 state = sheetState,
                 dailyFreeCredits = monetizationConfig.dailyFreeCredits,
                 onWatch = { credits.watch(this@MainActivity) },
                 onCode = {
                     sheet = false
+                    credits.close()
                     openSettings()
                 },
-                onDismiss = { sheet = false },
+                onDismiss = {
+                    sheet = false
+                    credits.close()
+                },
             )
         }
         val state by searchViewModel.state.collectAsStateWithLifecycle()

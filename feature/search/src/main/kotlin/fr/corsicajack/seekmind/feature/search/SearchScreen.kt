@@ -19,6 +19,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -78,8 +79,15 @@ fun SearchRoute(
     onCredits: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    // Balance at 0: the sheet opens on the submission of the search (docs/specs/monetisation.md §6).
-    LaunchedEffect(state.phase) { if (state.phase == SearchPhase.NO_CREDIT) onCredits() }
+    // Balance at 0: the sheet opens on the submission of the search (docs/specs/monetisation.md §6), once
+    // per refused search: not again after a rotation.
+    var sheetOpenedFor by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(state.noCreditCount) {
+        if (state.noCreditCount > sheetOpenedFor) {
+            sheetOpenedFor = state.noCreditCount
+            onCredits()
+        }
+    }
     SearchScreen(
         state = state,
         zone = zone,
