@@ -78,6 +78,12 @@ class OfflineVariantTest {
             val localized = context.createConfigurationContext(configuration)
             val id = context.resources.getIdentifier("onboarding_disclosure_data_2", "string", context.packageName)
             assertThat(localized.getString(id)).isEqualTo(text)
+            // The description shown in Settings › Accessibility says the same, and nothing of ads.
+            val description = localized.getString(
+                context.resources.getIdentifier("a11y_service_description", "string", context.packageName),
+            )
+            assertThat(description).contains(text)
+            assertThat(description.lowercase()).doesNotContain(if (locale == Locale.FRENCH) "publicit" else " ads ")
         }
     }
 }

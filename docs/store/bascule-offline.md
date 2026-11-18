@@ -29,7 +29,8 @@ scripts/check-elf-alignment.sh
 - **Formule activée** : code d'activation, collé ou par lien, comme dans la variante `ads`.
 - **Divulgation** : le deuxième point de « Ce que deviennent ces données » devient « L'application n'a
   pas l'autorisation d'accéder à Internet. » ([conformité §4.4](../05-conformite-play-store.md#44-variante-offline)).
-  La version de la divulgation reste la même : le texte est une ressource de la variante.
+  La version de la divulgation reste la même : le texte est une ressource de la variante. La description
+  du service dans Réglages › Accessibilité dit de même, sans la phrase sur la publicité.
 
 ## 3. Textes à changer dans la Play Console
 

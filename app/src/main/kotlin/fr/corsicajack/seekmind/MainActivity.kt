@@ -112,7 +112,7 @@ class MainActivity : SecureActivity() {
 
     @Inject lateinit var rewardFlow: RewardFlow
 
-    /** Absent in the `offline` variant (RewardModule). */
+    /** `NoRewardProvider` in the `offline` variant: no ad privacy choices to offer (RewardModule). */
     @Inject lateinit var rewardProvider: Optional<RewardProvider>
 
     @Inject lateinit var monetizationConfig: MonetizationConfig
