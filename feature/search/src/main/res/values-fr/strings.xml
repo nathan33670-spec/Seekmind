@@ -81,4 +81,5 @@
         <item quantity="one">Dernière mémorisation il y a %1$d jour</item>
         <item quantity="other">Dernière mémorisation il y a %1$d jours</item>
     </plurals>
+    <string name="search_no_credit_action">Obtenir des recherches</string>
 </resources>

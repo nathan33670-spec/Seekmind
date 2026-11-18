@@ -39,6 +39,7 @@ const val ACTIVATION_PASTE_TAG = "settings_activation_paste"
 const val ACTIVATION_ACTIVATE_TAG = "settings_activation_activate"
 const val ACTIVATION_REMOVE_TAG = "settings_activation_remove"
 const val ACTIVATION_MESSAGE_TAG = "settings_activation_message"
+const val ACTIVATION_AD_PRIVACY_TAG = "settings_activation_ad_privacy"
 
 /**
  * « Activation » section of the settings (docs/specs/ui-ux.md §3.5): the balance or the licence; with
@@ -53,6 +54,9 @@ fun ActivationSettingsSection(
     onActivate: () -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
+    /** « Confidentialité des publicités », offered only where the regulations require it (variant `ads`). */
+    privacyOptionsRequired: Boolean = false,
+    onPrivacyOptions: () -> Unit = {},
 ) {
     var confirmingRemoval by rememberSaveable { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
@@ -113,6 +117,13 @@ fun ActivationSettingsSection(
                     ) { Text(text = stringResource(R.string.settings_activation_activate)) }
                 }
             }
+        }
+        if (privacyOptionsRequired) {
+            SettingRow(
+                title = stringResource(R.string.settings_activation_ad_privacy),
+                onClick = onPrivacyOptions,
+                modifier = Modifier.testTag(ACTIVATION_AD_PRIVACY_TAG),
+            )
         }
         state.message?.let { message ->
             Text(

@@ -127,6 +127,13 @@ sequenceDiagram
 | `NOT_ALLOWED`, `ERROR`, `FAILED` | Rien | « Publicité indisponible pour le moment » |
 
 Le crédit de courtoisie évite qu'un utilisateur sans connexion ou sans annonce disponible soit bloqué.
+Une fois atteint le plafond quotidien de courtoisie, `NO_FILL` et `OFFLINE` affichent « Publicité
+indisponible pour le moment », sans crédit.
+
+Implémentation (M8-04) : `RewardFlow.prepare` s'exécute à l'ouverture de la feuille de crédits (plafond
+des récompenses vérifié d'abord, sans appel au fournisseur s'il est atteint), et `RewardFlow.complete` au
+toucher du bouton. Après une annonce sans crédit (fermée trop tôt, indisponible), l'annonce suivante est
+préparée. Après un crédit, la feuille se ferme et une recherche refusée faute de crédit repart.
 
 ### 3.3 Implémentation AdMob (`engine:ads`)
 

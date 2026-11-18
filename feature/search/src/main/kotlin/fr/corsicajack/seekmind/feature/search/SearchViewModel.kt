@@ -7,6 +7,7 @@ import fr.corsicajack.seekmind.core.database.store.SearchHistoryEntry
 import fr.corsicajack.seekmind.core.database.store.SearchHistoryStore
 import fr.corsicajack.seekmind.core.model.Authorization
 import fr.corsicajack.seekmind.core.model.CaptureStatus
+import fr.corsicajack.seekmind.core.model.Entitlement
 import fr.corsicajack.seekmind.core.model.ParsedQuery
 import fr.corsicajack.seekmind.core.model.SearchFilters
 import fr.corsicajack.seekmind.core.model.SearchHit
@@ -23,6 +24,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,7 +42,10 @@ import kotlinx.coroutines.withContext
  * - A new search cancels the previous one; the keyword results are shown as they arrive, then the
  *   hybrid results.
  * - The entitlement gate is asked before the search and told the result count after the final emission.
- * - The history records submitted queries only while the setting allows it, and is shown only then.
+ * - The history records submitted queries only while the setting allows it, and is shown only then:
+ *   the searches of the live search, as the user types, are never recorded.
+ * - With the activated plan the search runs as the user types, after [liveSearchDebounceMs]; with the
+ *   free plan only when submitted, since each search may cost a credit (docs/specs/monetisation.md §2).
  * - Removing a filter understood in the query searches again without it: the query becomes the text
  *   without its expressions, and the other understood filters are kept as explicit filters.
  *
@@ -64,11 +69,14 @@ class SearchViewModel(
     private val resolveSource: suspend (SearchHit) -> SourceRef? = { null },
     /** The capture status (docs/specs/capture.md §8): the banner of the screen. */
     captureStatus: Flow<CaptureStatus> = emptyFlow(),
+    /** Pause of the live search of the activated plan (MonetizationConfig.liveSearchDebounceMs). */
+    private val liveSearchDebounceMs: Long = 300,
 ) : ViewModel() {
     private val _state = MutableStateFlow(SearchUiState())
     val state: StateFlow<SearchUiState> = _state.asStateFlow()
 
     private var search: Job? = null
+    private var live: Job? = null
 
     /**
      * Ways back resolved for the current search, by capture id: each result is resolved once. Written on
@@ -84,6 +92,9 @@ class SearchViewModel(
     init {
         viewModelScope.launch {
             captureStatus.collect { status -> _state.update { it.copy(capture = status) } }
+        }
+        viewModelScope.launch {
+            gate.state.collect { entitlement -> _state.update { it.copy(entitlement = entitlement) } }
         }
         viewModelScope.launch {
             deletions.collect { id ->
@@ -110,13 +121,29 @@ class SearchViewModel(
         }
     }
 
-    fun onQueryChange(query: String) = _state.update { it.copy(query = query) }
+    fun onQueryChange(query: String) {
+        val changed = query != _state.value.query
+        _state.update { it.copy(query = query) }
+        live?.cancel()
+        if (!changed || _state.value.entitlement !is Entitlement.Activated) return
+        live = viewModelScope.launch {
+            delay(liveSearchDebounceMs)
+            pinned = SearchFilters()
+            run(record = false)
+        }
+    }
+
+    /** Credits were added from the credits sheet: a search refused for lack of credit goes on. */
+    fun onCredited() {
+        if (_state.value.phase == SearchPhase.NO_CREDIT) run()
+    }
 
     /** « Réessayer » after a failed search: the same query and filters. */
     fun retry() = run()
 
     /** Runs [query]; a blank query clears the results. */
     fun submit(query: String = _state.value.query) {
+        live?.cancel()
         pinned = SearchFilters()
         _state.update { it.copy(query = query) }
         run()
@@ -149,7 +176,8 @@ class SearchViewModel(
         packages = state.app?.let { setOf(it) } ?: pinned.packages,
     )
 
-    private fun run() {
+    /** [record]: whether the search goes in the history; false for the searches made as the user types. */
+    private fun run(record: Boolean = true) {
         search?.cancel()
         resolving?.cancel()
         // Installed applications may have changed since the previous search.
@@ -192,7 +220,9 @@ class SearchViewModel(
                 }
                 authorization = gate.authorize(key)
                 if (authorization is Authorization.NoCredit) {
-                    _state.update { it.copy(phase = SearchPhase.NO_CREDIT, refining = false) }
+                    _state.update {
+                        it.copy(phase = SearchPhase.NO_CREDIT, refining = false, noCreditCount = it.noCreditCount + 1)
+                    }
                     return@launch
                 }
                 searchEngine.search(SearchRequest(query, filters, LIMIT, now(), zone())).collect { results ->
@@ -219,7 +249,7 @@ class SearchViewModel(
             try {
                 gate.commit(key, final.hits.size)
                 val willCharge = (authorization as Authorization.Granted).willCharge && final.hits.isNotEmpty()
-                if (recordHistory) {
+                if (record && recordHistory) {
                     withContext(io) {
                         history()?.add(SearchHistoryEntry(now(), query, key, final.hits.size, willCharge))
                     }

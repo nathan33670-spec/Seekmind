@@ -47,4 +47,5 @@
     <string name="settings_activation_invalid">This code is not valid: its signature does not match.</string>
     <string name="settings_activation_expired">This code has expired.</string>
     <string name="settings_activation_revoked">This code has been revoked.</string>
+    <string name="settings_activation_ad_privacy">Ad privacy</string>
 </resources>

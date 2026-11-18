@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,11 +17,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
@@ -31,6 +35,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.corsicajack.seekmind.core.designsystem.SeekMindIcons
 import fr.corsicajack.seekmind.core.designsystem.component.ConfirmDialog
+import fr.corsicajack.seekmind.core.designsystem.component.CreditBadge
+import fr.corsicajack.seekmind.core.designsystem.component.CreditBadgeState
 import fr.corsicajack.seekmind.core.designsystem.component.EmptyState
 import fr.corsicajack.seekmind.core.designsystem.component.FilterChipItem
 import fr.corsicajack.seekmind.core.designsystem.component.FilterChipRow
@@ -39,6 +45,7 @@ import fr.corsicajack.seekmind.core.designsystem.component.ResultCardModel
 import fr.corsicajack.seekmind.core.designsystem.component.SearchField
 import fr.corsicajack.seekmind.core.designsystem.component.StatusBanner
 import fr.corsicajack.seekmind.core.designsystem.theme.Spacing
+import fr.corsicajack.seekmind.core.model.Entitlement
 import fr.corsicajack.seekmind.core.model.Relaxation
 import fr.corsicajack.seekmind.core.model.SearchHit
 import fr.corsicajack.seekmind.core.model.SourceRef
@@ -52,6 +59,7 @@ import java.time.temporal.ChronoUnit
 /** Test tags of the screen. */
 const val SEARCH_RESULTS_TAG = "search_results"
 const val SEARCH_REFINING_TAG = "search_refining"
+const val SEARCH_CREDITS_TAG = "search_credits"
 
 private const val APP_CHIP = "app"
 
@@ -67,8 +75,19 @@ fun SearchRoute(
     modifier: Modifier = Modifier,
     onStatusAction: (StatusAction) -> Unit = {},
     canEnableCapture: Boolean = false,
+    /** Opens the credits sheet: on a tap of the balance, and when a search finds no credit left. */
+    onCredits: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Balance at 0: the sheet opens on the submission of the search (docs/specs/monetisation.md §6), once
+    // per refused search: not again after a rotation.
+    var sheetOpenedFor by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(state.noCreditCount) {
+        if (state.noCreditCount > sheetOpenedFor) {
+            sheetOpenedFor = state.noCreditCount
+            onCredits()
+        }
+    }
     SearchScreen(
         state = state,
         zone = zone,
@@ -85,6 +104,7 @@ fun SearchRoute(
         modifier = modifier,
         onStatusAction = onStatusAction,
         canEnableCapture = canEnableCapture,
+        onCredits = onCredits,
     )
 }
 
@@ -110,6 +130,7 @@ fun SearchScreen(
     onStatusAction: (StatusAction) -> Unit = {},
     /** Whether « Activer la mémorisation » has somewhere to go (the disclosure, M6-02). */
     canEnableCapture: Boolean = false,
+    onCredits: () -> Unit = {},
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = Spacing.l),
@@ -123,13 +144,32 @@ fun SearchScreen(
             onAction = onStatusAction,
             modifier = Modifier.padding(top = Spacing.m),
         )
-        SearchField(
-            query = state.query,
-            onQueryChange = onQueryChange,
-            onSearch = onSearch,
-            placeholder = stringResource(R.string.search_placeholder),
+        Row(
             modifier = Modifier.padding(top = Spacing.m),
-        )
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.s),
+        ) {
+            SearchField(
+                query = state.query,
+                onQueryChange = onQueryChange,
+                onSearch = onSearch,
+                placeholder = stringResource(R.string.search_placeholder),
+                modifier = Modifier.weight(1f),
+            )
+            when (val entitlement = state.entitlement) {
+                // « Activé »: no credit to show, no sheet to open.
+                is Entitlement.Activated -> CreditBadge(CreditBadgeState.Activated, onClick = {
+                }, modifier = Modifier.testTag(SEARCH_CREDITS_TAG))
+
+                is Entitlement.Free -> CreditBadge(
+                    CreditBadgeState.Credits(entitlement.balance),
+                    onClick = onCredits,
+                    modifier = Modifier.testTag(SEARCH_CREDITS_TAG),
+                )
+
+                null -> Unit
+            }
+        }
         Filters(state, onPeriod, onApp)
         if (state.understood.isNotEmpty()) {
             FilterChipRow(
@@ -160,6 +200,8 @@ fun SearchScreen(
                     title = stringResource(R.string.search_no_credit_title),
                     message = stringResource(R.string.search_no_credit_message),
                     icon = SeekMindIcons.Info,
+                    actionLabel = stringResource(R.string.search_no_credit_action),
+                    onAction = onCredits,
                 )
 
                 SearchPhase.UNAVAILABLE -> Unavailable(onReset)

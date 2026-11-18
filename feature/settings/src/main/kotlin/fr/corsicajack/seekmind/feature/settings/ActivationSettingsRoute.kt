@@ -11,7 +11,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
  * once, on the user's tap, puts the text in the field and activates it.
  */
 @Composable
-fun ActivationSettingsRoute(viewModel: ActivationSettingsViewModel, modifier: Modifier = Modifier) {
+fun ActivationSettingsRoute(
+    viewModel: ActivationSettingsViewModel,
+    modifier: Modifier = Modifier,
+    privacyOptionsRequired: Boolean = false,
+    onPrivacyOptions: () -> Unit = {},
+) {
     @Suppress("DEPRECATION") // LocalClipboard is suspending and needs a ClipEntry; the text is all we read.
     val clipboard = LocalClipboardManager.current
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -25,5 +30,7 @@ fun ActivationSettingsRoute(viewModel: ActivationSettingsViewModel, modifier: Mo
         onActivate = viewModel::activate,
         onRemove = viewModel::deactivate,
         modifier = modifier,
+        privacyOptionsRequired = privacyOptionsRequired,
+        onPrivacyOptions = onPrivacyOptions,
     )
 }
