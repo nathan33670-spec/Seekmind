@@ -110,10 +110,20 @@ class RewardE2ETest {
 
     private fun watch() = compose.onNodeWithTag(CREDITS_AD_TAG).performClick()
 
+    /**
+     * One test only: each @HiltAndroidTest test builds its own graph, and the singletons of the process
+     * that the graph opens (the settings DataStore, the database) cannot be opened twice in a process.
+     * The two scenarios run in turn, in the same activity.
+     */
     @Test
-    fun e2e15_aWatchedAdGivesFiveAClosedOneNothingAndNoAdOneCourtesySearch() {
-        setBalance(10)
+    fun e2e15_rewardsThenASearchWithoutCreditThatGoesOnAfterTheReward() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
+        watchedClosedAndUnavailableAds()
+        aSearchWithoutCreditOpensTheSheetAndGoesOnAfterTheReward()
+    }
+
+    private fun watchedClosedAndUnavailableAds() {
+        setBalance(10)
 
         // Watched to the end: +5, the sheet closes.
         openSheet()
@@ -141,10 +151,10 @@ class RewardE2ETest {
         assertThat(ads.shows).isEqualTo(2)
     }
 
-    @Test
-    fun aSearchWithoutCreditOpensTheSheetAndGoesOnAfterTheReward() {
+    private fun aSearchWithoutCreditOpensTheSheetAndGoesOnAfterTheReward() {
+        ads.readiness = RewardReadiness.READY
+        ads.outcome = RewardOutcome.EARNED
         setBalance(0)
-        scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.onNode(hasSetTextAction()).performTextInput("zanzibar")
         compose.onNode(hasSetTextAction()).performImeAction()
 
