@@ -79,15 +79,7 @@ fun SearchRoute(
     onCredits: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    // Balance at 0: the sheet opens on the submission of the search (docs/specs/monetisation.md §6), once
-    // per refused search: not again after a rotation.
-    var sheetOpenedFor by rememberSaveable { mutableIntStateOf(0) }
-    LaunchedEffect(state.noCreditCount) {
-        if (state.noCreditCount > sheetOpenedFor) {
-            sheetOpenedFor = state.noCreditCount
-            onCredits()
-        }
-    }
+    NoCreditTrigger(state.noCreditCount, onCredits)
     SearchScreen(
         state = state,
         zone = zone,
@@ -106,6 +98,23 @@ fun SearchRoute(
         canEnableCapture = canEnableCapture,
         onCredits = onCredits,
     )
+}
+
+/**
+ * Balance at 0: the credits sheet opens on the submission of the search (docs/specs/monetisation.md §6),
+ * once per refused search ([noCreditCount]): not again after a rotation, and again after the death of the
+ * process, when the count starts from 0 while the saved value does not.
+ */
+@Composable
+internal fun NoCreditTrigger(noCreditCount: Int, onCredits: () -> Unit) {
+    var sheetOpenedFor by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(noCreditCount) {
+        if (noCreditCount < sheetOpenedFor) sheetOpenedFor = 0
+        if (noCreditCount > sheetOpenedFor) {
+            sheetOpenedFor = noCreditCount
+            onCredits()
+        }
+    }
 }
 
 /**
