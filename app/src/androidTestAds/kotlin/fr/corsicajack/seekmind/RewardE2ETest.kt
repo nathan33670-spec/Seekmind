@@ -1,6 +1,5 @@
 package fr.corsicajack.seekmind
 
-import android.view.KeyEvent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
@@ -101,13 +100,6 @@ class RewardE2ETest {
         }
     }
 
-    private fun closeSheet() {
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        compose.waitUntil(TIMEOUT_MS) {
-            compose.onAllNodes(hasTestTag(CREDITS_SHEET_TAG)).fetchSemanticsNodes().isEmpty()
-        }
-    }
-
     private fun watch() = compose.onNodeWithTag(CREDITS_AD_TAG).performClick()
 
     /**
@@ -133,22 +125,27 @@ class RewardE2ETest {
             compose.onAllNodes(hasTestTag(CREDITS_SHEET_TAG)).fetchSemanticsNodes().isEmpty()
         }
 
-        // Closed before the end: nothing, the sheet says why and stays.
+        // Closed before the end: nothing, the sheet says why, stays open and prepares the next ad,
+        // which this time is unavailable.
         ads.outcome = RewardOutcome.DISMISSED
         openSheet()
+        ads.readiness = RewardReadiness.NO_FILL
         watch()
         compose.waitUntil(TIMEOUT_MS) {
             compose.onAllNodes(hasTestTag(CREDITS_MESSAGE_TAG)).fetchSemanticsNodes().isNotEmpty()
         }
         assertThat(balance()).isEqualTo(15)
-        closeSheet()
 
-        // No ad available: one courtesy search.
-        ads.readiness = RewardReadiness.NO_FILL
-        openSheet()
+        // No ad available: one courtesy search, in the same sheet.
+        compose.waitUntil(TIMEOUT_MS) {
+            compose.onAllNodes(hasTestTag(CREDITS_AD_TAG) and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+        }
         watch()
         compose.waitUntil(TIMEOUT_MS) { balance() == 16 }
         assertThat(ads.shows).isEqualTo(2)
+        compose.waitUntil(TIMEOUT_MS) {
+            compose.onAllNodes(hasTestTag(CREDITS_SHEET_TAG)).fetchSemanticsNodes().isEmpty()
+        }
     }
 
     private fun aSearchWithoutCreditOpensTheSheetAndGoesOnAfterTheReward() {
