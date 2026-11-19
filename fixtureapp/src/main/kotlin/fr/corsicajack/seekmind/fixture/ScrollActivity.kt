@@ -21,6 +21,7 @@ class ScrollActivity : FixtureActivity() {
     }
 
     private companion object {
-        const val LINES = 300
+        /** Taller than any screen, small enough for the time budget of the tree (capture §4). */
+        const val LINES = 40
     }
 }

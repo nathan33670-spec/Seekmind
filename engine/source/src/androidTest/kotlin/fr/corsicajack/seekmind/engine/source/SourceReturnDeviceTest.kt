@@ -51,9 +51,10 @@ class SourceReturnDeviceTest {
 
     @Test
     fun withoutItsVariableTheRuleGivesWayToTheApplication() {
-        // The fixture application has no launcher activity: nothing else leads to it.
+        // Without the identifier the rule cannot build its link: the application's launcher activity
+        // (PlainTextActivity, ticket M2-08) is the way back.
         val ref = source.resolver.resolve(capture(FIXTURE, "Aucun identifiant"))
-        assertThat(ref.level).isEqualTo(SourceLevel.UNAVAILABLE)
+        assertThat(ref.level).isEqualTo(SourceLevel.APP_ONLY)
         assertThat(ref.appLabel).isEqualTo("SeekMind test fixtures")
     }
 
