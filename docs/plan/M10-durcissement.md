@@ -164,7 +164,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 **À faire**
 
-1. Arrêt du processus pendant une capture, pendant un lot d'embeddings, pendant une purge : reprise sans perte ni corruption.
+1. E2E-18 (repris de M2-08), joué au niveau d'`adb` : tuer le processus, rouvrir un écran, le service
+   reprend et capture. Arrêt du processus pendant une capture, pendant un lot d'embeddings, pendant une purge : reprise sans perte ni corruption.
 2. Base corrompue, clé perdue, espace de stockage saturé : détection, message, réinitialisation proposée.
 3. Mise à jour de l'application : migrations, changement de modèle, conservation des réglages et du solde.
 
