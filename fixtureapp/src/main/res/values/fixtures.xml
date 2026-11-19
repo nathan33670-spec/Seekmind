@@ -12,6 +12,7 @@
     <string name="fixture_web_html" translatable="false"><![CDATA[<html><head><title>SeekMind fixture article</title></head><body><h1>SEEKMIND_FIXTURE_WEB</h1><p>Un article sur les phares de la côte corse.</p></body></html>]]></string>
     <!-- E2E-14 (DeepLinkActivity): the identifier received by the return to the source. -->
     <string name="fixture_deep_link_item" translatable="false">Fixture item %1$s</string>
+    <string name="fixture_deep_link_marker" translatable="false">SEEKMIND_FIXTURE_ITEM Fiche @item42 du catalogue des kumquats</string>
     <!-- E2E-02 -->
     <string name="fixture_password_marker" translatable="false">SEEKMIND_FIXTURE_PASSWORD Connexion à votre compte</string>
     <string name="fixture_password_user" translatable="false">utilisateur.test</string>

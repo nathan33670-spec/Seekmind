@@ -138,6 +138,15 @@ class CaptureE2ETest {
     }
 
     @Test
+    fun e2e13_theUrlOfTheWebScreenIsStoredWithTheCapture() = runBlocking<Unit> {
+        harness.open("WebActivity")
+        val (_, capture) = harness.awaitCapture("SEEKMIND_FIXTURE_WEB")
+        assertThat(capture.url).isEqualTo("https://fixture.seekmind.test/article/42")
+        // The address bar is an editable field: its text is not part of the capture.
+        assertThat(capture.text).doesNotContain("fixture.seekmind.test/article/42")
+    }
+
+    @Test
     fun e2e19_aDisabledFamilyIsDroppedAndCapturedOnceEnabledAgain() = runBlocking<Unit> {
         settings.setEnabledFamilies(AppFamily.entries.toSet() - AppFamily.MESSAGING)
         harness.open("MessagingLikeActivity")

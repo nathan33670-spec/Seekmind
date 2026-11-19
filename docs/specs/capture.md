@@ -198,6 +198,7 @@ ticket M2-04 :
 | `com.sec.android.app.sbrowser` | `location_bar_edit_text` |
 | `com.opera.browser`, `com.opera.mini.native` | `url_field` |
 | `com.duckduckgo.mobile.android` | `omnibarTextInput` |
+| `fr.corsicajack.seekmind.fixture` (application de test du dépôt, scénario E2E-13) | `url_bar` |
 
 Algorithme (`UrlExtractor`) :
 

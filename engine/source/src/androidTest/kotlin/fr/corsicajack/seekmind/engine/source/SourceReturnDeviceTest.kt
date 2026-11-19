@@ -16,7 +16,8 @@ import org.junit.runner.RunWith
 /**
  * E2E-14 (docs/06-qualite-tests-ci.md §3), at the level of this module: a capture of the fixture
  * application resolves, through a test rule, to `seekmind-fixture://item/<id>`, and the launcher opens
- * DeepLinkActivity on that identifier. The rule lives in the test, not in the shipped rules file.
+ * DeepLinkActivity on that identifier. The rule is the test's own, so that this module does not depend on
+ * the shipped file; the full path with the shipped rule is played by the app's CaptureE2ETest (M2-08).
  */
 @RunWith(AndroidJUnit4::class)
 class SourceReturnDeviceTest {

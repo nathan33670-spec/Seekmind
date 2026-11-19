@@ -29,6 +29,10 @@
     {
       "packages": ["com.duckduckgo.mobile.android"],
       "urlBarId": "omnibarTextInput"
+    },
+    {
+      "packages": ["fr.corsicajack.seekmind.fixture"],
+      "urlBarId": "url_bar"
     }
   ]
 }
