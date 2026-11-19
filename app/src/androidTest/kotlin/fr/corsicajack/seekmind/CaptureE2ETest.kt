@@ -73,7 +73,11 @@ class CaptureE2ETest {
         harness.awaitCapture(SCROLL)
         val start = System.currentTimeMillis()
         val end = SystemClock.elapsedRealtime() + SCROLL_MS
-        while (SystemClock.elapsedRealtime() < end) harness.shell("input swipe 540 1600 540 600 200")
+        // From 70 % to 30 % of the height: the emulators' screens differ in size.
+        val screen = harness.context.resources.displayMetrics
+        val x = screen.widthPixels / 2
+        val swipe = "input swipe $x ${screen.heightPixels * 7 / 10} $x ${screen.heightPixels * 3 / 10} 200"
+        while (SystemClock.elapsedRealtime() < end) harness.shell(swipe)
         // Once the scrolling stops, the last screen is captured: the scrolling is over for the pipeline.
         harness.awaitCapture(SCROLL)
         val config = CaptureConfig()
