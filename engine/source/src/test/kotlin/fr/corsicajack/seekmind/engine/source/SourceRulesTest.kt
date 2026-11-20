@@ -34,6 +34,8 @@ class SourceRulesTest {
             "com.twitter.android" to SourceLevel.APP_LINK,
             "com.google.android.apps.maps" to SourceLevel.APP_SEARCH,
             "com.spotify.music" to SourceLevel.APP_SEARCH,
+            // The repository's test application, for E2E-14 (retour-source §4).
+            "fr.corsicajack.seekmind.fixture" to SourceLevel.APP_LINK,
         ).inOrder()
     }
 
