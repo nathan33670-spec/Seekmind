@@ -247,6 +247,8 @@ class HybridSearcherTest {
         // The dated result first, then the one of the query read without the date.
         assertThat(emissions.last().hits.map { it.captureId }).containsExactly(1L, 2L).inOrder()
         assertThat(emissions.last().parsed.rangeLabel).isEqualTo("lundi")
+        // Only the completed results are final: the screen keeps refining until then.
+        assertThat(emissions.dropLast(1).map { it.stage }.toSet()).containsExactly(Stage.LEXICAL)
 
         // A weekday without « le » is a date: no completion.
         val dated = searcher.search(request("cours de yoga lundi")).toList().last()

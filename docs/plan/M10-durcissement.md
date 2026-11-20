@@ -92,7 +92,7 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| Fait | M5-07 | `engine:index` | [capture §4.2](../specs/capture.md) · EF-SRCH-01 |
+| Fait | M5-07 | `engine:index`, `engine:search`, `core:model` | [capture §4.2](../specs/capture.md) · EF-SRCH-01 |
 
 **À faire**
 

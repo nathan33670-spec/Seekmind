@@ -59,10 +59,11 @@ class HybridSearcher(
         }
         // « le lundi » (recherche §3): the dated results first, then those of the query read without the
         // time expression, its weekday kept as a word.
+        // The dated results are not final yet: shown as keyword-stage results, the screen keeps refining.
         var dated: SearchResults? = null
         searchParsed(parsed, request).collect {
             dated = it
-            emit(it)
+            emit(it.copy(stage = Stage.LEXICAL))
         }
         val undated = searchParsed(parser.parse(request, apps, withTime = false), request).lastOrNull()
         val first = dated
