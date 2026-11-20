@@ -57,8 +57,10 @@ try {
 - Le système impose un intervalle minimal entre deux captures
   (`ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT`) : 1 000 ms mesurés sous Android 11, 500 ms à partir
   d'Android 14 ([prototype S3](../prototypes/S3-accessibilite.md)). Un limiteur interne garantit au moins 1 000 ms entre
-  deux demandes ; au-delà, `RateLimited`. Une demande refusée par le système compte aussi : le limiteur
-  mesure l'intervalle depuis la dernière demande transmise.
+  deux demandes : une demande trop proche **attend** la fin de l'intervalle (1 s au plus), puis part.
+  Elle n'est pas refusée, car pour un paquet sondé à chaque capture, un refus rejetterait l'écran
+  (§3.3). Une demande refusée par le système compte aussi : le limiteur mesure l'intervalle depuis la
+  dernière demande transmise.
 - Correspondance des codes d'erreur du système : `ERROR_TAKE_SCREENSHOT_SECURE_WINDOW` → `SecureWindow` ;
   `ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT` → `RateLimited` ; tout autre code → `Failed(code)`. Deux codes
   internes, négatifs pour ne jamais rencontrer ceux du système, complètent `Failed` : `-1` (image
@@ -107,8 +109,9 @@ les applications dont l'attribut varie d'un écran à l'autre.
 
 ### 3.3 Résultat `Unknown`
 
-Capture impossible (limite de débit, erreur interne) : pour les paquets de `probeAlwaysPackages`, la
-capture est **rejetée** (`SECURE_WINDOW`) ; pour les autres, elle se poursuit sans OCR.
+Capture impossible (limite de débit signalée par le système, erreur interne) : pour les paquets de
+`probeAlwaysPackages`, la capture est **rejetée** (`SECURE_WINDOW`) ; pour les autres, elle se poursuit
+sans OCR. Le limiteur interne ne produit plus ce cas : il attend la fin de l'intervalle (§2).
 
 `rejects(meta, result)` rend cette décision : vrai pour `Secure`, et pour `Unknown` sur un paquet de
 `probeAlwaysPackages`.

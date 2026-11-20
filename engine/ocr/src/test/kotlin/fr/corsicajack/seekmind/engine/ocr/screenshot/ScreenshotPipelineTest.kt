@@ -65,8 +65,18 @@ class ScreenshotPipelineTest {
     private val clock = FakeClock()
     private val ops = Ops()
 
-    private fun pipeline(requester: Requester) =
-        ScreenshotPipeline(requester, ops, ScreenshotRateLimiter(clock, minIntervalMs = 1_000), maxSide = 1_600)
+    private fun pipeline(requester: Requester) = ScreenshotPipeline(
+        requester,
+        ops,
+        ScreenshotRateLimiter(clock, minIntervalMs = 1_000),
+        maxSide = 1_600,
+        wait = {
+            waited += it
+            clock.advance(it)
+        },
+    )
+
+    private var waited = 0L
 
     private val window = IntRect(0, 0, 1_000, 1_000)
 
@@ -79,12 +89,21 @@ class ScreenshotPipelineTest {
     }
 
     @Test
-    fun `a check reports a secure window and the rate limit`() = runBlocking<Unit> {
+    fun `a check reports a secure window, and a close second request waits for the interval`() = runBlocking<Unit> {
         val requester = Requester().apply { next = { FrameResult.Error(ScreenshotErrors.SECURE_WINDOW) } }
         val pipeline = pipeline(requester)
         assertThat(pipeline.check(7)).isEqualTo(Shot.SecureWindow)
-        assertThat(pipeline.check(7)).isEqualTo(Shot.RateLimited)
-        assertThat(requester.calls).isEqualTo(1)
+        clock.advance(300)
+        // Not refused: sent once the 1 000 ms since the previous request are over.
+        assertThat(pipeline.check(7)).isEqualTo(Shot.SecureWindow)
+        assertThat(requester.calls).isEqualTo(2)
+        assertThat(waited).isEqualTo(700)
+    }
+
+    @Test
+    fun `the system's own interval error is still reported`() = runBlocking<Unit> {
+        val requester = Requester().apply { next = { FrameResult.Error(ScreenshotErrors.INTERVAL_TIME_SHORT) } }
+        assertThat(pipeline(requester).check(7)).isEqualTo(Shot.RateLimited)
     }
 
     @Test
@@ -179,17 +198,14 @@ class ScreenshotPipelineTest {
     }
 
     @Test
-    fun `two close requests give RateLimited without calling the system`() = runBlocking<Unit> {
+    fun `a close request waits for the interval before calling the system`() = runBlocking<Unit> {
         val requester = Requester()
         val pipeline = pipeline(requester)
         assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.Ok(1))
         clock.advance(500)
-        var called = false
-        assertThat(pipeline.withScreenshot(7, window) { called = true }).isEqualTo(Shot.RateLimited)
-        assertThat(requester.calls).isEqualTo(1)
-        assertThat(called).isFalse()
-        clock.advance(500)
         assertThat(pipeline.withScreenshot(7, window) { 2 }).isEqualTo(Shot.Ok(2))
+        // The second request reached the system only after the 1 000 ms of the interval.
+        assertThat(waited).isEqualTo(500)
         assertThat(requester.calls).isEqualTo(2)
     }
 
@@ -198,8 +214,10 @@ class ScreenshotPipelineTest {
         val requester = Requester().apply { next = { FrameResult.Error(ScreenshotErrors.INTERNAL_ERROR) } }
         val pipeline = pipeline(requester)
         assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.Failed(ScreenshotErrors.INTERNAL_ERROR))
-        assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.RateLimited)
-        assertThat(requester.calls).isEqualTo(1)
+        assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.Failed(ScreenshotErrors.INTERNAL_ERROR))
+        // The failed request opened the interval: the next one waited for all of it.
+        assertThat(waited).isEqualTo(1_000)
+        assertThat(requester.calls).isEqualTo(2)
     }
 
     @Test

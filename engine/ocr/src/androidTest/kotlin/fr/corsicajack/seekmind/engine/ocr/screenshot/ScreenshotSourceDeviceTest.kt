@@ -95,12 +95,13 @@ class ScreenshotSourceDeviceTest {
     }
 
     @Test
-    fun aCloseSecondRequestIsRateLimited() = runBlocking<Unit> {
+    fun aCloseSecondRequestWaitsForTheIntervalAndIsServed() = runBlocking<Unit> {
         val source = source()
         assertThat(source.withScreenshot(windowId, windowBounds) { 1 }).isEqualTo(Shot.Ok(1))
-        var called = false
-        assertThat(source.withScreenshot(windowId, windowBounds) { called = true }).isEqualTo(Shot.RateLimited)
-        assertThat(called).isFalse()
+        val start = android.os.SystemClock.elapsedRealtime()
+        // Not refused: the request waits for the interval the system requires, then is served.
+        assertThat(source.withScreenshot(windowId, windowBounds) { 2 }).isEqualTo(Shot.Ok(2))
+        assertThat(android.os.SystemClock.elapsedRealtime() - start).isAtLeast(500L)
     }
 
     @Test
