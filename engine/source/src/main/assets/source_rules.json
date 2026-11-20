@@ -14,6 +14,8 @@
     { "package": "com.google.android.apps.maps", "level": "APP_SEARCH",
       "uri": "geo:0,0?q={title}", "requires": ["title"] },
     { "package": "com.spotify.music", "level": "APP_SEARCH",
-      "uri": "spotify:search:{title}", "requires": ["title"] }
+      "uri": "spotify:search:{title}", "requires": ["title"] },
+    { "package": "fr.corsicajack.seekmind.fixture", "level": "APP_LINK",
+      "uri": "seekmind-fixture://item/{handle}", "requires": ["handle"] }
   ]
 }

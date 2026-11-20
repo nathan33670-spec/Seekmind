@@ -7,7 +7,9 @@ import android.widget.LinearLayout
 
 /**
  * A browser-like screen (URL extraction): a fake address bar identified `url_bar`, as in Chrome, above
- * a web view that shows local HTML. No network: the page has no external resource.
+ * a web view that shows local HTML. No network: the page has no external resource. A line of plain text
+ * sits under the bar: some emulators expose nothing of the web view, and a screen without any text in the
+ * tree would share the fingerprint of ImageTextActivity in the memory of the OCR policy (ocr §5).
  */
 class WebActivity : FixtureActivity() {
     override fun addContent() {
@@ -21,6 +23,7 @@ class WebActivity : FixtureActivity() {
                 isFocusable = false
             },
         )
+        addText(R.string.fixture_web_toolbar)
         addView(
             WebView(this).apply {
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 800)

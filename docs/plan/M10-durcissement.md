@@ -44,6 +44,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
      consentement en région Europe ; formulaire des choix de confidentialité accessible ;
    - **M7-02** : les sept règles par application (tableau de la PR #40) ; une règle qui échoue est
      retirée de `source_rules.json`.
+   - **M2-08** : une heure d'usage normal, puis relevé dans Réglages → Diagnostic du nombre de
+     captures, des rejets par motif et de la durée médiane de lecture de l'arbre.
 
    Une validation qui échoue rouvre le ticket (statut `En cours`) et bloque M10-01 jusqu'à sa correction.
 
@@ -165,7 +167,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 **À faire**
 
-1. Arrêt du processus pendant une capture, pendant un lot d'embeddings, pendant une purge : reprise sans perte ni corruption.
+1. E2E-18 (repris de M2-08), joué au niveau d'`adb` : tuer le processus, rouvrir un écran, le service
+   reprend et capture. Arrêt du processus pendant une capture, pendant un lot d'embeddings, pendant une purge : reprise sans perte ni corruption.
 2. Base corrompue, clé perdue, espace de stockage saturé : détection, message, réinitialisation proposée.
 3. Mise à jour de l'application : migrations, changement de modèle, conservation des réglages et du solde.
 

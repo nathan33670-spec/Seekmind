@@ -29,6 +29,9 @@ import org.junit.rules.ExternalResource
  * accessibility service on, the consent and every family given, no pause, no rule for the fixture, and
  * the events of the pipeline collected from the start. Settings and rules are put back afterwards.
  * Create it before any other UiAutomation, or accessibility services are suppressed.
+ *
+ * Families are given by package: the fixture's `SENDTO smsto:` filter puts the whole fixture, the
+ * sentinel PlainTextActivity included, in « messageries ». Disabling that family stops every fixture screen.
  */
 class CaptureHarness : ExternalResource() {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -115,13 +118,19 @@ class CaptureHarness : ExternalResource() {
     }
 
     /** Waits for the capture of the fixture screen showing [marker], stored or deduplicated. */
-    suspend fun awaitCapture(marker: String): Pair<PipelineEvent, Capture> {
+    suspend fun awaitCapture(marker: String): Pair<PipelineEvent, Capture> =
+        awaitCaptureAfter(marker).let { (event, capture, _) -> event to capture }
+
+    /** As [awaitCapture], with the events of the pipeline that came before it. */
+    suspend fun awaitCaptureAfter(marker: String): Triple<PipelineEvent, Capture, List<PipelineEvent>> {
         var capture: Capture? = null
+        val before = mutableListOf<PipelineEvent>()
         val event = awaitEvent("a capture holding $marker") {
-            fixtureCapture(it, marker)?.also { c -> capture = c } !=
-                null
+            val found = fixtureCapture(it, marker)?.also { c -> capture = c } != null
+            if (!found) before += it
+            found
         }
-        return event to checkNotNull(capture)
+        return Triple(event, checkNotNull(capture), before)
     }
 
     /** Captures holding [marker] seen since the start of the test. */

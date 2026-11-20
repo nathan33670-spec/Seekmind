@@ -94,6 +94,11 @@ Règles initiales, **chacune à valider sur appareil** au ticket M7-02 (une règ
 | X | `com.twitter.android` | `https://x.com/{handle}` | `APP_LINK` |
 | Google Maps | `com.google.android.apps.maps` | `geo:0,0?q={title}` | `APP_SEARCH` |
 | Spotify | `com.spotify.music` | `spotify:search:{title}` | `APP_SEARCH` |
+| Application de test | `fr.corsicajack.seekmind.fixture` | `seekmind-fixture://item/{handle}` | `APP_LINK` |
+
+La dernière règle sert au scénario E2E-14 (décision du porteur, 19 novembre 2026) : elle ne vise que
+l'application de test du dépôt, absente des téléphones des utilisateurs, et n'a donc aucun effet en usage
+réel.
 
 Messageries et courriel (WhatsApp, Messages, Gmail) : aucun lien vers une conversation n'est
 constructible à partir du contenu affiché ; niveau `APP_ONLY`.
@@ -178,10 +183,10 @@ texte (cinq au plus).
 - **Lancement.** `:app` lance avec `SourceReturn`, fourni par Hilt et créé à la première demande ; un
   échec ne fait que journaliser le niveau. Les liens du texte passent par `SourceLinks.refFor`, qui
   n'accepte que `http(s)` et vise le navigateur par défaut.
-- **E2E-14.** Le test tourne au niveau de `engine:source` (`SourceReturnDeviceTest`) : une capture de
-  l'application de test, munie d'une règle de test, ouvre `DeepLinkActivity` sur l'identifiant
-  attendu. La règle vit dans le test, pas dans le fichier livré. Le parcours complet (capture, recherche,
-  appui sur le bouton) attend la chaîne de capture (M2-06, M2-08).
+- **E2E-14.** Au niveau de `engine:source` (`SourceReturnDeviceTest`), une capture de l'application de
+  test, munie d'une règle propre au test, ouvre `DeepLinkActivity` sur l'identifiant attendu. Le parcours
+  complet (capture par le service, recherche, appui sur le bouton) est joué par `SourceReturnE2ETest`
+  de `:app` (M2-08), avec la règle livrée de l'application de test (§4).
 
 ## 7. Tests attendus
 

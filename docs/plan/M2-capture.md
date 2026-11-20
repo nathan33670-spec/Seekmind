@@ -177,21 +177,23 @@ identifiants pour les sept pays, tous vérifiés par `tools/privacy/verify_sensi
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En cours — restent E2E-13, E2E-14 et E2E-18 | M2-06, M2-07 | `app`, `fixtureapp` | [tests §3, §4](../06-qualite-tests-ci.md) |
+| Fait — validation manuelle reportée à M10-01 | M2-06, M2-07 | `app`, `fixtureapp` | [tests §3, §4](../06-qualite-tests-ci.md) |
 
 **À faire**
 
 1. Compléter l'application de test : `PasswordActivity`, `EditableActivity`, `ScrollActivity`,
    `SensitiveDataActivity`, `MessagingLikeActivity`.
-2. Écrire les scénarios E2E-01, 02, 04, 07 à 13, 18 et 19, synchronisés sur `CapturePipeline.events`.
+2. Écrire les scénarios E2E-01, 02, 04, 07 à 13 et 19, synchronisés sur `CapturePipeline.events`.
+   E2E-18 (arrêt du processus) relève de M10-06 : chaque exécution d'instrumentation force l'arrêt du
+   paquet à son début et à sa fin, si bien que la mort du processus ne se simule qu'au niveau d'`adb`.
 3. E2E-14, parcours complet : capturer un écran de l'application de test, le retrouver par la recherche,
    puis toucher le bouton de retour à la source, qui ouvre `DeepLinkActivity` sur le bon identifiant.
    Le maillon résolution et lancement est déjà couvert par M7-03 (`SourceReturnDeviceTest`).
 
 **Critères d'acceptation**
 
-- [ ] Les scénarios sont verts sur les émulateurs API 30, 34 et 36, sans attente à durée fixe.
-- [ ] E2E-01 : le mot distinctif est retrouvé par `SearchStore.lexical` moins d'une seconde après `Stored`.
+- [x] Les scénarios sont verts sur les émulateurs API 30, 34 et 36, sans attente à durée fixe.
+- [x] E2E-01 : le mot distinctif est retrouvé par `SearchStore.lexical` moins d'une seconde après `Stored`.
 
 **Validation manuelle** — une heure d'usage normal sur le téléphone de test : relever dans Réglages →
 Diagnostic le nombre de captures, les rejets par motif et la durée médiane de lecture de l'arbre.
