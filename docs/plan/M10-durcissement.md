@@ -157,8 +157,7 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 **Critères d'acceptation**
 
-- [x] Chaque point de la liste est coché avec sa preuve (test, commande, ou constat) dans la PR ; les
-      points qui demandent le téléphone sont reportés à M10-01.
+- [x] Chaque point de la liste est coché avec sa preuve (test, commande, ou constat) dans la PR.
 - [x] La CI échoue si le journal système contient l'un des mots distinctifs de l'application de test.
 
 **Validation manuelle** — protocole des écrans sensibles ([tests §8](../06-qualite-tests-ci.md#8-validation-manuelle)).

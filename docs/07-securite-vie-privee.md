@@ -151,7 +151,9 @@ Plan du document à publier sur le site (rédaction : ticket M11-02, relecture j
 - [x] Verrouillage : l'interface n'est jamais composée avant l'authentification.
       *Preuve : `AppLockTest.lockedNoContentIsComposed`.*
 - [x] Empreintes des dépendances vérifiées ; aucune dépendance hors liste blanche.
-      *Preuve : `gradle/verification-metadata.xml` (M10-05) ; `verifyDependencies`.*
+      *Preuve : `gradle/verification-metadata.xml` (M10-05) ; `verifyDependencies`. Limite : les empreintes
+      SHA-256 sont vérifiées, pas les signatures PGP (`verify-signatures` à `false`) ; une empreinte ne
+      protège que contre un artefact modifié après sa première inscription.*
 - [x] Clés de test refusées par le build `release` (test).
       *Preuve : `ReleaseKeyringTest`.*
 - [ ] Protocole des écrans sensibles ([06 §8](06-qualite-tests-ci.md#8-validation-manuelle)) rejoué.
