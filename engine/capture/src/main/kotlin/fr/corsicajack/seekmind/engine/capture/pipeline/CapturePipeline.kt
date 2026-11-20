@@ -21,6 +21,9 @@ import fr.corsicajack.seekmind.engine.capture.meta.ScreenMetaReader
 import fr.corsicajack.seekmind.engine.capture.tree.ActiveWindow
 import fr.corsicajack.seekmind.engine.capture.tree.TreeExtractor
 import fr.corsicajack.seekmind.engine.capture.tree.UiNode
+import java.util.Timer
+import java.util.TimerTask
+import kotlin.concurrent.schedule
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -100,7 +103,18 @@ class CapturePipeline(
     private val mutableEvents = MutableSharedFlow<PipelineEvent>(extraBufferCapacity = EVENT_BUFFER)
     val events: SharedFlow<PipelineEvent> = mutableEvents.asSharedFlow()
 
+    /** The step in progress (the numbers of the comments below) and when it started: for the watchdog. */
+    @Volatile
+    private var step = 0
+
+    @Volatile
+    private var stepStartedAt = 0L
+
     override suspend fun onStable(): PipelineEvent {
+        // Logged on another thread, the capture's may be the one held: the step and its age, nothing else.
+        val watchdog: TimerTask = WATCHDOG.schedule(STALL_MS) {
+            SmLog.w(TAG, "capture_stalled", null, "step" to step, "ms" to clock.elapsedRealtime() - stepStartedAt)
+        }
         val event = try {
             capture()
         } catch (e: CancellationException) {
@@ -109,6 +123,9 @@ class CapturePipeline(
             // The class name only: the message may quote captured text (INV-07).
             SmLog.w(TAG, "capture_failed", e)
             PipelineEvent.Dropped(DropReason.ERROR)
+        } finally {
+            watchdog.cancel()
+            enter(0)
         }
         try {
             outcomes(event)
@@ -123,6 +140,7 @@ class CapturePipeline(
 
     private suspend fun capture(): PipelineEvent {
         // 1. Consent, pause, lock.
+        enter(1)
         val settings = gate()
         if (!settings.consented) return dropped(DropReason.CONSENT_MISSING)
         val pausedUntil = settings.pausedUntil
@@ -130,6 +148,7 @@ class CapturePipeline(
         if (screens.isDeviceLocked()) return dropped(DropReason.DEVICE_LOCKED)
 
         // 2. Root and window type.
+        enter(2)
         val window = when (val outcome = screens.activeWindow()) {
             is Outcome.Failure -> return dropped(outcome.error)
             is Outcome.Success -> outcome.value
@@ -143,10 +162,12 @@ class CapturePipeline(
 
     private suspend fun captureWindow(window: ActiveWindow): PipelineEvent {
         // 3. The package alone, before any content is read.
+        enter(3)
         val first = metas.read(window.packageName, window.windowId, window.title)
         (privacy.checkPackage(first) as? GateDecision.Deny)?.let { return dropped(it.reason) }
 
         // 4. The tree.
+        enter(4)
         val extraction = when (val outcome = extractor.extract(window.root)) {
             is Outcome.Failure -> return dropped(outcome.error)
             is Outcome.Success -> outcome.value
@@ -154,9 +175,11 @@ class CapturePipeline(
         val meta = metas.completed(first, extraction)
 
         // 5. The tree's content.
+        enter(5)
         (privacy.checkTree(meta, extraction) as? GateDecision.Deny)?.let { return dropped(it.reason) }
 
         // 6. Secure window and OCR, one screenshot.
+        enter(6)
         val treeLines = extraction.lines.map { it.text }
         val treeSimHash = simHash(treeLines.joinToString("\n"))
         val ocrLines = when (val shot = screenshot.run(meta, extraction, treeSimHash)) {
@@ -165,6 +188,7 @@ class CapturePipeline(
         }
 
         // 7. Merge, URL, redaction.
+        enter(7)
         val merged = if (ocrLines.isNullOrEmpty()) {
             MergedLines(treeLines, TextSource.TREE)
         } else {
@@ -174,9 +198,11 @@ class CapturePipeline(
         val pageUrl = url(meta.packageName, window.root, extraction.pageTitle)
 
         // 8. Minimal length.
+        enter(8)
         if (text.trim().length < config.minTextChars) return dropped(DropReason.TOO_SHORT)
 
         // 9. Deduplication and storage.
+        enter(9)
         return when (val result = sink.ingest(RawCapture(meta, pageUrl, text, merged.textSource, treeSimHash))) {
             is IngestResult.Stored -> PipelineEvent.Stored(result.captureId)
             is IngestResult.Deduplicated -> PipelineEvent.Deduplicated(result.captureId)
@@ -185,9 +211,23 @@ class CapturePipeline(
 
     private fun dropped(reason: DropReason) = PipelineEvent.Dropped(reason)
 
+    /** Starts step [next] (0: none); a step of more than [SLOW_STEP_MS] is logged, by number and duration. */
+    private fun enter(next: Int) {
+        val now = clock.elapsedRealtime()
+        val ms = now - stepStartedAt
+        if (step != 0 && ms >= SLOW_STEP_MS) SmLog.w(TAG, "capture_step_slow", null, "step" to step, "ms" to ms)
+        step = next
+        stepStartedAt = now
+    }
+
     companion object {
         private const val TAG = "CapturePipeline"
         private const val EVENT_BUFFER = 16
+
+        /** Diagnostics only: a capture still running after [STALL_MS], a step longer than [SLOW_STEP_MS]. */
+        const val STALL_MS = 10_000L
+        const val SLOW_STEP_MS = 2_000L
+        private val WATCHDOG = Timer("capture-watchdog", true)
 
         /** The `metric_daily` key of an outcome: `capture_stored`, `capture_deduplicated`, `capture_dropped_<reason>`. */
         fun metricKey(event: PipelineEvent): String = when (event) {

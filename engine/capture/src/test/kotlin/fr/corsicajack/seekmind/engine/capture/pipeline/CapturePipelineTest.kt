@@ -3,6 +3,7 @@ package fr.corsicajack.seekmind.engine.capture.pipeline
 import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.common.IntRect
 import fr.corsicajack.seekmind.core.common.Outcome
+import fr.corsicajack.seekmind.core.common.SmLog
 import fr.corsicajack.seekmind.core.model.DropReason
 import fr.corsicajack.seekmind.core.model.GateDecision
 import fr.corsicajack.seekmind.core.model.IngestResult
@@ -87,9 +88,12 @@ class CapturePipelineTest {
         }
     }
 
+    private var ingestMs = 0L
+
     private val sink = object : CaptureSink {
         override suspend fun ingest(raw: RawCapture): IngestResult {
             ingestFailure?.let { throw it }
+            clock.advance(ingestMs)
             stored += raw
             return ingestResult
         }
@@ -252,6 +256,21 @@ class CapturePipelineTest {
             extractor.real, ScreenshotStep.NotProbed, LineMerger.Append, { _, _, _ -> null }, { 0L }, sink,
         ) { error("metrics unavailable") }
         assertThat(runBlocking { failing.onStable() }).isEqualTo(PipelineEvent.Stored(42))
+    }
+
+    @Test
+    fun `a slow step is logged by number and duration, without content`() {
+        val written = mutableListOf<String>()
+        val previous = SmLog.sink
+        SmLog.sink = SmLog.Sink { _, _, message -> written += message }
+        try {
+            treeText = "Card 4111 and enough text to be stored"
+            ingestMs = 3_000
+            assertThat(run()).isEqualTo(PipelineEvent.Stored(42))
+        } finally {
+            SmLog.sink = previous
+        }
+        assertThat(written).containsExactly("capture_step_slow step=9 ms=3000")
     }
 
     private companion object {
