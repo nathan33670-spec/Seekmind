@@ -13,10 +13,14 @@ class ManifestRulesTest {
         "lib.DisabledService enabled=false",
     )
 
-    private fun manifest(body: String, backup: String = "false") = """
+    private fun manifest(
+        body: String,
+        backup: String = "false",
+        extraction: String = "android:dataExtractionRules=\"@xml/rules\"",
+    ) = """
         <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app">
             $body
-            <application android:allowBackup="$backup">
+            <application android:allowBackup="$backup" $extraction>
                 <activity android:name="app.MainActivity" android:exported="true">
                     <intent-filter><action android:name="android.intent.action.MAIN" /></intent-filter>
                 </activity>
@@ -47,6 +51,11 @@ class ManifestRulesTest {
     @Test
     fun `rejects backups`() {
         assertTrue(check(manifest("", backup = "true")).single().contains("allowBackup"))
+    }
+
+    @Test
+    fun `rejects a manifest without extraction rules`() {
+        assertTrue(check(manifest("", extraction = "")).single().contains("dataExtractionRules"))
     }
 
     @Test

@@ -291,6 +291,18 @@ data class RawCapture(
 )
 ```
 
+### 6.1 Chien de garde (diagnostic)
+
+Deux événements de journal, sans contenu (INV-07), aident à trouver une capture bloquée :
+
+| Événement | Quand | Mesures |
+|---|---|---|
+| `capture_stalled` | Une capture dure encore après 10 s ; journalisé depuis un minuteur, sur un autre fil que celui de la capture, qui peut être le fil bloqué | `step` : numéro de l'étape en cours (1 à 9, ceux de la méthode `capture`) ; `ms` : durée de cette étape |
+| `capture_step_slow` | Une étape a duré plus de 2 s | `step`, `ms` |
+
+Une seule capture tourne à la fois. Le chien de garde ne peut jamais interrompre une capture : une
+défaillance du minuteur est ignorée.
+
 ## 7. Pause
 
 - État : `pausedUntil: Long?` dans les réglages (`null` = active, `Long.MAX_VALUE` = sans limite).

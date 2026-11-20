@@ -1,0 +1,19 @@
+# Distinctive words of the fixture app's screens (fixtureapp/src/main/res/values/fixtures.xml), one per
+# line, compared without regard to case. None of them may appear in the system log while the end-to-end
+# suites run: SeekMind logs counts, durations and lengths, never captured content (INV-07, ticket M10-05).
+SEEKMIND_FIXTURE_
+SEEKMIND_FIELD_CONTENT
+zanzibar
+rue Paradis
+Baker Street
+montgolfières
+phares de la côte corse
+Revellata
+kumquats
+@item42
+motdepasse-de-test
+utilisateur.test
+4111 1111 1111 1111
+DE89 3704 0044 0532 0130 00
+1Z999AA10123456784
+CODE 4821

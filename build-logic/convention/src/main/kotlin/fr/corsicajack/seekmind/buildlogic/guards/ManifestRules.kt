@@ -61,6 +61,10 @@ object ManifestRules {
         if (application?.android("allowBackup") != "false") {
             violations += "application must declare android:allowBackup=\"false\""
         }
+        // Android 12+: allowBackup="false" alone still lets a device-to-device transfer copy the files.
+        if (application?.android("dataExtractionRules").isNullOrEmpty()) {
+            violations += "application must declare android:dataExtractionRules (INV-09)"
+        }
         return violations
     }
 

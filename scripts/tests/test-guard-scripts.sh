@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Tests of scripts/check-forbidden-apis.sh and scripts/check-elf-alignment.sh (ticket M0-04).
+# Tests of scripts/check-forbidden-apis.sh, scripts/check-elf-alignment.sh (ticket M0-04) and
+# scripts/check-logcat-content.sh (ticket M10-05) and scripts/check-site.sh (ticket M11-02).
 # Each guard must accept a compliant input and reject a non-compliant one.
 set -uo pipefail
 
@@ -78,6 +79,27 @@ expect "site: a remote resource is rejected" 1 "$repo/scripts/check-site.sh" "$w
 expect "site: a placeholder passes before publication" 0 "$repo/scripts/check-site.sh" "$work/site-todo"
 expect "site: a placeholder is rejected for the release" 1 "$repo/scripts/check-site.sh" --release "$work/site-todo"
 expect "site: the shipped site passes" 0 "$repo/scripts/check-site.sh" "$repo/site"
+
+# --- check-logcat-content.sh -------------------------------------------------------------------
+logcat() { put "$work/$1.txt"; echo "$work/$1.txt"; }
+quiet="$(logcat quiet <<'L'
+11-20 01:30:48.877  6298  6315 I CapturePipeline: capture_stored chars=142 ms=38
+11-20 01:30:49.001   512   530 I ActivityTaskManager: Displayed fr.corsicajack.seekmind.fixture/.PlainTextActivity
+L
+)"
+leak="$(logcat leak <<'L'
+11-20 01:30:48.877  6298  6315 I CapturePipeline: capture_stored chars=142 ms=38
+11-20 01:30:48.900  6298  6315 D SearchScreen: query=Zanzibar
+L
+)"
+runner="$(logcat runner <<'L'
+11-20 01:30:48.877  6298  6315 E TestRunner: java.lang.AssertionError: timed out waiting for a capture holding SEEKMIND_FIXTURE_SCROLL
+L
+)"
+expect "logcat: a log without captured content passes" 0 "$repo/scripts/check-logcat-content.sh" "$quiet"
+expect "logcat: a distinctive word of the fixture is rejected, whatever its case" 1 "$repo/scripts/check-logcat-content.sh" "$leak"
+expect "logcat: the test runner's own failure messages are left out" 0 "$repo/scripts/check-logcat-content.sh" "$runner"
+expect "logcat: a missing log is an error" 2 "$repo/scripts/check-logcat-content.sh" "$work/absent.txt"
 
 # --- check-elf-alignment.sh --------------------------------------------------------------------
 if command -v gcc >/dev/null && command -v objdump >/dev/null; then

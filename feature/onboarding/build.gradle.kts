@@ -23,3 +23,9 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.truth)
 }
+
+// DisclosureTextTest compares the disclosure resources with the published text: an input of the tests.
+tasks.withType<Test>().configureEach {
+    inputs.file(rootProject.file("docs/05-conformite-play-store.md")).withPropertyName("disclosureText")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
