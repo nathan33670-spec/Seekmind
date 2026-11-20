@@ -95,10 +95,35 @@ pas modifié.
   (il reste trouvable par mots-clés).
 - Chaque fragment est décrit par ses positions `[start, end)` dans le texte de la capture : le texte
   n'est pas dupliqué en base. Les fragments sont contigus : chacun garde la fin de ligne qui le termine,
-  si bien que leurs tranches mises bout à bout redonnent exactement le texte couvert.
+  si bien que leurs tranches mises bout à bout redonnent exactement le texte couvert, aux lignes
+  récurrentes près (§5.1).
 
 Texte soumis au modèle pour un fragment : `"passage: " + titre + " · " + fragment`, le titre étant
 `window_title` s'il existe (sinon le préfixe seul).
+
+### 5.1 Lignes récurrentes (M10-03)
+
+Une application répète sur presque tous ses écrans ses barres d'onglets, menus et boutons (« Accueil »,
+« Rechercher », « Profil »). Ces lignes tirent tous les vecteurs de l'application vers le même point.
+`RecurringLines` (`core:common`) les repère, par application :
+
+- **Mémoire.** Pour chaque paquet, on retient les lignes courtes distinctes de ses `recurringWindow` (50)
+  dernières captures stockées. Une ligne courte compte au plus `recurringMaxLineChars` (40) caractères,
+  espaces de bord retirés. Les doublons ne comptent pas : ils répètent un écran déjà compté.
+- **Ligne récurrente.** C'est une ligne présente dans **plus de** `recurringShare` (60 %) de ces captures,
+  à condition qu'au moins `recurringMinCaptures` (10) captures aient été comptées. L'état est celui
+  d'avant la capture en cours : la capture n'est comptée qu'après son découpage.
+- **Effet.** Une ligne récurrente n'appartient à **aucun fragment** et clôt le fragment qui la précède.
+  Elle reste dans le texte stocké, donc dans l'index plein texte et dans l'affichage.
+- **Mémoire vive seulement.** Aucun contenu n'est écrit hors de la base (INV-06). L'apprentissage
+  reprend à chaque démarrage du processus : les premières captures d'une application ne sont pas
+  filtrées. Au plus 64 paquets sont suivis, le moins récemment vu étant oublié en premier.
+  `IngestService.forget()` oublie aussi ces lignes, après toute suppression de captures.
+- **Désactivation.** `IndexConfig.recurringLinesFilter = false` redonne exactement le découpage d'avant.
+- **Limite connue.** Une ligne de contenu courte et répétée devient récurrente elle aussi, par exemple
+  le nom du correspondant en tête d'une conversation longuement suivie. Elle sort des vecteurs, mais
+  reste trouvable par mots-clés, et le titre de la fenêtre précède chaque passage. À surveiller pendant
+  la campagne M10-01.
 
 ## 6. Insertion
 
@@ -183,6 +208,11 @@ data class IndexConfig(
     val workerBudgetMs: Long = 9 * 60_000L,
     val interBatchPauseMs: Long = 100,
     val maxAttempts: Int = 3,
+    val recurringLinesFilter: Boolean = true,   // §5.1
+    val recurringWindow: Int = 50,
+    val recurringShare: Double = 0.6,
+    val recurringMaxLineChars: Int = 40,
+    val recurringMinCaptures: Int = 10,
 )
 ```
 

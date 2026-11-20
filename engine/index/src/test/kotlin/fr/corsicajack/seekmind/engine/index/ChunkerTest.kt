@@ -84,4 +84,24 @@ class ChunkerTest {
     fun `empty text has no fragment`() {
         assertThat(chunker.split("")).isEmpty()
     }
+
+    @Test
+    fun `a recurring line belongs to no fragment and ends the one before it`() {
+        val text = "Accueil\nUn article sur les phares\nde la côte corse\nMenu\nLa suite de l'article\nProfil"
+        val spans = chunker.split(text) { it.trim() in setOf("Accueil", "Menu", "Profil") }
+        assertThat(spans.map { text.substring(it.start, it.end) })
+            .containsExactly("Un article sur les phares\nde la côte corse\n", "La suite de l'article\n")
+            .inOrder()
+    }
+
+    @Test
+    fun `without recurring lines the fragments are those of before`() {
+        val text = List(30) { "ligne $it " + "x".repeat(60) }.joinToString("\n")
+        assertThat(chunker.split(text) { false }).isEqualTo(chunker.split(text))
+    }
+
+    @Test
+    fun `a screen of recurring lines only has no fragment`() {
+        assertThat(chunker.split("Accueil\nMenu") { true }).isEmpty()
+    }
 }

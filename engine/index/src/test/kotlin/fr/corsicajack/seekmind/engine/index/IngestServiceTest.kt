@@ -102,6 +102,51 @@ class IngestServiceTest {
         assertThat(service.ingest(Models.rawCapture(screen))).isInstanceOf(IngestResult.Stored::class.java)
     }
 
+    // §5.1: recurring lines.
+
+    private fun article(i: Int) = "Accueil\nArticle $i : " + "mot$i ".repeat(i % 7 + 3) + "\n" +
+        (1..5).joinToString("\n") { "Paragraphe $it de l'article $i, qui parle du sujet numéro ${i * 31 + it}" } +
+        "\nProfil"
+
+    private fun fragmentsText(index: Int): String {
+        val (capture, chunks) = store.inserted[index]
+        return chunks.joinToString("") { capture.text.substring(it.startOffset, it.endOffset) }
+    }
+
+    private suspend fun ingestArticles(service: IngestService, count: Int) = repeat(count) {
+        // Seven hours apart: never a duplicate.
+        clock.advance(7 * 3_600_000L)
+        assertThat(service.ingest(Models.rawCapture(article(it)))).isInstanceOf(IngestResult.Stored::class.java)
+    }
+
+    @Test
+    fun `a line on most screens of an application leaves its fragments, not its text`() = runBlocking<Unit> {
+        ingestArticles(service, 11)
+        // The first ten captures taught the lines; the eleventh is cut without them.
+        assertThat(fragmentsText(9)).contains("Accueil")
+        val last = fragmentsText(10)
+        assertThat(last).doesNotContain("Accueil")
+        assertThat(last).doesNotContain("Profil")
+        assertThat(last).contains("Paragraphe 1 de l'article 10")
+        assertThat(store.inserted[10].first.text).contains("Accueil")
+    }
+
+    @Test
+    fun `the filter can be turned off`() = runBlocking<Unit> {
+        val unfiltered = IngestService(store, { requests++ }, clock, IndexConfig(recurringLinesFilter = false))
+        ingestArticles(unfiltered, 11)
+        assertThat(fragmentsText(10)).contains("Accueil")
+    }
+
+    @Test
+    fun `forget also forgets the recurring lines`() = runBlocking<Unit> {
+        ingestArticles(service, 10)
+        service.forget()
+        clock.advance(7 * 3_600_000L)
+        service.ingest(Models.rawCapture(article(10)))
+        assertThat(fragmentsText(10)).contains("Accueil")
+    }
+
     @Test
     fun `a duplicate of a deleted capture is stored anew`() = runBlocking<Unit> {
         service.ingest(Models.rawCapture(screen))

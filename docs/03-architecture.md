@@ -60,7 +60,7 @@ flowchart LR
 | Module | Rôle | Types publics principaux |
 |---|---|---|
 | `:app` | Application, manifeste, graphe Hilt, navigation, activité de liens ; sources propres à chaque variante | `SeekMindApp`, `MainActivity`, `LinkActivity` |
-| `:core:common` | Utilitaires sans dépendance Android lourde | `Clock`, `DispatcherProvider`, `SmLog`, `Outcome`, `IntRect` |
+| `:core:common` | Utilitaires sans dépendance Android lourde | `Clock`, `DispatcherProvider`, `SmLog`, `Outcome`, `IntRect`, `RecurringLines` |
 | `:core:model` | Modèles de domaine, interfaces entre modules, configurations | `Capture`, `ScreenMeta`, `RawCapture`, `SourceRef`, `SearchRequest`, `SearchHit`, `Entitlement`, `AppFamily`, ports (`port`), `*Config` (`config`) |
 | `:core:database` | Base chiffrée, schéma, DAO, clé, purge, réglages | `SeekMindDatabase`, `CaptureStore`, `SearchStore`, `SettingsRepository` |
 | `:core:designsystem` | Thème et composants Compose | `SeekMindTheme`, composants |

@@ -12,10 +12,11 @@ data class ChunkSpan(val start: Int, val end: Int) {
  * lines grouped greedily up to [IndexConfig.chunkMaxChars]; a longer line is cut at its last sentence
  * end, else its last space, before the limit; at most [IndexConfig.maxChunksPerCapture] fragments.
  * Fragments are contiguous: each one keeps the line break that ends it, so that their slices put end to
- * end give back the text they cover.
+ * end give back the text they cover, except the lines for which [isRecurring] is true (§5.1): such a
+ * line belongs to no fragment, and ends the one before it.
  */
 class Chunker(private val config: IndexConfig = IndexConfig()) {
-    fun split(text: String): List<ChunkSpan> {
+    fun split(text: String, isRecurring: (String) -> Boolean = { false }): List<ChunkSpan> {
         val max = config.chunkMaxChars
         val spans = mutableListOf<ChunkSpan>()
         var start = 0
@@ -24,6 +25,13 @@ class Chunker(private val config: IndexConfig = IndexConfig()) {
         while (position < text.length && spans.size < config.maxChunksPerCapture) {
             val lineEnd = text.indexOf('\n', position).let { if (it < 0) text.length else it + 1 }
             val lineLength = lineEnd - position
+            if (isRecurring(text.substring(position, lineEnd))) {
+                if (end > start) spans += ChunkSpan(start, end)
+                position = lineEnd
+                start = lineEnd
+                end = lineEnd
+                continue
+            }
             when {
                 // The line fits in the current fragment.
                 end - start + lineLength <= max -> {
