@@ -100,8 +100,9 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 **Critères d'acceptation**
 
-- [ ] Le Rappel@5 hybride ne baisse pas ; le rapport d'évaluation avant et après est joint.
-- [ ] Le filtre est désactivable par configuration ; sans lui, le comportement est celui d'avant.
+- [x] Le Rappel@5 hybride ne baisse pas ; le rapport d'évaluation avant et après est joint (PR #73 :
+      0,863 → 0,950 pour `fr`, 0,863 → 0,963 pour `multi`).
+- [x] Le filtre est désactivable par configuration ; sans lui, le comportement est celui d'avant.
 
 ---
 
