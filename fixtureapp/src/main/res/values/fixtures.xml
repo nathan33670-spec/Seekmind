@@ -12,4 +12,22 @@
     <string name="fixture_web_html" translatable="false"><![CDATA[<html><head><title>SeekMind fixture article</title></head><body><h1>SEEKMIND_FIXTURE_WEB</h1><p>Un article sur les phares de la côte corse.</p></body></html>]]></string>
     <!-- E2E-14 (DeepLinkActivity): the identifier received by the return to the source. -->
     <string name="fixture_deep_link_item" translatable="false">Fixture item %1$s</string>
+    <!-- E2E-02 -->
+    <string name="fixture_password_marker" translatable="false">SEEKMIND_FIXTURE_PASSWORD Connexion à votre compte</string>
+    <string name="fixture_password_user" translatable="false">utilisateur.test</string>
+    <string name="fixture_password_value" translatable="false">motdepasse-de-test</string>
+    <!-- E2E-04 -->
+    <string name="fixture_editable_marker" translatable="false">SEEKMIND_FIXTURE_EDITABLE</string>
+    <string name="fixture_editable_static" translatable="false">Le texte statique de cet écran parle de montgolfières.</string>
+    <string name="fixture_editable_field" translatable="false">SEEKMIND_FIELD_CONTENT brouillon jamais lu</string>
+    <!-- E2E-07 -->
+    <string name="fixture_scroll_line" translatable="false">SEEKMIND_FIXTURE_SCROLL ligne %1$d de la liste des phares</string>
+    <!-- E2E-12: public test values (test card, example IBAN), and a tracking number to keep. -->
+    <string name="fixture_sensitive_marker" translatable="false">SEEKMIND_FIXTURE_SENSITIVE</string>
+    <string name="fixture_sensitive_card" translatable="false">Carte 4111 1111 1111 1111 enregistrée</string>
+    <string name="fixture_sensitive_iban" translatable="false">IBAN DE89 3704 0044 0532 0130 00 du compte</string>
+    <string name="fixture_sensitive_tracking" translatable="false">Suivi du colis 1Z999AA10123456784</string>
+    <!-- E2E-19 -->
+    <string name="fixture_messaging_marker" translatable="false">SEEKMIND_FIXTURE_MESSAGING</string>
+    <string name="fixture_messaging_text" translatable="false">Rendez-vous au phare de la Revellata à dix-huit heures.</string>
 </resources>

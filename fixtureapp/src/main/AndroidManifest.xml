@@ -9,7 +9,26 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
-        <activity android:name=".PlainTextActivity" android:exported="true" />
+        <!-- Launchable, so that SeekMind sees the package (package visibility, its <queries>) and
+             reads its other intent filters, MessagingLikeActivity's included. -->
+        <activity android:name=".PlainTextActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".PasswordActivity" android:exported="true" />
+        <activity android:name=".EditableActivity" android:exported="true" />
+        <activity android:name=".ScrollActivity" android:exported="true" />
+        <activity android:name=".SensitiveDataActivity" android:exported="true" />
+        <!-- E2E-19: answering SENDTO smsto: files the package under « messageries ». -->
+        <activity android:name=".MessagingLikeActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="smsto" />
+            </intent-filter>
+        </activity>
         <activity android:name=".SecureActivity" android:exported="true" />
         <activity android:name=".ImageTextActivity" android:exported="true" />
         <activity android:name=".WebActivity" android:exported="true" />

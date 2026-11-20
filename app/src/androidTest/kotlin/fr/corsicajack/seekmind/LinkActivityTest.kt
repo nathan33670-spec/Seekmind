@@ -62,6 +62,12 @@ class LinkActivityTest {
             assertThat(store.license()).isNull()
             compose.onNodeWithTag(LINK_CONFIRM_TAG).performClick()
             compose.waitUntil(TIMEOUT_MS) { runBlocking { store.license() } != null }
+            // The row is written before the screen shows the result: wait for it too.
+            compose.waitUntil(TIMEOUT_MS) {
+                compose.onAllNodes(
+                    androidx.compose.ui.test.hasTestTag(LINK_MESSAGE_TAG),
+                ).fetchSemanticsNodes().isNotEmpty()
+            }
             compose.onNodeWithTag(LINK_MESSAGE_TAG).assertIsDisplayed()
             assertThat(store.license()?.licenseId).isEqualTo("TEST-0001")
         }
