@@ -7,6 +7,8 @@ android {
         unitTests.all {
             // Reference sets of docs/06-qualite-tests-ci.md, read by the JVM tests.
             it.systemProperty("seekmind.testdata", rootProject.file("testdata").path)
+            it.inputs.dir(rootProject.file("testdata")).withPropertyName("testdata")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
             // The JVM tests check the patterns of the shipped asset, not a copy of them.
             it.systemProperty("seekmind.privacy.assets", file("src/main/assets").path)
         }
