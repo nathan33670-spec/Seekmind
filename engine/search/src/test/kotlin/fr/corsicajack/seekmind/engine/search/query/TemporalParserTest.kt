@@ -87,4 +87,18 @@ class TemporalParserTest {
     private companion object {
         fun epoch(iso: String): Long = OffsetDateTime.parse(iso).toInstant().toEpochMilli()
     }
+
+    @Test
+    fun `a weekday after le may be a habit, and is marked so`() {
+        val parser = TemporalParser()
+        val zone = ZoneId.of("Europe/Paris")
+        val now = OffsetDateTime.parse("2026-11-10T21:00:00+01:00").toInstant().toEpochMilli()
+        fun ambiguous(query: String) = parser.extract(query, now, zone)?.ambiguous
+        assertThat(ambiguous("cours de yoga le lundi")).isTrue()
+        assertThat(ambiguous("réunion le jeudi")).isTrue()
+        assertThat(ambiguous("cours de yoga lundi")).isFalse()
+        assertThat(ambiguous("lundi dernier")).isFalse()
+        assertThat(ambiguous("le lundi soir")).isFalse()
+        assertThat(ambiguous("hier")).isFalse()
+    }
 }

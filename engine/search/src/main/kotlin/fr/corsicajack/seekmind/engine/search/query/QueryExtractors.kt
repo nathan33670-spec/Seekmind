@@ -10,6 +10,8 @@ data class TemporalMatch(
     val label: String,
     /** The query with the expression and its linking words removed. */
     val remaining: String,
+    /** A weekday after « le », which may name a habit rather than a date (recherche §3). */
+    val ambiguous: Boolean = false,
 )
 
 /** Extension point for the time expressions (ticket M5-02). */

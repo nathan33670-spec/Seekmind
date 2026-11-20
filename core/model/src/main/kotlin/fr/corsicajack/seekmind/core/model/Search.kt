@@ -39,6 +39,11 @@ data class ParsedQuery(
     val rangeLabel: String?,
     val packages: Set<String>,
     val profile: QueryProfile,
+    /**
+     * The time expression may name a habit rather than a date, « le lundi » (docs/specs/recherche.md §3):
+     * the search completes the dated results with those of the query read without it.
+     */
+    val timeAmbiguous: Boolean = false,
 )
 
 /** An extract of a capture and the character ranges to highlight in it. */

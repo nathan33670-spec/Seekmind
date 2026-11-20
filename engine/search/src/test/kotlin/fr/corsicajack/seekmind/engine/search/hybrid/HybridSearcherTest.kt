@@ -19,6 +19,7 @@ import fr.corsicajack.seekmind.engine.search.lexical.LexicalSearcher
 import fr.corsicajack.seekmind.engine.search.query.AppExtractor
 import fr.corsicajack.seekmind.engine.search.query.QueryParser
 import fr.corsicajack.seekmind.engine.search.query.StopWords
+import fr.corsicajack.seekmind.engine.search.query.TemporalParser
 import fr.corsicajack.seekmind.engine.search.vector.SemanticHit
 import java.time.ZoneId
 import kotlinx.coroutines.CompletableDeferred
@@ -222,6 +223,37 @@ class HybridSearcherTest {
         val first: SearchResults = searcher(blocked).search(request("tarte")).first()
         assertThat(first.stage).isEqualTo(Stage.LEXICAL)
         assertThat(first.hits.map { it.captureId }).containsExactly(1L)
+    }
+
+    @Test
+    fun anAmbiguousWeekdayCompletesTheDatedResultsWithTheUndatedOnes() = runTest {
+        val zone = ZoneId.of("Europe/Paris")
+        val monday = checkNotNull(TemporalParser().extract("le lundi", now, zone)).range
+        store.add(Models.capture("cours de yoga", id = 1, at = monday.from + 3_600_000))
+        store.add(Models.capture("cours de yoga le lundi", id = 2, at = now - 30 * DAY))
+        store.matches = listOf(1L, 2L)
+        semantic.vectors = false
+        val searcher = HybridSearcher(
+            parser = QueryParser(StopWords(listOf("le", "de")), TemporalParser()),
+            apps = { AppExtractor.NONE },
+            lexical = LexicalSearcher(store),
+            semantic = semantic,
+            store = store,
+            cache = cache,
+            generation = { generation },
+        )
+        val emissions = searcher.search(request("cours de yoga le lundi")).toList()
+        assertThat(emissions.first().parsed.timeAmbiguous).isTrue()
+        // The dated result first, then the one of the query read without the date.
+        assertThat(emissions.last().hits.map { it.captureId }).containsExactly(1L, 2L).inOrder()
+        assertThat(emissions.last().parsed.rangeLabel).isEqualTo("lundi")
+        // Only the completed results are final: the screen keeps refining until then.
+        assertThat(emissions.dropLast(1).map { it.stage }.toSet()).containsExactly(Stage.LEXICAL)
+
+        // A weekday without « le » is a date: no completion.
+        val dated = searcher.search(request("cours de yoga lundi")).toList().last()
+        assertThat(dated.parsed.timeAmbiguous).isFalse()
+        assertThat(dated.hits.map { it.captureId }).containsExactly(1L)
     }
 
     private class FakeSearchStore : SearchStore {

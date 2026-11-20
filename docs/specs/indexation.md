@@ -117,7 +117,8 @@ Une application répète sur presque tous ses écrans ses barres d'onglets, menu
   Elle reste dans le texte stocké, donc dans l'index plein texte et dans l'affichage.
 - **Mémoire vive, amorcée depuis la base.** Aucun contenu n'est écrit hors de la base (INV-06). À la
   première capture d'un paquet depuis le démarrage du processus, son historique est relu dans la base :
-  le texte de ses `recurringWindow` dernières captures (`CaptureStore.recentTexts`), de la plus ancienne
+  le texte de ses `recurringWindow` captures vues le plus récemment (`CaptureStore.recentTexts`, par
+  `last_seen_at` : une capture ancienne revue récemment en fait partie), de la plus ancienne
   à la plus récente. Le filtre ne repart donc pas de zéro à chaque démarrage. Au plus 64 paquets sont
   suivis, le moins récemment vu étant oublié en premier, puis relu s'il revient.
   `IngestService.forget()` oublie aussi ces lignes, après toute suppression de captures : l'historique

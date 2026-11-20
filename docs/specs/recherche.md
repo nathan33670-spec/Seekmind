@@ -132,6 +132,13 @@ Moments de la journée, combinables avec un jour (« mardi soir », « hier mati
 lettres de un à douze. Les mots de liaison adjacents (« vu », « le », « du », « on », « at ») partent
 avec l'expression. Une capture correspond à l'intervalle si `[first_seen_at, last_seen_at]` le recoupe.
 
+**Jour de la semaine précédé de « le »** (M10-03, décision du porteur du 20 novembre 2026). « Cours de
+yoga le lundi » peut désigner une habitude plutôt qu'une date. L'expression reste un filtre, mais elle est
+marquée ambiguë (`ParsedQuery.timeAmbiguous`). La recherche donne d'abord les résultats datés, puis, dans
+une dernière émission, les complète par ceux de la requête lue sans l'expression, où le jour reste un
+mot cherché. La puce du filtre reste affichée. « lundi », « lundi dernier » et « le lundi soir » ne sont
+pas ambigus. Une période choisie dans l'interface ne l'est jamais.
+
 La table complète des cas, avec date de référence et intervalle attendu, est `testdata/temporal_cases.tsv`,
 produite par `tools/testdata/gen_temporal_cases.py`, qui calcule les intervalles indépendamment de
 l'analyseur Kotlin (`TemporalParser`).
@@ -516,7 +523,7 @@ deux temps (§5), `SearchConfig` par défaut. Entre parenthèses, la première m
   | q49 « help carrying furniture… » | paraphrase en anglais | `fr` et `multi` |
   | q72, q78 | bilingues | `fr` et `multi` |
 
-  q32 et q58, manquées avec les modèles par tenseur, sont retrouvées. q78 (« cours de yoga le lundi ») est pénalisée par l'analyseur temporel : « le lundi » devient un filtre de date, alors que la requête parle d'un rendez-vous récurrent.
+  q32 et q58, manquées avec les modèles par tenseur, sont retrouvées. q78 (« cours de yoga le lundi ») est pénalisée par l'analyseur temporel : « le lundi » devient un filtre de date, alors que la requête parle d'un rendez-vous récurrent. Depuis M10-03, une telle expression est complétée par la recherche sans elle (§3).
 - **Calibration** (balayage sur l'hybride) :
   - `semanticFloor` de 0,70 à 0,82 ne change pas le Rappel@5 de `fr` (1,0). Pour `multi`, 0,80 gagne trois requêtes (0,988), 0,82 en reperd deux, et 0,70 à 0,76 en perdent une. C'est dans le bruit d'un jeu de 80 requêtes, mais c'est la piste à suivre avec des captures réelles.
   - `binaryTopK` = 200 donne le même Rappel@5.
