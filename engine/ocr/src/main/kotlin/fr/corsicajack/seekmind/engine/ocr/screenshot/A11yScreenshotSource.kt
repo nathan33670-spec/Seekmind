@@ -50,6 +50,14 @@ internal class A11yFrameRequester(
 ) : FrameRequester<AccessibilityService.ScreenshotResult> {
     override val coversDisplay: Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 
+    override fun isActive(windowId: Int): Boolean {
+        val root = service.rootInActiveWindow ?: return false
+        val active = root.windowId == windowId
+        @Suppress("DEPRECATION")
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) root.recycle()
+        return active
+    }
+
     override suspend fun request(windowId: Int): FrameResult<AccessibilityService.ScreenshotResult> =
         withTimeoutOrNull(timeoutMs) {
             suspendCancellableCoroutine { continuation ->
