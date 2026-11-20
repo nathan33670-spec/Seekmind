@@ -100,7 +100,11 @@ class CaptureHarness : ExternalResource() {
                 event
             }
         } catch (e: TimeoutCancellationException) {
-            throw AssertionError("timed out waiting for $what; events seen: $skipped", e)
+            throw AssertionError(
+                "timed out waiting for $what; events seen: $skipped; " +
+                    "${graph.router().diagnostics()}; ${graph.loop().diagnostics()}",
+                e,
+            )
         }
     }
 

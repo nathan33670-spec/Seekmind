@@ -6,6 +6,8 @@ import dagger.hilt.components.SingletonComponent
 import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
 import fr.corsicajack.seekmind.engine.capture.pipeline.CapturePipeline
+import fr.corsicajack.seekmind.engine.capture.routing.CaptureLoop
+import fr.corsicajack.seekmind.engine.capture.routing.EventRouter
 
 /**
  * The singletons the end-to-end tests of the capture observe (docs/06-qualite-tests-ci.md §4): they
@@ -20,4 +22,9 @@ interface CaptureEntryPoint {
     fun settings(): SettingsRepository
 
     fun database(): DatabaseState
+
+    /** For the diagnostics of a test whose expected event does not come. */
+    fun router(): EventRouter
+
+    fun loop(): CaptureLoop
 }

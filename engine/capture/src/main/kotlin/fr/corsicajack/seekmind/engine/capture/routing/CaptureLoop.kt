@@ -33,7 +33,18 @@ class CaptureLoop(
     private val debouncer = Debouncer(config, clock, executor.newTimer(), ::onStable)
     private var window: WindowKey? = null
 
+    @Volatile private var events = 0L
+
+    @Volatile private var fired = 0L
+
+    @Volatile private var finished = 0L
+
+    /** Diagnostics, counts and states only (INV-07), for the end-to-end tests. */
+    fun diagnostics(): String = "loop events=$events fired=$fired finished=$finished " +
+        "debouncer=${debouncer.diagnostics()} window_set=${window != null}"
+
     fun onEvent(type: Int, packageName: String, className: String?, windowId: Int) {
+        events++
         if (type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             activities.onWindowStateChanged(packageName, className)
             WindowKey(packageName, windowId).let {
@@ -55,6 +66,7 @@ class CaptureLoop(
     }
 
     private fun onStable() {
+        fired++
         val current = window ?: NO_WINDOW
         scope.launch {
             val event = try {
@@ -66,6 +78,7 @@ class CaptureLoop(
                 SmLog.w(TAG, "handler_error", e)
                 null
             }
+            finished++
             debouncer.onCaptureFinished(current, deduplicated = event is PipelineEvent.Deduplicated)
         }
     }

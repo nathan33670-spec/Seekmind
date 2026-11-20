@@ -29,6 +29,10 @@ class Debouncer(
     private var dedupStreak = 0
     private var lastWindow: Any? = null
 
+    /** States only, for the end-to-end tests' diagnostics. */
+    fun diagnostics(): String =
+        "capturing=$capturing,pending=$pending,waiting=${firstEventAt != null},max_wait_ms=$maxWaitMs"
+
     /** The maximum wait in force, for the diagnostics. */
     val currentMaxWaitMs: Long get() = maxWaitMs
 
