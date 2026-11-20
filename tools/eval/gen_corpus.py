@@ -65,6 +65,9 @@ NAVIGATION = {
 }
 # Share of an application's screens that show its navigation.
 NAVIGATION_SHARE = 0.85
+# Applications whose bar is at the top of the screen, before the content: the line ends no fragment
+# there, it starts the text.
+NAVIGATION_ON_TOP = {"linkedin", "x", "spotify"}
 
 # (key, language, app, days ago, hour, window title, text, url)
 ANCHORS = [
@@ -424,9 +427,11 @@ def add_navigation(corpus: list[dict]) -> None:
     rng = random.Random(SEED + 1)
     apps = {package: app for app, (package, _) in APPS.items()}
     for item in corpus:
-        lines = NAVIGATION.get(apps[item["package"]])
+        app = apps[item["package"]]
+        lines = NAVIGATION.get(app)
         if lines and rng.random() < NAVIGATION_SHARE:
-            item["text"] += "\n" + "\n".join(lines)
+            bar = "\n".join(lines)
+            item["text"] = f"{bar}\n{item['text']}" if app in NAVIGATION_ON_TOP else f"{item['text']}\n{bar}"
 
 
 def build() -> tuple[list[dict], dict, list[dict]]:

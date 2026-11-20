@@ -120,6 +120,10 @@ Une application répète sur presque tous ses écrans ses barres d'onglets, menu
   filtrées. Au plus 64 paquets sont suivis, le moins récemment vu étant oublié en premier.
   `IngestService.forget()` oublie aussi ces lignes, après toute suppression de captures.
 - **Désactivation.** `IndexConfig.recurringLinesFilter = false` redonne exactement le découpage d'avant.
+- **Limite connue.** Une ligne de contenu courte et répétée devient récurrente elle aussi, par exemple
+  le nom du correspondant en tête d'une conversation longuement suivie. Elle sort des vecteurs, mais
+  reste trouvable par mots-clés, et le titre de la fenêtre précède chaque passage. À surveiller pendant
+  la campagne M10-01.
 
 ## 6. Insertion
 

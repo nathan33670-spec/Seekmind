@@ -171,8 +171,11 @@ class SearchEvalDeviceTest {
     }
 
     /**
-     * The text embedded for each capture, as the ingestion cuts its fragments (docs/specs/indexation.md
-     * §5.1): without the lines recurring in its application, learnt in the order the captures were seen.
+     * The text embedded for each capture without the lines recurring in its application
+     * (docs/specs/indexation.md §5.1), in the established state: the history of each application is
+     * learnt from the whole corpus first. Each application has 10 to 40 captures here, against hundreds on
+     * a phone, so learning as the captures come would mostly measure the first captures, which no filter
+     * touches. The lines left are embedded as one passage: the cut into fragments is not reproduced.
      */
     private val filteredByKey: Map<String, String> = run {
         val config = IndexConfig()
@@ -182,12 +185,11 @@ class SearchEvalDeviceTest {
             maxLineChars = config.recurringMaxLineChars,
             minCaptures = config.recurringMinCaptures,
         )
-        corpus.sortedBy { it.getLong("lastSeenAt") }.associate { item ->
-            val text = item.getString("text")
-            val packageName = item.getString("package")
-            val recurring = lines.recurringIn(packageName)
-            lines.record(packageName, text)
-            item.getString("key") to text.lines().filterNot(recurring).joinToString("\n")
+        val ordered = corpus.sortedBy { it.getLong("lastSeenAt") }
+        for (item in ordered) lines.record(item.getString("package"), item.getString("text"))
+        ordered.associate { item ->
+            val recurring = lines.recurringIn(item.getString("package"))
+            item.getString("key") to item.getString("text").lines().filterNot(recurring).joinToString("\n")
         }
     }
 
