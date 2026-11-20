@@ -35,4 +35,20 @@ class ScreenshotRateLimiterTest {
         clock.advance(400)
         assertThat(limiter.tryAcquire()).isTrue()
     }
+
+    @Test
+    fun `acquire waits for the rest of the interval only`() = kotlinx.coroutines.runBlocking {
+        val waits = mutableListOf<Long>()
+        limiter.acquire {
+            waits += it
+            clock.advance(it)
+        }
+        clock.advance(250)
+        limiter.acquire {
+            waits += it
+            clock.advance(it)
+        }
+        assertThat(waits).containsExactly(750L)
+        assertThat(limiter.remainingMs()).isEqualTo(1_000)
+    }
 }

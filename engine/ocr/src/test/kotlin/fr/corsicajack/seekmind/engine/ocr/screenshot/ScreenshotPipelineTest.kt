@@ -55,6 +55,13 @@ class ScreenshotPipelineTest {
         var calls = 0
         var next: () -> FrameResult<Frame> = { FrameResult.Frame(Frame(1_000, 1_000)) }
         val frames = mutableListOf<Frame>()
+        var active = true
+        var activeChecks = 0
+
+        override fun isActive(windowId: Int): Boolean {
+            activeChecks++
+            return active
+        }
 
         override suspend fun request(windowId: Int): FrameResult<Frame> {
             calls++
@@ -65,8 +72,22 @@ class ScreenshotPipelineTest {
     private val clock = FakeClock()
     private val ops = Ops()
 
-    private fun pipeline(requester: Requester) =
-        ScreenshotPipeline(requester, ops, ScreenshotRateLimiter(clock, minIntervalMs = 1_000), maxSide = 1_600)
+    /** Runs during the wait, before the clock moves: the screen may change there. */
+    private var duringWait: () -> Unit = {}
+
+    private fun pipeline(requester: Requester) = ScreenshotPipeline(
+        requester,
+        ops,
+        ScreenshotRateLimiter(clock, minIntervalMs = 1_000),
+        maxSide = 1_600,
+        wait = {
+            duringWait()
+            waited += it
+            clock.advance(it)
+        },
+    )
+
+    private var waited = 0L
 
     private val window = IntRect(0, 0, 1_000, 1_000)
 
@@ -79,12 +100,21 @@ class ScreenshotPipelineTest {
     }
 
     @Test
-    fun `a check reports a secure window and the rate limit`() = runBlocking<Unit> {
+    fun `a check reports a secure window, and a close second request waits for the interval`() = runBlocking<Unit> {
         val requester = Requester().apply { next = { FrameResult.Error(ScreenshotErrors.SECURE_WINDOW) } }
         val pipeline = pipeline(requester)
         assertThat(pipeline.check(7)).isEqualTo(Shot.SecureWindow)
-        assertThat(pipeline.check(7)).isEqualTo(Shot.RateLimited)
-        assertThat(requester.calls).isEqualTo(1)
+        clock.advance(300)
+        // Not refused: sent once the 1 000 ms since the previous request are over.
+        assertThat(pipeline.check(7)).isEqualTo(Shot.SecureWindow)
+        assertThat(requester.calls).isEqualTo(2)
+        assertThat(waited).isEqualTo(700)
+    }
+
+    @Test
+    fun `the system's own interval error is still reported`() = runBlocking<Unit> {
+        val requester = Requester().apply { next = { FrameResult.Error(ScreenshotErrors.INTERVAL_TIME_SHORT) } }
+        assertThat(pipeline(requester).check(7)).isEqualTo(Shot.RateLimited)
     }
 
     @Test
@@ -179,17 +209,14 @@ class ScreenshotPipelineTest {
     }
 
     @Test
-    fun `two close requests give RateLimited without calling the system`() = runBlocking<Unit> {
+    fun `a close request waits for the interval before calling the system`() = runBlocking<Unit> {
         val requester = Requester()
         val pipeline = pipeline(requester)
         assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.Ok(1))
         clock.advance(500)
-        var called = false
-        assertThat(pipeline.withScreenshot(7, window) { called = true }).isEqualTo(Shot.RateLimited)
-        assertThat(requester.calls).isEqualTo(1)
-        assertThat(called).isFalse()
-        clock.advance(500)
         assertThat(pipeline.withScreenshot(7, window) { 2 }).isEqualTo(Shot.Ok(2))
+        // The second request reached the system only after the 1 000 ms of the interval.
+        assertThat(waited).isEqualTo(500)
         assertThat(requester.calls).isEqualTo(2)
     }
 
@@ -198,8 +225,10 @@ class ScreenshotPipelineTest {
         val requester = Requester().apply { next = { FrameResult.Error(ScreenshotErrors.INTERNAL_ERROR) } }
         val pipeline = pipeline(requester)
         assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.Failed(ScreenshotErrors.INTERNAL_ERROR))
-        assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.RateLimited)
-        assertThat(requester.calls).isEqualTo(1)
+        assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.Failed(ScreenshotErrors.INTERNAL_ERROR))
+        // The failed request opened the interval: the next one waited for all of it.
+        assertThat(waited).isEqualTo(1_000)
+        assertThat(requester.calls).isEqualTo(2)
     }
 
     @Test
@@ -218,5 +247,52 @@ class ScreenshotPipelineTest {
             assertThat(pipeline.withScreenshot(7, window) { called = true }).isEqualTo(shot)
             assertThat(called).isFalse()
         }
+    }
+
+    @Test
+    fun `a display screenshot is not requested when the window changed during the wait`() = runBlocking<Unit> {
+        val requester = Requester(coversDisplay = true)
+        val pipeline = pipeline(requester)
+        assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.Ok(1))
+        duringWait = { requester.active = false }
+        var called = false
+        val shot = pipeline.withScreenshot(7, window) { called = true }
+        assertThat(shot).isEqualTo(Shot.Failed(ScreenshotErrors.WINDOW_CHANGED))
+        assertThat(called).isFalse()
+        // Only the first frame was requested and read.
+        assertThat(requester.calls).isEqualTo(1)
+        assertThat(ops.images).hasSize(1)
+    }
+
+    @Test
+    fun `a display check is not requested when the window changed during the wait`() = runBlocking<Unit> {
+        val requester = Requester(coversDisplay = true)
+        val pipeline = pipeline(requester)
+        assertThat(pipeline.check(7)).isEqualTo(Shot.Ok(Unit))
+        duringWait = { requester.active = false }
+        assertThat(pipeline.check(7)).isEqualTo(Shot.Failed(ScreenshotErrors.WINDOW_CHANGED))
+        assertThat(requester.calls).isEqualTo(1)
+    }
+
+    @Test
+    fun `a display screenshot after a wait goes on while the window is still active`() = runBlocking<Unit> {
+        val requester = Requester(coversDisplay = true)
+        val pipeline = pipeline(requester)
+        assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.Ok(1))
+        assertThat(requester.activeChecks).isEqualTo(0)
+        assertThat(pipeline.withScreenshot(7, window) { 2 }).isEqualTo(Shot.Ok(2))
+        assertThat(requester.activeChecks).isEqualTo(1)
+        assertThat(requester.calls).isEqualTo(2)
+    }
+
+    @Test
+    fun `a window screenshot is not checked again after a wait`() = runBlocking<Unit> {
+        val requester = Requester(coversDisplay = false)
+        val pipeline = pipeline(requester)
+        requester.active = false
+        assertThat(pipeline.withScreenshot(7, window) { 1 }).isEqualTo(Shot.Ok(1))
+        // The system captures the window itself and answers INVALID_WINDOW if it is gone.
+        assertThat(pipeline.withScreenshot(7, window) { 2 }).isEqualTo(Shot.Ok(2))
+        assertThat(requester.activeChecks).isEqualTo(0)
     }
 }
