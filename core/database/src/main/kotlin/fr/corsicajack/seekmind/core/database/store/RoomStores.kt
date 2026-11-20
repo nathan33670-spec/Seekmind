@@ -45,6 +45,9 @@ internal class RoomCaptureStore(private val dao: CaptureDao) : CaptureStore {
 
     override suspend fun touch(captureId: Long, seenAt: Long): Boolean = dao.touch(captureId, seenAt) > 0
 
+    override suspend fun recentTexts(packageName: String, limit: Int): List<String> =
+        dao.recentTexts(packageName, limit)
+
     override suspend fun recentHashes(packageName: String, limit: Int): List<HashRef> =
         dao.recentHashes(packageName, limit).map { HashRef(it.id, it.simhash, it.first_seen_at, it.last_seen_at) }
 

@@ -139,8 +139,20 @@ class IngestServiceTest {
     }
 
     @Test
+    fun `after a restart the lines are learnt again from the stored captures`() = runBlocking<Unit> {
+        ingestArticles(service, 10)
+        // A new process: a new service on the same database.
+        val restarted = IngestService(store, { requests++ }, clock)
+        clock.advance(7 * 3_600_000L)
+        restarted.ingest(Models.rawCapture(article(10)))
+        assertThat(fragmentsText(10)).doesNotContain("Accueil")
+    }
+
+    @Test
     fun `forget also forgets the recurring lines`() = runBlocking<Unit> {
         ingestArticles(service, 10)
+        // The captures are deleted, then the service forgets: nothing is learnt again from them.
+        store.deleted += (1L..10L)
         service.forget()
         clock.advance(7 * 3_600_000L)
         service.ingest(Models.rawCapture(article(10)))
@@ -167,6 +179,12 @@ class IngestServiceTest {
             inserted += capture to chunks
             return inserted.size.toLong()
         }
+
+        override suspend fun recentTexts(packageName: String, limit: Int): List<String> = inserted.withIndex()
+            .filter { (i, row) -> row.first.packageName == packageName && (i + 1).toLong() !in deleted }
+            .map { it.value.first.text }
+            .asReversed()
+            .take(limit)
 
         override suspend fun touch(captureId: Long, seenAt: Long): Boolean {
             if (captureId in deleted) return false

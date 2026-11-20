@@ -297,6 +297,8 @@ class StoresTest {
         assertThat(handle.captures.page(null, null, 1).single().preview).isEqualTo("trois")
 
         assertThat(handle.captures.recentHashes("com.example.notes", 1).single().captureId).isEqualTo(b)
+        assertThat(handle.captures.recentTexts("com.example.notes", 10)).containsExactly("deux", "un").inOrder()
+        assertThat(handle.captures.recentTexts("com.example.notes", 1)).containsExactly("deux")
         val stats = handle.captures.stats()
         assertThat(stats.captureCount).isEqualTo(3)
         assertThat(stats.oldestCaptureAt).isEqualTo(1_000)

@@ -89,6 +89,9 @@ internal abstract class CaptureDao {
     )
     abstract suspend fun recentHashes(pkg: String, limit: Int): List<HashRow>
 
+    @Query("SELECT text FROM capture WHERE package_name = :pkg ORDER BY last_seen_at DESC LIMIT :limit")
+    abstract suspend fun recentTexts(pkg: String, limit: Int): List<String>
+
     @Query("SELECT * FROM capture WHERE id = :id")
     abstract suspend fun get(id: Long): CaptureEntity?
 
