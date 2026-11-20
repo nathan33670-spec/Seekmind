@@ -39,7 +39,10 @@ class CaptureLoop(
 
     @Volatile private var finished = 0L
 
-    /** Diagnostics, counts and states only (INV-07), for the end-to-end tests. */
+    /**
+     * Diagnostics, counts and states only (INV-07), for the end-to-end tests. Approximate: written on the
+     * capture thread, read from another one.
+     */
     fun diagnostics(): String = "loop events=$events fired=$fired finished=$finished " +
         "debouncer=${debouncer.diagnostics()} window_set=${window != null}"
 

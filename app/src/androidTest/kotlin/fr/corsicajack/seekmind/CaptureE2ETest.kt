@@ -42,6 +42,7 @@ class CaptureE2ETest {
         harness.open(activity)
         harness.open(COVER)
         allow()
+        harness.awaitRouterOpen()
         harness.open("PlainTextActivity")
         val (_, _, before) = harness.awaitCaptureAfter(PLAIN)
         for (event in before) {

@@ -68,8 +68,16 @@ class EventRouter(
     }
 
     /**
+     * Whether an event would pass now: the ignored set and the settings are known, consent given, no
+     * pause. The settings reach the router through a flow, a little after they are written: an end-to-end
+     * test waits for this before opening a screen, or the screen's events may meet the gate still closed.
+     */
+    fun isOpen(): Boolean = ignored != null && gate?.allows(clock.nowMillis()) == true
+
+    /**
      * Diagnostics, counts and states only (INV-07): what became of the events since the start. Read by
-     * the end-to-end tests when an expected event does not come.
+     * the end-to-end tests when an expected event does not come. Approximate: written on the main thread,
+     * read from another one.
      */
     fun diagnostics(): String = "router received=$received forwarded=$forwarded no_package=$noPackage " +
         "no_ignored_set=$noIgnoredSet ignored=$ignoredDrops no_gate=$noGate gate_closed=$gateClosed " +

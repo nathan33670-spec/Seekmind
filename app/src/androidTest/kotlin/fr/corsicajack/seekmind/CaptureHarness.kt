@@ -2,6 +2,7 @@ package fr.corsicajack.seekmind
 
 import android.app.UiAutomation
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import androidx.test.platform.app.InstrumentationRegistry
 import dagger.hilt.android.EntryPointAccessors
 import fr.corsicajack.seekmind.core.database.DatabaseHandle
@@ -61,6 +62,20 @@ class CaptureHarness : ExternalResource() {
         graph.settings().setPausedUntil(null)
         shell("settings put secure enabled_accessibility_services $service")
         shell("settings put secure accessibility_enabled 1")
+        awaitRouterOpen()
+    }
+
+    /**
+     * Waits until the router lets events through. The settings reach it through a flow, after they are
+     * written: a screen opened before would meet the gate still closed, and a static screen sends no
+     * other event (E2E-11 after E2E-13, the main thread held by a dead window).
+     */
+    fun awaitRouterOpen() {
+        val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS
+        while (!graph.router().isOpen()) {
+            check(SystemClock.elapsedRealtime() < deadline) { "router still closed: ${graph.router().diagnostics()}" }
+            SystemClock.sleep(POLL_MS)
+        }
     }
 
     override fun after() = runBlocking<Unit> {
@@ -155,6 +170,7 @@ class CaptureHarness : ExternalResource() {
     companion object {
         const val FIXTURE = "fr.corsicajack.seekmind.fixture"
         const val TIMEOUT_MS = 60_000L
+        private const val POLL_MS = 20L
         private const val LIMIT = 50
     }
 }
