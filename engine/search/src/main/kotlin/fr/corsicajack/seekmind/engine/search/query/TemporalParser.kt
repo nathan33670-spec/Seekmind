@@ -31,10 +31,14 @@ class TemporalParser(private val monthFirst: Boolean = false) : TemporalExtracto
         repeat(MAX_LINKING) { if (first > 0 && words[first - 1].norm in LINKING) first-- }
         val last = words[match.start + match.length - 1]
         val from = words[first].begin
+        // « le lundi »: the coming habit as much as the last Monday (recherche §3).
+        val ambiguous = match.length == 1 && words[match.start].norm in WEEKDAYS_FR &&
+            match.start > 0 && words[match.start - 1].norm == "le"
         return TemporalMatch(
             range = match.range,
             label = text.substring(words[match.start].begin, last.end),
             remaining = text.substring(0, from) + " " + text.substring(last.end),
+            ambiguous = ambiguous,
         )
     }
 

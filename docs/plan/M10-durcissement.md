@@ -87,7 +87,7 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| En cours — reste le point 3 (décision du porteur) | M5-07 | `engine:index` | [capture §4.2](../specs/capture.md) · EF-SRCH-01 |
+| Fait | M5-07 | `engine:index` | [capture §4.2](../specs/capture.md) · EF-SRCH-01 |
 
 **À faire**
 
@@ -98,7 +98,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
 3. Analyseur temporel : un jour de la semaine précédé de « le » (« cours de yoga le lundi », « réunion le
    jeudi ») peut désigner une habitude, et non une date. Aujourd'hui, il devient un filtre de date, et la
    requête q78 du jeu d'évaluation est manquée (recherche §11.1). À trancher sur des requêtes réelles :
-   ignorer cette forme, ou chercher avec et sans le filtre.
+   ignorer cette forme, ou chercher avec et sans le filtre. *Décision du porteur (20 novembre 2026) :
+   chercher avec et sans le filtre (recherche §3).*
 
 **Critères d'acceptation**
 

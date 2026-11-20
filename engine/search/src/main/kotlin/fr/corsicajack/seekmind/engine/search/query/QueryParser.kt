@@ -15,10 +15,17 @@ class QueryParser(private val stopWords: StopWords, private val temporal: Tempor
      * Parses [raw]. [apps] recognises the application filter; it is built from the installed
      * applications, hence given at each call.
      */
-    fun parse(raw: String, now: Long, zone: ZoneId, apps: AppExtractor = AppExtractor.NONE): ParsedQuery {
+    fun parse(
+        raw: String,
+        now: Long,
+        zone: ZoneId,
+        apps: AppExtractor = AppExtractor.NONE,
+        /** False: the query is read without its time expression, kept as words (an ambiguous one, §3). */
+        withTime: Boolean = true,
+    ): ParsedQuery {
         var text = clean(raw)
 
-        val time = temporal.extract(text, now, zone)
+        val time = if (withTime) temporal.extract(text, now, zone) else null
         if (time != null) text = collapseSpaces(time.remaining)
 
         val app = apps.extract(text)
@@ -37,6 +44,7 @@ class QueryParser(private val stopWords: StopWords, private val temporal: Tempor
             rangeLabel = time?.label,
             packages = app?.packages.orEmpty(),
             profile = profileOf(tokens, codeTokens),
+            timeAmbiguous = time?.ambiguous == true,
         )
     }
 
@@ -45,13 +53,15 @@ class QueryParser(private val stopWords: StopWords, private val temporal: Tempor
      * found in the text: an explicit range replaces the extracted one (and its label), explicit packages
      * replace the extracted ones. The expressions are removed from the text in every case.
      */
-    fun parse(request: SearchRequest, apps: AppExtractor = AppExtractor.NONE): ParsedQuery {
-        val parsed = parse(request.rawQuery, request.now, request.zone, apps)
+    fun parse(request: SearchRequest, apps: AppExtractor = AppExtractor.NONE, withTime: Boolean = true): ParsedQuery {
+        val parsed = parse(request.rawQuery, request.now, request.zone, apps, withTime)
         val explicit = request.filters
         return parsed.copy(
             range = explicit.range ?: parsed.range,
             rangeLabel = if (explicit.range != null) null else parsed.rangeLabel,
             packages = explicit.packages.ifEmpty { parsed.packages },
+            // A range chosen in the interface is not ambiguous.
+            timeAmbiguous = parsed.timeAmbiguous && explicit.range == null,
         )
     }
 

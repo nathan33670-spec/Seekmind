@@ -20,7 +20,9 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.lastOrNull
 
 /**
  * Hybrid search (docs/specs/recherche.md §1, §7 to §9).
@@ -32,6 +34,8 @@ import kotlinx.coroutines.flow.flow
  *   [Stage.HYBRID] emission holds the keyword results with `semanticAvailable = false`.
  * - With filters and no result: the time range is dropped, then every filter ([Relaxation]).
  * - A cached query gives its hybrid results at once, in a single emission.
+ * - An ambiguous time expression (« le lundi », [ParsedQuery.timeAmbiguous]): the dated results, then
+ *   one more emission, completed with the results of the query read without it (§3).
  */
 class HybridSearcher(
     private val parser: QueryParser,
@@ -47,7 +51,35 @@ class HybridSearcher(
     private val fusion = Fusion(config)
 
     override fun search(request: SearchRequest): Flow<SearchResults> = flow {
-        val parsed = parser.parse(request, apps())
+        val apps = apps()
+        val parsed = parser.parse(request, apps)
+        if (!parsed.timeAmbiguous) {
+            emitAll(searchParsed(parsed, request))
+            return@flow
+        }
+        // « le lundi » (recherche §3): the dated results first, then those of the query read without the
+        // time expression, its weekday kept as a word.
+        var dated: SearchResults? = null
+        searchParsed(parsed, request).collect {
+            dated = it
+            emit(it)
+        }
+        val undated = searchParsed(parser.parse(request, apps, withTime = false), request).lastOrNull()
+        val first = dated
+        if (first != null && undated != null) emit(complete(first, undated, request.limit))
+    }
+
+    /** [dated] then the hits of [undated] it does not hold, at most [limit]. */
+    private fun complete(dated: SearchResults, undated: SearchResults, limit: Int): SearchResults {
+        val seen = dated.hits.mapTo(HashSet()) { it.captureId }
+        return dated.copy(
+            stage = undated.stage,
+            hits = (dated.hits + undated.hits.filter { it.captureId !in seen }).take(limit),
+            semanticAvailable = dated.semanticAvailable && undated.semanticAvailable,
+        )
+    }
+
+    private fun searchParsed(parsed: ParsedQuery, request: SearchRequest): Flow<SearchResults> = flow {
         val key = SearchCache.keyOf(parsed, request.limit)
         // Unknown generation (meta unreadable): search without reading or writing the cache.
         val generationAtStart = try {
