@@ -72,7 +72,10 @@ class EventRouter(
      * pause. The settings reach the router through a flow, a little after they are written: an end-to-end
      * test waits for this before opening a screen, or the screen's events may meet the gate still closed.
      */
-    fun isOpen(): Boolean = ignored != null && gate?.allows(clock.nowMillis()) == true
+    fun isOpen(): Boolean = isConnected() && ignored != null && gate?.allows(clock.nowMillis()) == true
+
+    /** Whether the accessibility service is connected: an end-to-end test waits for its unbinding. */
+    fun isConnected(): Boolean = connected.service != null
 
     /**
      * Diagnostics, counts and states only (INV-07): what became of the events since the start. Read by

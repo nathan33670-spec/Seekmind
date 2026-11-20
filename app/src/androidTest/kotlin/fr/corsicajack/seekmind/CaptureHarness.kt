@@ -75,12 +75,13 @@ class CaptureHarness : ExternalResource() {
     /** The other way: after consent is withdrawn or a pause starts, until the router lets nothing through. */
     fun awaitRouterClosed() = awaitRouter(open = false)
 
-    private fun awaitRouter(open: Boolean) {
+    private fun awaitRouter(open: Boolean) =
+        awaitUntil("router still ${if (open) "closed" else "open"}") { graph.router().isOpen() == open }
+
+    private fun awaitUntil(what: String, condition: () -> Boolean) {
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS
-        while (graph.router().isOpen() != open) {
-            check(SystemClock.elapsedRealtime() < deadline) {
-                "router still ${if (open) "closed" else "open"}: ${graph.router().diagnostics()}"
-            }
+        while (!condition()) {
+            check(SystemClock.elapsedRealtime() < deadline) { "$what: ${graph.router().diagnostics()}" }
             SystemClock.sleep(POLL_MS)
         }
     }
@@ -89,6 +90,9 @@ class CaptureHarness : ExternalResource() {
         shell("am force-stop $FIXTURE")
         restore("enabled_accessibility_services", services)
         restore("accessibility_enabled", accessibility)
+        // The system unbinds the service on its own time, slower while a dead window holds the main
+        // thread: unbound late, during the next test, the service would miss that test's first screen.
+        if (services?.contains(service) != true) awaitUntil("service still connected") { !graph.router().isConnected() }
         database().appRules.remove(FIXTURE)
         graph.settings().reset()
         scope.cancel()
