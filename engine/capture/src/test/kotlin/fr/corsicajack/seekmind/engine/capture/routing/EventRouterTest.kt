@@ -57,7 +57,9 @@ class EventRouterTest {
     @Test
     fun `the router says when it is open, and counts what it drops`() {
         assertThat(router.isOpen()).isFalse()
+        assertThat(router.isConnected()).isFalse()
         attachReady(consented = false)
+        assertThat(router.isConnected()).isTrue()
         assertThat(router.isOpen()).isFalse()
         router.onEvent(CONTENT, APP, null, 1)
         router.onEvent(CONTENT, SEEKMIND, null, 1)
