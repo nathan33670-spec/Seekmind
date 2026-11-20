@@ -177,7 +177,7 @@ identifiants pour les sept pays, tous vérifiés par `tools/privacy/verify_sensi
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| `Fait` — validation manuelle reportée à M10-01 | M2-06, M2-07 | `app`, `fixtureapp` | [tests §3, §4](../06-qualite-tests-ci.md) |
+| Fait — validation manuelle reportée à M10-01 | M2-06, M2-07 | `app`, `fixtureapp` | [tests §3, §4](../06-qualite-tests-ci.md) |
 
 **À faire**
 

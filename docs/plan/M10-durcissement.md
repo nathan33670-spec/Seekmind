@@ -44,6 +44,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
      consentement en région Europe ; formulaire des choix de confidentialité accessible ;
    - **M7-02** : les sept règles par application (tableau de la PR #40) ; une règle qui échoue est
      retirée de `source_rules.json`.
+   - **M2-08** : une heure d'usage normal, puis relevé dans Réglages → Diagnostic du nombre de
+     captures, des rejets par motif et de la durée médiane de lecture de l'arbre.
 
    Une validation qui échoue rouvre le ticket (statut `En cours`) et bloque M10-01 jusqu'à sa correction.
 

@@ -90,9 +90,10 @@ class CaptureOcrE2ETest {
         open("PlainTextActivity")
         awaitEvent("a stored plain screen") { it is PipelineEvent.Stored || it is PipelineEvent.Deduplicated }
         val before = files()
-        // The plain screen, sparse, may have used an OCR: the policy allows the next one only after
-        // its minimal interval (ocr §5), a known rule rather than an arbitrary delay.
-        SystemClock.sleep(OcrConfig().minIntervalMs)
+        // The OCR budget of the policy (ocr §5) belongs to the process, shared with the tests run before
+        // in it: at most maxPerMinute OCRs in any minute, minIntervalMs apart. Once a minute has passed,
+        // both rules allow the next one: a known rule rather than an arbitrary delay.
+        SystemClock.sleep(maxOf(OcrConfig().minIntervalMs, MINUTE_MS))
 
         open("ImageTextActivity")
         val stored = awaitEvent("the image screen stored") { event ->
@@ -175,6 +176,7 @@ class CaptureOcrE2ETest {
     private companion object {
         const val FIXTURE = "fr.corsicajack.seekmind.fixture"
         const val TIMEOUT_MS = 60_000L
+        const val MINUTE_MS = 60_000L
         const val ML_KIT_PREFERENCES = "shared_prefs/com.google.mlkit.internal.xml"
         const val ML_KIT_KEY = "ml_sdk_instance_id"
         val KEY = Regex("""name="([^"]+)"""")
