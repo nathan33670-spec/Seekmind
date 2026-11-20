@@ -16,11 +16,14 @@ internal interface FrameRequester<F> {
     /** True when the frame covers the whole display and must be cropped to the window (API 30-33). */
     val coversDisplay: Boolean
 
+    /** True while [windowId] is still the active window. */
+    fun isActive(windowId: Int): Boolean
+
     suspend fun request(windowId: Int): FrameResult<F>
 }
 
 /**
- * The platform-independent part of [A11yScreenshotSource] (docs/specs/ocr.md §2): wait for the rate limit, request,
+ * The platform-independent part of [A11yScreenshotSource] (docs/specs/ocr.md §2): wait for the rate limit, check that the window is still active, request,
  * mapping of the system's error codes to [Shot], lifecycle of the image.
  */
 internal class ScreenshotPipeline<F, B>(
@@ -32,7 +35,7 @@ internal class ScreenshotPipeline<F, B>(
     private val wait: suspend (Long) -> Unit = { delay(it) },
 ) {
     suspend fun <T> withScreenshot(windowId: Int, windowBounds: IntRect, block: suspend (B) -> T): Shot<T> {
-        limiter.acquire(wait)
+        if (!acquire(windowId)) return Shot.Failed(ScreenshotErrors.WINDOW_CHANGED)
         return when (val result = requester.request(windowId)) {
             is FrameResult.Error -> ScreenshotErrors.toShot(result.code)
 
@@ -48,7 +51,7 @@ internal class ScreenshotPipeline<F, B>(
 
     /** A request whose frame is closed at once, never copied: only its success or error counts. */
     suspend fun check(windowId: Int): Shot<Unit> {
-        limiter.acquire(wait)
+        if (!acquire(windowId)) return Shot.Failed(ScreenshotErrors.WINDOW_CHANGED)
         return when (val result = requester.request(windowId)) {
             is FrameResult.Error -> ScreenshotErrors.toShot(result.code)
 
@@ -57,5 +60,15 @@ internal class ScreenshotPipeline<F, B>(
                 Shot.Ok(Unit)
             }
         }
+    }
+
+    /**
+     * Waits for the rate limit. False when it had to wait, the frame covers the whole display, and the window
+     * is no longer the active one: the display now shows another window, which the privacy gate never
+     * admitted (INV-05), so no frame is requested.
+     */
+    private suspend fun acquire(windowId: Int): Boolean {
+        val waited = limiter.acquire(wait)
+        return !(waited && requester.coversDisplay && !requester.isActive(windowId))
     }
 }

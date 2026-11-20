@@ -25,8 +25,16 @@ internal class ScreenshotRateLimiter(private val clock: Clock, private val minIn
     @Synchronized
     fun remainingMs(): Long = lastRequestMs?.let { it + minIntervalMs - clock.elapsedRealtime() } ?: 0
 
-    /** Waits until a request may be sent, then counts it. [wait] sleeps for the given milliseconds. */
-    suspend fun acquire(wait: suspend (Long) -> Unit) {
-        while (!tryAcquire()) wait(remainingMs().coerceIn(1, minIntervalMs))
+    /**
+     * Waits until a request may be sent, then counts it. [wait] sleeps for the given milliseconds.
+     * True when it had to wait: the screen may have changed in the meantime.
+     */
+    suspend fun acquire(wait: suspend (Long) -> Unit): Boolean {
+        var waited = false
+        while (!tryAcquire()) {
+            wait(remainingMs().coerceIn(1, minIntervalMs))
+            waited = true
+        }
+        return waited
     }
 }

@@ -18,6 +18,7 @@ internal object ScreenshotErrors {
     /** Our own codes, negative so that they never collide with the system's. */
     const val INVALID_IMAGE = -1
     const val TIMEOUT = -2
+    const val WINDOW_CHANGED = -3
 
     fun toShot(code: Int): Shot<Nothing> = when (code) {
         SECURE_WINDOW -> Shot.SecureWindow

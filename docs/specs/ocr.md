@@ -61,11 +61,19 @@ try {
   Elle n'est pas refusée, car pour un paquet sondé à chaque capture, un refus rejetterait l'écran
   (§3.3). Une demande refusée par le système compte aussi : le limiteur mesure l'intervalle depuis la
   dernière demande transmise.
+- Sous l'API 34, la capture couvre tout l'écran. Si la demande a dû attendre, le pipeline vérifie
+  juste avant de l'envoyer que la fenêtre active est toujours celle qu'a admise la porte de
+  confidentialité (même `windowId`, donc même paquet). Sinon, aucune image n'est demandée et le
+  résultat est `Failed(-3)` : l'écran affiche une autre fenêtre, qui n'est pas passée par la porte
+  (INV-05). Le `Debouncer` traitera la nouvelle fenêtre normalement. À partir de l'API 34, la capture
+  vise la fenêtre elle-même : cette vérification est inutile.
+- L'attente ajoute jusqu'à 1 s à l'étape 6. Le chien de garde (seuil de 10 s) n'est pas concerné,
+  mais `capture_step_slow` (seuil de 2 s) peut le refléter : à mesurer pendant M10-01.
 - Correspondance des codes d'erreur du système : `ERROR_TAKE_SCREENSHOT_SECURE_WINDOW` → `SecureWindow` ;
-  `ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT` → `RateLimited` ; tout autre code → `Failed(code)`. Deux codes
+  `ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT` → `RateLimited` ; tout autre code → `Failed(code)`. Trois codes
   internes, négatifs pour ne jamais rencontrer ceux du système, complètent `Failed` : `-1` (image
-  illisible, ou fenêtre hors de l'écran après recadrage) et `-2` (le système n'a pas répondu dans les
-  5 s). Une image qui arrive après l'abandon de l'attente est fermée aussitôt.
+  illisible, ou fenêtre hors de l'écran après recadrage), `-2` (le système n'a pas répondu dans les
+  5 s) et `-3` (fenêtre changée pendant l'attente, ci-dessus). Une image qui arrive après l'abandon de l'attente est fermée aussitôt.
 - **Interdits** (INV-03) : `Bitmap.compress`, écriture de fichier, `MediaStore`, cache, passage de
   l'image à un autre module. Le bitmap ne sort jamais de `block`.
 
