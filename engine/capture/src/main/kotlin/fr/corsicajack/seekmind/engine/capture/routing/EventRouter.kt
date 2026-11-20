@@ -61,15 +61,48 @@ class EventRouter(
     }
 
     fun onEvent(type: Int, packageName: String?, className: String?, windowId: Int) {
+        received++
         if (!accepts(packageName)) return
+        forwarded++
         executor.execute { loop.onEvent(type, packageName!!, className, windowId) }
     }
 
+    /**
+     * Whether an event would pass now: the ignored set and the settings are known, consent given, no
+     * pause. The settings reach the router through a flow, a little after they are written: an end-to-end
+     * test waits for this before opening a screen, or the screen's events may meet the gate still closed.
+     */
+    fun isOpen(): Boolean = ignored != null && gate?.allows(clock.nowMillis()) == true
+
+    /**
+     * Diagnostics, counts and states only (INV-07): what became of the events since the start. Read by
+     * the end-to-end tests when an expected event does not come. Approximate: written on the main thread,
+     * read from another one.
+     */
+    fun diagnostics(): String = "router received=$received forwarded=$forwarded no_package=$noPackage " +
+        "no_ignored_set=$noIgnoredSet ignored=$ignoredDrops no_gate=$noGate gate_closed=$gateClosed " +
+        "gate=${gate?.let { "consented=${it.consented},paused=${it.pausedUntil != null}" } ?: "none"} " +
+        "connected=${connected.service != null}"
+
+    @Volatile private var received = 0L
+
+    @Volatile private var forwarded = 0L
+
+    @Volatile private var noPackage = 0L
+
+    @Volatile private var noIgnoredSet = 0L
+
+    @Volatile private var ignoredDrops = 0L
+
+    @Volatile private var noGate = 0L
+
+    @Volatile private var gateClosed = 0L
+
     private fun accepts(packageName: String?): Boolean {
-        if (packageName == null) return false
-        val ignored = ignored ?: return false
-        if (packageName in ignored) return false
-        val gate = gate ?: return false
-        return gate.allows(clock.nowMillis())
+        if (packageName == null) return false.also { noPackage++ }
+        val ignored = ignored ?: return false.also { noIgnoredSet++ }
+        if (packageName in ignored) return false.also { ignoredDrops++ }
+        val gate = gate ?: return false.also { noGate++ }
+        return gate.allows(clock.nowMillis()).also { if (!it) gateClosed++ }
     }
 }

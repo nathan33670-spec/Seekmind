@@ -55,6 +55,21 @@ class EventRouterTest {
     }
 
     @Test
+    fun `the router says when it is open, and counts what it drops`() {
+        assertThat(router.isOpen()).isFalse()
+        attachReady(consented = false)
+        assertThat(router.isOpen()).isFalse()
+        router.onEvent(CONTENT, APP, null, 1)
+        router.onEvent(CONTENT, SEEKMIND, null, 1)
+        environment.listener!!.onSettings(consented = true, pausedUntil = null)
+        assertThat(router.isOpen()).isTrue()
+        router.onEvent(CONTENT, APP, null, 1)
+        assertThat(router.diagnostics()).startsWith(
+            "router received=3 forwarded=1 no_package=0 no_ignored_set=0 ignored=1 no_gate=0 gate_closed=1",
+        )
+    }
+
+    @Test
     fun `without consent nothing passes`() {
         attachReady(consented = false)
         router.onEvent(STATE, APP, "$APP.MainActivity", 1)
