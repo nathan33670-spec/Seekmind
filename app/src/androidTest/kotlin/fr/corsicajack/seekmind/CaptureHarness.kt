@@ -70,10 +70,17 @@ class CaptureHarness : ExternalResource() {
      * written: a screen opened before would meet the gate still closed, and a static screen sends no
      * other event (E2E-11 after E2E-13, the main thread held by a dead window).
      */
-    fun awaitRouterOpen() {
+    fun awaitRouterOpen() = awaitRouter(open = true)
+
+    /** The other way: after consent is withdrawn or a pause starts, until the router lets nothing through. */
+    fun awaitRouterClosed() = awaitRouter(open = false)
+
+    private fun awaitRouter(open: Boolean) {
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS
-        while (!graph.router().isOpen()) {
-            check(SystemClock.elapsedRealtime() < deadline) { "router still closed: ${graph.router().diagnostics()}" }
+        while (graph.router().isOpen() != open) {
+            check(SystemClock.elapsedRealtime() < deadline) {
+                "router still ${if (open) "closed" else "open"}: ${graph.router().diagnostics()}"
+            }
             SystemClock.sleep(POLL_MS)
         }
     }

@@ -39,6 +39,8 @@ class CaptureE2ETest {
      * pipeline handled nothing but the cover (capture §8: the router lets no event through).
      */
     private suspend fun nothingWhileBlocked(activity: String, allow: suspend () -> Unit) {
+        // The settings reach the router through a flow: until it is closed, events would still pass.
+        harness.awaitRouterClosed()
         harness.open(activity)
         harness.open(COVER)
         allow()
