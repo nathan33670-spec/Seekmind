@@ -65,6 +65,20 @@ check_bad "a WebView" "feature/search/src/main/kotlin/W.kt" "val view = WebView(
 check_bad "the database key turned into text" "core/database/src/main/kotlin/fr/corsicajack/seekmind/core/database/key/K.kt" "val hex = key.joinToString(\"\")"
 check_bad "the database key logged" "core/database/src/main/kotlin/fr/corsicajack/seekmind/core/database/key/L.kt" "SmLog.i(TAG, \"key\")"
 
+# --- check-site.sh -----------------------------------------------------------------------------
+csp='<meta http-equiv="Content-Security-Policy" content="default-src '"'"'none'"'"'; style-src '"'"'unsafe-inline'"'"'">'
+mkdir -p "$work/site-ok" "$work/site-script" "$work/site-remote" "$work/site-todo"
+echo "<html><head>$csp</head><body><p>ok</p></body></html>" > "$work/site-ok/index.html"
+echo "<html><head>$csp</head><body><script>1</script></body></html>" > "$work/site-script/index.html"
+echo "<html><head>$csp</head><body><img src=\"https://cdn.example/x.png\"></body></html>" > "$work/site-remote/index.html"
+echo "<html><head>$csp</head><body><span class=\"todo\">[TO FILL IN]</span></body></html>" > "$work/site-todo/index.html"
+expect "site: a strict page passes" 0 "$repo/scripts/check-site.sh" "$work/site-ok"
+expect "site: a script outside the relay page is rejected" 1 "$repo/scripts/check-site.sh" "$work/site-script"
+expect "site: a remote resource is rejected" 1 "$repo/scripts/check-site.sh" "$work/site-remote"
+expect "site: a placeholder passes before publication" 0 "$repo/scripts/check-site.sh" "$work/site-todo"
+expect "site: a placeholder is rejected for the release" 1 "$repo/scripts/check-site.sh" --release "$work/site-todo"
+expect "site: the shipped site passes" 0 "$repo/scripts/check-site.sh" "$repo/site"
+
 # --- check-elf-alignment.sh --------------------------------------------------------------------
 if command -v gcc >/dev/null && command -v objdump >/dev/null; then
   printf 'int seekmind_probe(void) { return 1; }\n' > "$work/probe.c"

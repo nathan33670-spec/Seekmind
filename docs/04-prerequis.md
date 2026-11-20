@@ -31,6 +31,7 @@ Ils ne le deviendraient que pour la solution de repli par le navigateur ([annexe
 ### 2.1 Site sur GitHub Pages
 
 - Le contenu du site vit dans le dossier `site/` de ce dépôt (pages statiques, rédigées par le ticket M11-02).
+  Publication et `app-ads.txt` pas à pas : [store/site-et-app-ads.md](store/site-et-app-ads.md).
 - GitHub Pages ne publie le site d'un dépôt **privé** qu'avec une offre payante. Si le dépôt reste privé
   sur une offre gratuite, publier `site/` depuis un petit dépôt public dédié.
 - **`app-ads.txt`** : AdMob cherche ce fichier à la **racine** du site web du développeur déclaré dans la

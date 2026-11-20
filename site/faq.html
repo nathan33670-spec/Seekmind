@@ -1,0 +1,50 @@
+<!doctype html>
+<!-- Frequently asked questions (ticket M11-02). No script, no external resource: the policy below allows nothing but the inline style. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>SeekMind — Questions fréquentes</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 24px 16px; max-width: 720px; line-height: 1.6; color: #1b1b1f; background: #fefbff; }
+  @media (prefers-color-scheme: dark) { body { color: #e4e1e6; background: #1b1b1f; } a { color: #b8c3ff; } }
+  h1 { font-size: 1.7em; line-height: 1.25; } h2 { font-size: 1.2em; margin-top: 1.8em; }
+  nav { font-size: 0.95em; margin-bottom: 1.5em; } nav a { margin-right: 1em; }
+  .todo { background: #ffe08a; color: #1b1b1f; padding: 0 4px; border-radius: 3px; }
+  .small { font-size: 0.9em; opacity: 0.85; }
+</style>
+</head>
+<body>
+<nav><a href="index.html">Accueil</a><a href="faq.html">FAQ</a><a href="assistance.html">Assistance</a><a href="confidentialite.html">Confidentialité</a><a href="faq-en.html" hreflang="en">English</a></nav>
+<h1>Questions fréquentes</h1>
+
+<h2>Que lit SeekMind ?</h2>
+<p>Le texte affiché à l’écran dans les applications que vous avez choisies, le nom de l’application, le titre de l’écran et l’adresse des pages web. Quand un écran contient surtout des images, SeekMind reconnaît le texte de l’image, en mémoire ; l’image n’est jamais enregistrée.</p>
+
+<h2>Que ne lit-il pas ?</h2>
+<p>Les champs de mot de passe, la navigation privée, les écrans protégés par l’application qui les affiche, les applications sensibles (banque, gestionnaires de mots de passe, authentification…) et SeekMind lui-même. Les numéros de carte bancaire et les IBAN sont masqués avant tout enregistrement. SeekMind n’agit jamais à votre place dans les autres applications.</p>
+
+<h2>Que sont les familles d’applications ?</h2>
+<p>Les applications sont rangées en quatre familles : messageries et e-mails, navigateurs, réseaux sociaux et vidéo, autres. Vous choisissez à l’installation celles que SeekMind mémorise, et vous pouvez changer d’avis dans Réglages › Applications, ou exclure une application précise.</p>
+
+<h2>Les écrans protégés sont-ils toujours reconnus ?</h2>
+<p>Sous Android 14 et plus, le système signale à SeekMind qu’un écran est protégé : il n’est jamais lu. Sous Android 11 à 13, le système ne le signale pas ; SeekMind reconnaît un écran protégé à ce que son image est entièrement noire. Cette détection est très fiable, mais pas absolue. Les applications bancaires et de mots de passe connues sont de toute façon exclues d’office.</p>
+
+<h2>Et la navigation privée ?</h2>
+<p>Chrome, Firefox, Samsung Internet et les navigateurs dérivés de Chromium protègent leurs onglets privés : SeekMind ne les lit pas. Si vous avez autorisé les captures d’écran en navigation privée dans les réglages de votre navigateur, cette protection disparaît. SeekMind reconnaît alors encore la plupart des onglets privés à leurs marqueurs, mais sans garantie. Laissez ce réglage désactivé, ou excluez le navigateur.</p>
+
+<h2>Pourquoi des publicités ?</h2>
+<p>Les recherches consomment des crédits. Vous en recevez chaque jour, et vous pouvez en gagner en regardant une annonce récompensée, à votre demande seulement. Aucune autre publicité n’est affichée. Ces annonces sont fournies par Google et ne sont jamais choisies d’après ce que SeekMind a lu : rien de ce qu’il a mémorisé n’est transmis au réseau publicitaire. Un code d’activation retire les crédits.</p>
+
+<h2>Que sont les packs de langue ?</h2>
+<p>La recherche par le sens est faite par un modèle installé sur le téléphone, prévu pour le français. Pour d’autres langues, un pack facultatif peut être téléchargé par Google Play, à votre demande. La recherche par mots-clés fonctionne dans toutes les langues.</p>
+
+<h2>Comment supprimer mes données ?</h2>
+<p>Dans le journal, supprimez une capture ; dans Réglages › Données, supprimez une période, une application ou tout. Par défaut, les captures de plus de 90 jours sont supprimées automatiquement. Désinstaller SeekMind supprime toutes ses données. Rien n’existe ailleurs que sur votre téléphone : il n’y a rien d’autre à supprimer.</p>
+
+<h2>Le service s’arrête tout seul</h2>
+<p>Certains fabricants arrêtent les applications en arrière-plan pour économiser la batterie. Réglages › Le service s’arrête tout seul indique, pour votre téléphone, le réglage à changer.</p>
+</body>
+</html>

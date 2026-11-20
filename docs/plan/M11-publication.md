@@ -35,7 +35,7 @@ prépare les contenus et les artefacts.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | — | `site/`, `.github/workflows` | [sécurité §7](../07-securite-vie-privee.md#7-politique-de-confidentialité) · [prérequis §2.1](../04-prerequis.md#21-site-sur-github-pages) |
+| En cours — reste la relecture juridique, les emplacements à compléter, l'activation de Pages et `app-ads.txt` par le porteur | — | `site/`, `.github/workflows` | [sécurité §7](../07-securite-vie-privee.md#7-politique-de-confidentialité) · [prérequis §2.1](../04-prerequis.md#21-site-sur-github-pages) |
 
 **À faire**
 
