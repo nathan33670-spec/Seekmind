@@ -103,6 +103,9 @@ interface CaptureStore {
     /** The most recently seen captures of [packageName]. */
     suspend fun recentHashes(packageName: String, limit: Int): List<HashRef>
 
+    /** The texts of the most recently seen captures of [packageName], most recent first (indexation §5.1). */
+    suspend fun recentTexts(packageName: String, limit: Int): List<String>
+
     suspend fun get(captureId: Long): Capture?
 
     /**

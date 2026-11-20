@@ -46,6 +46,8 @@ class FakeCaptureStore(rows: List<CaptureSummary>) : CaptureStore {
 
     override suspend fun recentHashes(packageName: String, limit: Int): List<HashRef> = unused()
 
+    override suspend fun recentTexts(packageName: String, limit: Int): List<String> = unused()
+
     override suspend fun get(captureId: Long): Capture? = unused()
 
     override suspend fun deleteByPackage(packageName: String) = unused()

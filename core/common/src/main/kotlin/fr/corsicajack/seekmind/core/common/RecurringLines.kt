@@ -46,6 +46,9 @@ class RecurringLines(
         }
     }
 
+    /** Whether [packageName] has a history, learnt or seeded, since the start or the last [clear]. */
+    fun knows(packageName: String): Boolean = histories.containsKey(packageName)
+
     /** Forgets everything: after captures are deleted. */
     fun clear() = histories.clear()
 

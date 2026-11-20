@@ -115,10 +115,13 @@ Une application répète sur presque tous ses écrans ses barres d'onglets, menu
   d'avant la capture en cours : la capture n'est comptée qu'après son découpage.
 - **Effet.** Une ligne récurrente n'appartient à **aucun fragment** et clôt le fragment qui la précède.
   Elle reste dans le texte stocké, donc dans l'index plein texte et dans l'affichage.
-- **Mémoire vive seulement.** Aucun contenu n'est écrit hors de la base (INV-06). L'apprentissage
-  reprend à chaque démarrage du processus : les premières captures d'une application ne sont pas
-  filtrées. Au plus 64 paquets sont suivis, le moins récemment vu étant oublié en premier.
-  `IngestService.forget()` oublie aussi ces lignes, après toute suppression de captures.
+- **Mémoire vive, amorcée depuis la base.** Aucun contenu n'est écrit hors de la base (INV-06). À la
+  première capture d'un paquet depuis le démarrage du processus, son historique est relu dans la base :
+  le texte de ses `recurringWindow` dernières captures (`CaptureStore.recentTexts`), de la plus ancienne
+  à la plus récente. Le filtre ne repart donc pas de zéro à chaque démarrage. Au plus 64 paquets sont
+  suivis, le moins récemment vu étant oublié en premier, puis relu s'il revient.
+  `IngestService.forget()` oublie aussi ces lignes, après toute suppression de captures : l'historique
+  est ensuite relu depuis les captures qui restent.
 - **Désactivation.** `IndexConfig.recurringLinesFilter = false` redonne exactement le découpage d'avant.
 - **Limite connue.** Une ligne de contenu courte et répétée devient récurrente elle aussi, par exemple
   le nom du correspondant en tête d'une conversation longuement suivie. Elle sort des vecteurs, mais

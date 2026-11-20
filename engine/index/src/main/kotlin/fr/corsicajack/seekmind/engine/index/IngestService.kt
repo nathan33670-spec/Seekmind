@@ -61,7 +61,7 @@ class IngestService(
             }
         }
 
-        val isRecurring = if (config.recurringLinesFilter) recurring.recurringIn(packageName) else NEVER
+        val isRecurring = if (config.recurringLinesFilter) recurringIn(packageName) else NEVER
         val chunks = chunker.split(text, isRecurring).mapIndexed { ordinal, span ->
             NewChunk(ordinal, span.start, span.end)
         }
@@ -94,6 +94,19 @@ class IngestService(
     fun forget() {
         recent.clear()
         recurring.clear()
+    }
+
+    /**
+     * The test of recurring lines for [packageName]. At the first capture of a package since the start
+     * (or since [forget]), its history is seeded from its last stored captures, oldest first: the filter
+     * does not start from nothing at every start of the process (§5.1).
+     */
+    private suspend fun recurringIn(packageName: String): (String) -> Boolean {
+        if (!recurring.knows(packageName)) {
+            captures.recentTexts(packageName, config.recurringWindow).asReversed()
+                .forEach { recurring.record(packageName, it) }
+        }
+        return recurring.recurringIn(packageName)
     }
 
     /** §4: same package (the cache's key), close fingerprint, seen recently, started less than a day ago. */

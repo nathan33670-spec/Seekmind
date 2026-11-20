@@ -187,6 +187,7 @@ interface CaptureStore {
     suspend fun insertAll(items: List<Pair<NewCapture, List<NewChunk>>>): List<Long>  // une transaction ; imports, bases synthétiques
     suspend fun touch(captureId: Long, seenAt: Long): Boolean                 // last_seen_at, seen_count + 1 ; false si la capture n'existe plus
     suspend fun recentHashes(packageName: String, limit: Int): List<HashRef>  // id, simhash, first/last_seen_at
+    suspend fun recentTexts(packageName: String, limit: Int): List<String>    // textes, le plus récent d'abord (indexation §5.1)
     suspend fun get(captureId: Long): Capture?
     suspend fun page(before: JournalCursor?, packageName: String?, limit: Int): List<CaptureSummary>  // curseur (last_seen_at, id)
     suspend fun packages(): List<String>                                      // paquets présents, le plus récent d'abord
