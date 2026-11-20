@@ -28,5 +28,6 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             lint { configureSeekMindLint() }
         }
         configureKotlinWarningsAsErrors()
+        declareMainSourcesAsTestInputs()
     }
 }
