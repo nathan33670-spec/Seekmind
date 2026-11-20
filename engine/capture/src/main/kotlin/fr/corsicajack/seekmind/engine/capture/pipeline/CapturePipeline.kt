@@ -98,12 +98,17 @@ class CapturePipeline(
     private val url: (packageName: String, root: UiNode, pageTitle: String?) -> String?,
     private val simHash: (String) -> Long,
     private val sink: CaptureSink,
+    /** Diagnostics only: a capture still running after this many milliseconds is logged. */
+    private val stallMs: Long = STALL_MS,
     private val outcomes: suspend (PipelineEvent) -> Unit,
 ) : StableScreenHandler {
     private val mutableEvents = MutableSharedFlow<PipelineEvent>(extraBufferCapacity = EVENT_BUFFER)
     val events: SharedFlow<PipelineEvent> = mutableEvents.asSharedFlow()
 
-    /** The step in progress (the numbers of the comments below) and when it started: for the watchdog. */
+    /**
+     * The step in progress (the numbers of the comments below) and when it started: for the watchdog.
+     * One capture at a time: the capture loop never calls [onStable] before the previous call returned.
+     */
     @Volatile
     private var step = 0
 
@@ -111,11 +116,23 @@ class CapturePipeline(
     private var stepStartedAt = 0L
 
     override suspend fun onStable(): PipelineEvent {
-        // Logged on another thread, the capture's may be the one held: the step and its age, nothing else.
-        val watchdog: TimerTask = WATCHDOG.schedule(STALL_MS) {
-            SmLog.w(TAG, "capture_stalled", null, "step" to step, "ms" to clock.elapsedRealtime() - stepStartedAt)
-        }
+        var watchdog: TimerTask? = null
         val event = try {
+            // Logged on another thread, the capture's may be the one held: the step and its age, nothing else.
+            // A diagnostic never stops a capture: a failing timer or task is ignored.
+            watchdog = runCatching {
+                WATCHDOG.schedule(stallMs) {
+                    runCatching {
+                        SmLog.w(
+                            TAG,
+                            "capture_stalled",
+                            null,
+                            "step" to step,
+                            "ms" to clock.elapsedRealtime() - stepStartedAt,
+                        )
+                    }
+                }
+            }.getOrNull()
             capture()
         } catch (e: CancellationException) {
             throw e
@@ -124,7 +141,7 @@ class CapturePipeline(
             SmLog.w(TAG, "capture_failed", e)
             PipelineEvent.Dropped(DropReason.ERROR)
         } finally {
-            watchdog.cancel()
+            watchdog?.cancel()
             enter(0)
         }
         try {

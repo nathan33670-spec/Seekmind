@@ -273,6 +273,40 @@ class CapturePipelineTest {
         assertThat(written).containsExactly("capture_step_slow step=9 ms=3000")
     }
 
+    @Test
+    fun `a capture still running after the stall delay is logged from another thread, by step`() {
+        val written = java.util.concurrent.CopyOnWriteArrayList<String>()
+        val logged = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val previous = SmLog.sink
+        SmLog.sink = SmLog.Sink { _, _, message ->
+            written += message
+            if (message.startsWith("capture_stalled")) logged.countDown()
+        }
+        val blocking = object : CaptureSink {
+            override suspend fun ingest(raw: RawCapture): IngestResult {
+                // The capture thread is held until the watchdog has spoken.
+                release.await(5, java.util.concurrent.TimeUnit.SECONDS)
+                return ingestResult
+            }
+        }
+        try {
+            treeText = "Card 4111 and enough text to be stored"
+            val stalling = CapturePipeline(
+                config, clock, { gate }, screens, ScreenMetaReader(ActivityTracker({ _, _ -> true }), clock), privacy,
+                extractor.real, ScreenshotStep.NotProbed, LineMerger.Append, { _, _, _ -> null }, { 0L }, blocking,
+                stallMs = 50,
+            ) { }
+            val thread = Thread { runBlocking { stalling.onStable() } }.apply { start() }
+            assertThat(logged.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue()
+            release.countDown()
+            thread.join(5_000)
+        } finally {
+            SmLog.sink = previous
+        }
+        assertThat(written.first { it.startsWith("capture_stalled") }).matches("capture_stalled step=9 ms=\\d+")
+    }
+
     private companion object {
         const val PACKAGE = "org.example.notes"
     }
