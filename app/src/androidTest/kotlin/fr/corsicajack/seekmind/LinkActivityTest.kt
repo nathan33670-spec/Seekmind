@@ -82,6 +82,45 @@ class LinkActivityTest {
         }
     }
 
+    /** Ticket M10-05: links of another shape are neutral, without a confirmation to give. */
+    @Test
+    fun linksOfAnotherShapeAreNeutral() = runBlocking<Unit> {
+        val code = vector("valid")
+        for (link in listOf(
+            "seekmind://activate",
+            "seekmind://activate?t=",
+            "seekmind://activate?x=$code",
+            "seekmind://other?t=$code",
+            "seekmind://activate?t=$code&t=$code",
+            "seekmind://activate?t=%00$code",
+            "seekmind://activate?t=" + "\u202e".repeat(20),
+        )) {
+            launch(link).use {
+                compose.waitUntil(TIMEOUT_MS) {
+                    compose.onAllNodes(androidx.compose.ui.test.hasTestTag(LINK_MESSAGE_TAG))
+                        .fetchSemanticsNodes().isNotEmpty()
+                }
+                assertThat(compose.onAllNodesWithTagCount(LINK_CONFIRM_TAG)).isEqualTo(0)
+            }
+        }
+        assertThat(store.license()).isNull()
+    }
+
+    /** Ticket M10-05: well-formed codes that do not verify are refused once confirmed, and change nothing. */
+    @Test
+    fun codesThatDoNotVerifyAreRefused() = runBlocking<Unit> {
+        for (name in listOf("altered_signature", "altered_payload", "alg_none_signed", "unknown_kid")) {
+            launch("seekmind://activate?t=${vector(name)}").use {
+                compose.onNodeWithTag(LINK_CONFIRM_TAG).performClick()
+                compose.waitUntil(TIMEOUT_MS) {
+                    compose.onAllNodes(androidx.compose.ui.test.hasTestTag(LINK_MESSAGE_TAG))
+                        .fetchSemanticsNodes().isNotEmpty()
+                }
+            }
+            assertThat(store.license()).isNull()
+        }
+    }
+
     private fun androidx.compose.ui.test.junit4.ComposeTestRule.onAllNodesWithTagCount(tag: String) =
         onAllNodes(androidx.compose.ui.test.hasTestTag(tag)).fetchSemanticsNodes().size
 

@@ -122,19 +122,39 @@ Plan du document à publier sur le site (rédaction : ticket M11-02, relecture j
 
 ## 8. Liste de contrôle de sécurité (ticket M10-05)
 
-- [ ] Manifeste fusionné `release` de chaque variante : permissions du tableau 10.3 de l'architecture, rien de plus.
-- [ ] Variante `offline` : aucune permission `INTERNET`, module publicitaire absent du graphe de dépendances.
-- [ ] Composants exportés : quatre, tous justifiés ; aucun fournisseur de contenu exporté.
-- [ ] `allowBackup="false"` et règles d'extraction vides, vérifiés sur l'APK.
+- [x] Manifeste fusionné `release` de chaque variante : permissions du tableau 10.3 de l'architecture, rien de plus.
+      *Preuve : `:app:verifyAdsReleaseManifest`, `:app:verifyOfflineReleaseManifest` (CI).*
+- [x] Variante `offline` : aucune permission `INTERNET`, module publicitaire absent du graphe de dépendances.
+      *Preuve : `verifyOfflineReleaseManifest`, `verifyDependencies` (liste blanche `offline`), `verifyModuleGraph`.*
+- [x] Composants exportés : quatre, tous justifiés ; aucun fournisseur de contenu exporté.
+      *Preuve : `gradle/exported-allowlist.txt` appliquée par la vérification du manifeste ; les autres entrées
+      sont des composants de bibliothèque protégés par une permission système, et le service de Play Asset
+      Delivery désactivé (ADR-0012).*
+- [x] `allowBackup="false"` et règles d'extraction vides, vérifiés sur l'APK.
+      *Preuve : la vérification du manifeste fusionné exige `allowBackup="false"` et `dataExtractionRules`
+      (M10-05) ; `DataExtractionRulesTest` vérifie que tous les domaines sont exclus.*
 - [ ] Aucun fichier hors base, clé, DataStore, modèles et répertoires propres au SDK publicitaire dans
       le stockage privé après une journée d'usage ; les répertoires du SDK ne contiennent aucune donnée mémorisée.
-- [ ] Recherche de contenu utilisateur dans `logcat` pendant un scénario complet : rien.
+      *En partie : E2E-06 (aucun fichier écrit pendant une capture). La journée d'usage est faite à M10-01.*
+- [x] Recherche de contenu utilisateur dans `logcat` pendant un scénario complet : rien.
+      *Preuve : `scripts/check-logcat-content.sh` dans `device-tests`, sur le journal des suites de `:app`.*
 - [ ] Test de silence réseau vert ; inspection du trafic pendant une demande de publicité : aucun texte
       mémorisé, aucune requête de recherche, aucun nom d'application dans les requêtes.
-- [ ] `engine:ads` : aucune dépendance vers la base ou un autre module ; aucun appel aux API de ciblage.
-- [ ] Tests de `LinkActivity` avec entrées malformées, surdimensionnées, mal signées.
-- [ ] `FLAG_SECURE` sur chaque activité de SeekMind ; aperçu des applications récentes masqué.
-- [ ] Verrouillage : l'interface n'est jamais composée avant l'authentification.
-- [ ] Empreintes des dépendances vérifiées ; aucune dépendance hors liste blanche.
-- [ ] Clés de test refusées par le build `release` (test).
+      *En partie : `NetworkSilenceTest` vert. L'inspection du trafic se fait sur le téléphone, à M10-01.*
+- [x] `engine:ads` : aucune dépendance vers la base ou un autre module ; aucun appel aux API de ciblage.
+      *Preuve : `verifyModuleGraph` ; `scripts/check-forbidden-apis.sh` (motifs de ciblage).*
+- [x] Tests de `LinkActivity` avec entrées malformées, surdimensionnées, mal signées.
+      *Preuve : `ActivationFuzzTest` (JVM, entrées aléatoires) ; `LinkActivityTest` (liens d'autre forme, codes
+      mal signés).*
+- [x] `FLAG_SECURE` sur chaque activité de SeekMind ; aperçu des applications récentes masqué.
+      *Preuve : `SecureActivitiesTest` ; l'aperçu masqué est vérifié sur le téléphone (M6-07, reporté à M10-01).*
+- [x] Verrouillage : l'interface n'est jamais composée avant l'authentification.
+      *Preuve : `AppLockTest.lockedNoContentIsComposed`.*
+- [x] Empreintes des dépendances vérifiées ; aucune dépendance hors liste blanche.
+      *Preuve : `gradle/verification-metadata.xml` (M10-05) ; `verifyDependencies`. Limite : les empreintes
+      SHA-256 sont vérifiées, pas les signatures PGP (`verify-signatures` à `false`) ; une empreinte ne
+      protège que contre un artefact modifié après sa première inscription.*
+- [x] Clés de test refusées par le build `release` (test).
+      *Preuve : `ReleaseKeyringTest`.*
 - [ ] Protocole des écrans sensibles ([06 §8](06-qualite-tests-ci.md#8-validation-manuelle)) rejoué.
+      *Sur le téléphone, à M10-01.*

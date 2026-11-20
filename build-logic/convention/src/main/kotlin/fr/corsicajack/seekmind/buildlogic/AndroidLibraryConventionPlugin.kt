@@ -32,5 +32,6 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             }
         }
         configureKotlinWarningsAsErrors()
+        declareMainSourcesAsTestInputs()
     }
 }

@@ -46,6 +46,11 @@ protocole et l'outillage, puis corrige d'après les résultats.
      retirée de `source_rules.json`.
    - **M2-08** : une heure d'usage normal, puis relevé dans Réglages → Diagnostic du nombre de
      captures, des rejets par motif et de la durée médiane de lecture de l'arbre.
+   - **M10-05** : inspection du trafic pendant une demande de publicité (proxy sur le téléphone : aucun
+     texte mémorisé, aucune requête de recherche, aucun nom d'application) ; stockage privé après une
+     journée d'usage ; protocole des écrans sensibles ([tests §8](../06-qualite-tests-ci.md#8-validation-manuelle)) ;
+     durée de la première capture d'une application après un démarrage (relecture des lignes
+     récurrentes, M10-03).
 
    Une validation qui échoue rouvre le ticket (statut `En cours`) et bloque M10-01 jusqu'à sa correction.
 
@@ -139,7 +144,7 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M8 | tous | [sécurité §8](../07-securite-vie-privee.md#8-liste-de-contrôle-de-sécurité-ticket-m10-05) · ENF-SEC-01 |
+| Fait — validation manuelle reportée à M10-01 | M8 | tous | [sécurité §8](../07-securite-vie-privee.md#8-liste-de-contrôle-de-sécurité-ticket-m10-05) · ENF-SEC-01 |
 
 **À faire**
 
@@ -152,8 +157,8 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 **Critères d'acceptation**
 
-- [ ] Chaque point de la liste est coché avec sa preuve (test, commande, ou constat) dans la PR.
-- [ ] La CI échoue si le journal système contient l'un des mots distinctifs de l'application de test.
+- [x] Chaque point de la liste est coché avec sa preuve (test, commande, ou constat) dans la PR.
+- [x] La CI échoue si le journal système contient l'un des mots distinctifs de l'application de test.
 
 **Validation manuelle** — protocole des écrans sensibles ([tests §8](../06-qualite-tests-ci.md#8-validation-manuelle)).
 
