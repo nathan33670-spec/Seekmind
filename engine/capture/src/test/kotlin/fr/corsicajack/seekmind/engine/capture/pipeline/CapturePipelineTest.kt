@@ -3,6 +3,7 @@ package fr.corsicajack.seekmind.engine.capture.pipeline
 import com.google.common.truth.Truth.assertThat
 import fr.corsicajack.seekmind.core.common.IntRect
 import fr.corsicajack.seekmind.core.common.Outcome
+import fr.corsicajack.seekmind.core.common.SmLog
 import fr.corsicajack.seekmind.core.model.DropReason
 import fr.corsicajack.seekmind.core.model.GateDecision
 import fr.corsicajack.seekmind.core.model.IngestResult
@@ -87,9 +88,12 @@ class CapturePipelineTest {
         }
     }
 
+    private var ingestMs = 0L
+
     private val sink = object : CaptureSink {
         override suspend fun ingest(raw: RawCapture): IngestResult {
             ingestFailure?.let { throw it }
+            clock.advance(ingestMs)
             stored += raw
             return ingestResult
         }
@@ -252,6 +256,55 @@ class CapturePipelineTest {
             extractor.real, ScreenshotStep.NotProbed, LineMerger.Append, { _, _, _ -> null }, { 0L }, sink,
         ) { error("metrics unavailable") }
         assertThat(runBlocking { failing.onStable() }).isEqualTo(PipelineEvent.Stored(42))
+    }
+
+    @Test
+    fun `a slow step is logged by number and duration, without content`() {
+        val written = mutableListOf<String>()
+        val previous = SmLog.sink
+        SmLog.sink = SmLog.Sink { _, _, message -> written += message }
+        try {
+            treeText = "Card 4111 and enough text to be stored"
+            ingestMs = 3_000
+            assertThat(run()).isEqualTo(PipelineEvent.Stored(42))
+        } finally {
+            SmLog.sink = previous
+        }
+        assertThat(written).containsExactly("capture_step_slow step=9 ms=3000")
+    }
+
+    @Test
+    fun `a capture still running after the stall delay is logged from another thread, by step`() {
+        val written = java.util.concurrent.CopyOnWriteArrayList<String>()
+        val logged = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val previous = SmLog.sink
+        SmLog.sink = SmLog.Sink { _, _, message ->
+            written += message
+            if (message.startsWith("capture_stalled")) logged.countDown()
+        }
+        val blocking = object : CaptureSink {
+            override suspend fun ingest(raw: RawCapture): IngestResult {
+                // The capture thread is held until the watchdog has spoken.
+                release.await(5, java.util.concurrent.TimeUnit.SECONDS)
+                return ingestResult
+            }
+        }
+        try {
+            treeText = "Card 4111 and enough text to be stored"
+            val stalling = CapturePipeline(
+                config, clock, { gate }, screens, ScreenMetaReader(ActivityTracker({ _, _ -> true }), clock), privacy,
+                extractor.real, ScreenshotStep.NotProbed, LineMerger.Append, { _, _, _ -> null }, { 0L }, blocking,
+                stallMs = 50,
+            ) { }
+            val thread = Thread { runBlocking { stalling.onStable() } }.apply { start() }
+            assertThat(logged.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue()
+            release.countDown()
+            thread.join(5_000)
+        } finally {
+            SmLog.sink = previous
+        }
+        assertThat(written.first { it.startsWith("capture_stalled") }).matches("capture_stalled step=9 ms=\\d+")
     }
 
     private companion object {
