@@ -47,3 +47,12 @@ def test_code_queries_appear_verbatim_in_their_capture():
     text = {item["key"]: item["text"] for item in corpus}
     for query in (q for q in queries if q["type"] == "code"):
         assert all(query["text"] in text[key] for key in query["expected"]), query["id"]
+
+
+def test_most_screens_of_an_application_with_tabs_show_them():
+    corpus, _, _ = gen_corpus.build()
+    for app, lines in gen_corpus.NAVIGATION.items():
+        package = gen_corpus.APPS[app][0]
+        screens = [item["text"] for item in corpus if item["package"] == package]
+        shown = sum(item.endswith("\n" + "\n".join(lines)) for item in screens)
+        assert screens and shown / len(screens) >= 0.6, app

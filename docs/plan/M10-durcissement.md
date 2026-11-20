@@ -85,7 +85,7 @@ protocole et l'outillage, puis corrige d'après les résultats.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M5-07 | `engine:index` | [capture §4.2](../specs/capture.md) · EF-SRCH-01 |
+| En cours — reste le point 3 (décision du porteur) | M5-07 | `engine:index` | [capture §4.2](../specs/capture.md) · EF-SRCH-01 |
 
 **À faire**
 

@@ -5,6 +5,7 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import fr.corsicajack.seekmind.core.common.RecurringLines
 import fr.corsicajack.seekmind.core.common.SystemClockJvm
 import fr.corsicajack.seekmind.core.database.DatabaseHandle
 import fr.corsicajack.seekmind.core.database.store.NewChunk
@@ -13,6 +14,7 @@ import fr.corsicajack.seekmind.core.model.MatchKind
 import fr.corsicajack.seekmind.core.model.SearchFilters
 import fr.corsicajack.seekmind.core.model.SearchRequest
 import fr.corsicajack.seekmind.core.model.config.EmbeddingConfig
+import fr.corsicajack.seekmind.core.model.config.IndexConfig
 import fr.corsicajack.seekmind.core.model.config.SearchConfig
 import fr.corsicajack.seekmind.core.model.port.EmbeddingEngine
 import fr.corsicajack.seekmind.core.model.port.EmbeddingEngineProvider
@@ -136,6 +138,14 @@ class SearchEvalDeviceTest {
             if (global < Metrics.of(queries, keywords).recall5 || global < Metrics.of(queries, semantic).recall5) {
                 failures += "$name hybrid Recall@5 $global below keywords or meaning alone"
             }
+
+            // Ticket M10-03: the same hybrid search with every line in the vectors, as before the filter.
+            val unfiltered = unfilteredHybrid(name, model)
+            result.put("hybrid_unfiltered", summary(unfiltered))
+            log(name, "hybrid_unfiltered", unfiltered)
+            val before = Metrics.of(queries, unfiltered).recall5
+            Log.i(TAG, "api=${Build.VERSION.SDK_INT} m10_03_${name}_hybrid_r5 filtered=$global unfiltered=$before")
+            if (global < before) failures += "$name hybrid Recall@5 $global with the filter, $before without"
             return result
         } finally {
             engine.close()
@@ -143,8 +153,50 @@ class SearchEvalDeviceTest {
         }
     }
 
-    /** Stores and embeds the corpus; returns the key of each capture id. */
-    private suspend fun load(handle: DatabaseHandle, engine: EmbeddingEngine): Map<Long, String> {
+    /** The hybrid ranks on a second database whose vectors keep the recurring lines. */
+    private suspend fun unfilteredHybrid(name: String, model: LoadableModel): Map<String, Int> {
+        val database = TemporaryDatabase(context, "search_eval_${name}_unfiltered")
+        val handle = database.open()
+        val engine = factory.open(model, embeddingConfig.threadsDefault)
+        try {
+            val keys = load(handle, engine, textByKey)
+            val provider = object : EmbeddingEngineProvider {
+                override suspend fun <T> use(block: suspend (EmbeddingEngine) -> T): T = block(engine)
+            }
+            return run(handle, provider, keys, SearchConfig(), Mode.HYBRID)
+        } finally {
+            engine.close()
+            database.delete()
+        }
+    }
+
+    /**
+     * The text embedded for each capture, as the ingestion cuts its fragments (docs/specs/indexation.md
+     * §5.1): without the lines recurring in its application, learnt in the order the captures were seen.
+     */
+    private val filteredByKey: Map<String, String> = run {
+        val config = IndexConfig()
+        val lines = RecurringLines(
+            window = config.recurringWindow,
+            share = config.recurringShare,
+            maxLineChars = config.recurringMaxLineChars,
+            minCaptures = config.recurringMinCaptures,
+        )
+        corpus.sortedBy { it.getLong("lastSeenAt") }.associate { item ->
+            val text = item.getString("text")
+            val packageName = item.getString("package")
+            val recurring = lines.recurringIn(packageName)
+            lines.record(packageName, text)
+            item.getString("key") to text.lines().filterNot(recurring).joinToString("\n")
+        }
+    }
+
+    /** Stores and embeds the corpus, with the [embedded] text of each key; returns the key of each capture id. */
+    private suspend fun load(
+        handle: DatabaseHandle,
+        engine: EmbeddingEngine,
+        embedded: Map<String, String> = filteredByKey,
+    ): Map<Long, String> {
         val keys = HashMap<Long, String>()
         for (item in corpus) {
             val text = item.getString("text")
@@ -163,7 +215,7 @@ class SearchEvalDeviceTest {
         while (true) {
             val pending = handle.vectors.pendingChunks(BATCH)
             if (pending.isEmpty()) break
-            val texts = pending.map { chunk -> corpusText(keys.getValue(chunk.captureId)) }
+            val texts = pending.map { chunk -> embedded.getValue(keys.getValue(chunk.captureId)) }
             val vectors = engine.embedPassages(texts)
             handle.vectors.saveEmbeddings(
                 pending.mapIndexed { i, chunk ->
@@ -181,8 +233,6 @@ class SearchEvalDeviceTest {
     }
 
     private val textByKey: Map<String, String> = corpus.associate { it.getString("key") to it.getString("text") }
-
-    private fun corpusText(key: String): String = textByKey.getValue(key)
 
     /** The rank (1-based) of the first expected capture of each query, 0 when it is not in the results. */
     private suspend fun run(

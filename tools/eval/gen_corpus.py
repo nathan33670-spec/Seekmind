@@ -51,6 +51,21 @@ APPS = {
     "linkedin": ("com.linkedin.android", "LinkedIn"),
 }
 
+# The tab bars and menus of some applications, on most of their screens (ticket M10-03): the noise that
+# the filter of recurring lines (docs/specs/indexation.md §5.1) keeps out of the vectors.
+NAVIGATION = {
+    "instagram": ["Accueil", "Rechercher", "Reels", "Boutique", "Profil"],
+    "youtube": ["Accueil", "Shorts", "Abonnements", "Vous"],
+    "amazon": ["Accueil", "Vous", "Panier", "Menu"],
+    "leboncoin": ["Rechercher", "Favoris", "Publier", "Messages", "Mon compte"],
+    "linkedin": ["Accueil", "Mon réseau", "Publier", "Notifications", "Emplois"],
+    "reddit": ["Accueil", "Communautés", "Créer", "Discussion", "Boîte de réception"],
+    "x": ["Accueil", "Explorer", "Communautés", "Notifications", "Messages"],
+    "spotify": ["Accueil", "Rechercher", "Bibliothèque", "Premium"],
+}
+# Share of an application's screens that show its navigation.
+NAVIGATION_SHARE = 0.85
+
 # (key, language, app, days ago, hour, window title, text, url)
 ANCHORS = [
     # Recipes and food
@@ -404,6 +419,16 @@ def filler(rng: random.Random, index: int) -> dict:
     }
 
 
+def add_navigation(corpus: list[dict]) -> None:
+    """Appends its tab bar to most screens of the applications of NAVIGATION, with its own random draws."""
+    rng = random.Random(SEED + 1)
+    apps = {package: app for app, (package, _) in APPS.items()}
+    for item in corpus:
+        lines = NAVIGATION.get(apps[item["package"]])
+        if lines and rng.random() < NAVIGATION_SHARE:
+            item["text"] += "\n" + "\n".join(lines)
+
+
 def build() -> tuple[list[dict], dict, list[dict]]:
     """The corpus, the meta line and the queries, as written to testdata/eval."""
     rng = random.Random(SEED)
@@ -421,6 +446,7 @@ def build() -> tuple[list[dict], dict, list[dict]]:
             "lastSeenAt": timestamp(days_ago, hour, 10),
         })
     corpus += [filler(rng, i) for i in range(FILLERS)]
+    add_navigation(corpus)
     keys = {item["key"] for item in corpus}
     assert len(keys) == len(corpus), "duplicate keys"
     for query in QUERIES:

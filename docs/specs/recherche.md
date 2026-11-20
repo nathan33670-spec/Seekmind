@@ -454,7 +454,13 @@ modèle joint le rapport à la PR.
 Le jeu est produit par `tools/eval/gen_corpus.py`, de façon déterministe :
 - 298 captures, dont 58 ancres écrites à la main et 240 captures de remplissage ;
 - 80 requêtes, qui désignent leurs captures attendues par une clé stable ;
-- des dates relatives à un mardi soir fixe.
+- des dates relatives à un mardi soir fixe ;
+- la barre d'onglets de huit applications, sur 85 % de leurs écrans (M10-03).
+
+Les vecteurs sont calculés sur le texte tel que l'ingestion le découpe, donc sans les lignes
+récurrentes ([indexation §5.1](indexation.md)). Le test refait la recherche hybride avec les vecteurs
+du texte complet, sans ce filtre, sur une seconde base ; il échoue si le filtre fait baisser le
+Rappel@5 global. Rapport : lignes `m10_03_*`, et `hybrid_unfiltered` dans `search-eval.json`.
 
 Le coût de la quantification seule est mesuré par `tools/model/eval_set.py`, appelé par `verify.py` :
 Rappel@5 par le sens, modèle original contre modèle quantifié, sur le même jeu.

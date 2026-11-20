@@ -66,6 +66,12 @@ data class IndexConfig(
     val workerBudgetMs: Long = 9 * 60_000L,
     val interBatchPauseMs: Long = 100,
     val maxAttempts: Int = 3,
+    /** §5.1: recurring short lines (tab bars, menus) left out of the fragments; false gives the earlier behaviour. */
+    val recurringLinesFilter: Boolean = true,
+    val recurringWindow: Int = 50,
+    val recurringShare: Double = 0.6,
+    val recurringMaxLineChars: Int = 40,
+    val recurringMinCaptures: Int = 10,
 )
 
 /** docs/specs/embeddings.md §9. */

@@ -1,6 +1,7 @@
 package fr.corsicajack.seekmind.engine.index
 
 import fr.corsicajack.seekmind.core.common.Clock
+import fr.corsicajack.seekmind.core.common.RecurringLines
 import fr.corsicajack.seekmind.core.database.store.CaptureStore
 import fr.corsicajack.seekmind.core.database.store.HashRef
 import fr.corsicajack.seekmind.core.database.store.NewCapture
@@ -30,6 +31,14 @@ class IngestService(
     private val normalizer: TextNormalizer = TextNormalizer(config),
     private val chunker: Chunker = Chunker(config),
 ) : CaptureSink {
+    /** The short lines of each package's last stored captures (§5.1). */
+    private val recurring = RecurringLines(
+        window = config.recurringWindow,
+        share = config.recurringShare,
+        maxLineChars = config.recurringMaxLineChars,
+        minCaptures = config.recurringMinCaptures,
+    )
+
     /** The [IndexConfig.dedupWindow] most recently seen captures of each package, most recent first. */
     private val recent = HashMap<String, MutableList<HashRef>>()
 
@@ -52,7 +61,10 @@ class IngestService(
             }
         }
 
-        val chunks = chunker.split(text).mapIndexed { ordinal, span -> NewChunk(ordinal, span.start, span.end) }
+        val isRecurring = if (config.recurringLinesFilter) recurring.recurringIn(packageName) else NEVER
+        val chunks = chunker.split(text, isRecurring).mapIndexed { ordinal, span ->
+            NewChunk(ordinal, span.start, span.end)
+        }
         val id = captures.insert(
             NewCapture(
                 firstSeenAt = now,
@@ -67,6 +79,7 @@ class IngestService(
             ),
             chunks,
         )
+        recurring.record(packageName, text)
         candidates.add(0, HashRef(id, simhash, now, now))
         while (candidates.size > config.dedupWindow) candidates.removeAt(candidates.lastIndex)
         if (chunks.isNotEmpty()) scheduler.requestCharging()
@@ -74,15 +87,22 @@ class IngestService(
     }
 
     /**
-     * Forgets the cached fingerprints, after captures are deleted (journal, erase everything). Optional for
-     * correctness, since a deleted candidate is detected by [CaptureStore.touch], but it frees the memory.
-     * Capture thread only, as [ingest].
+     * Forgets the cached fingerprints and the recurring lines, after captures are deleted (journal, erase
+     * everything). Optional for correctness, since a deleted candidate is detected by [CaptureStore.touch],
+     * but it frees the memory and keeps nothing learnt from deleted captures. Capture thread only, as [ingest].
      */
-    fun forget() = recent.clear()
+    fun forget() {
+        recent.clear()
+        recurring.clear()
+    }
 
     /** §4: same package (the cache's key), close fingerprint, seen recently, started less than a day ago. */
     private fun isDuplicate(candidate: HashRef, simhash: Long, now: Long): Boolean =
         SimHash.hamming(candidate.simhash, simhash) <= config.dedupMaxHamming &&
             candidate.lastSeenAt >= now - config.dedupRecentMs &&
             candidate.firstSeenAt >= now - config.dedupSpanMs
+
+    private companion object {
+        val NEVER: (String) -> Boolean = { false }
+    }
 }
