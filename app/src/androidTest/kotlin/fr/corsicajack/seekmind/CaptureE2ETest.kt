@@ -33,10 +33,22 @@ class CaptureE2ETest {
 
     private val settings get() = harness.graph.settings()
 
-    /** Opens PlainTextActivity and waits for its capture: whatever was opened before has been handled. */
-    private suspend fun sentinel() {
+    /**
+     * The screen [activity] opened while nothing may be captured, then [COVER] over it, so that no late
+     * event of [activity] arrives once [allow] has run. Then the sentinel: before its capture, the
+     * pipeline handled nothing but the cover (capture §8: the router lets no event through).
+     */
+    private suspend fun nothingWhileBlocked(activity: String, allow: suspend () -> Unit) {
+        harness.open(activity)
+        harness.open(COVER)
+        allow()
         harness.open("PlainTextActivity")
-        harness.awaitCapture(PLAIN)
+        val (_, _, before) = harness.awaitCaptureAfter(PLAIN)
+        for (event in before) {
+            assertWithMessage(
+                "event before the sentinel: $event",
+            ).that(harness.fixtureCapture(event, SCROLL)).isNotNull()
+        }
     }
 
     @Test
@@ -105,21 +117,16 @@ class CaptureE2ETest {
     @Test
     fun e2e09_withoutConsentNothingIsCaptured() = runBlocking<Unit> {
         settings.withdrawConsent()
-        // The router lets no event through without the consent (capture §8), and the pipeline checks it
-        // again: the editable screen is handled, without a trace, before the sentinel replaces it.
-        harness.open("EditableActivity")
-        settings.acceptConsent(Consent(DISCLOSURE_VERSION, System.currentTimeMillis()), AppFamily.entries.toSet())
-        sentinel()
+        nothingWhileBlocked("EditableActivity") {
+            settings.acceptConsent(Consent(DISCLOSURE_VERSION, System.currentTimeMillis()), AppFamily.entries.toSet())
+        }
         assertThat(harness.seenSinceStart("SEEKMIND_FIXTURE_EDITABLE")).isEmpty()
     }
 
     @Test
     fun e2e10_whilePausedNothingIsCaptured() = runBlocking<Unit> {
         settings.setPausedUntil(Long.MAX_VALUE)
-        // As without consent: no event goes through during a pause.
-        harness.open("SensitiveDataActivity")
-        settings.setPausedUntil(null)
-        sentinel()
+        nothingWhileBlocked("SensitiveDataActivity") { settings.setPausedUntil(null) }
         assertThat(harness.seenSinceStart("SEEKMIND_FIXTURE_SENSITIVE")).isEmpty()
     }
 
@@ -163,6 +170,7 @@ class CaptureE2ETest {
     private companion object {
         const val PLAIN = "SEEKMIND_FIXTURE_PLAIN"
         const val SCROLL = "SEEKMIND_FIXTURE_SCROLL"
+        const val COVER = "ScrollActivity"
         const val SCROLL_MS = 5_000L
     }
 }
