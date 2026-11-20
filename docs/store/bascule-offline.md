@@ -56,3 +56,14 @@ scripts/check-elf-alignment.sh
 1. Consigner la bascule par un nouvel ADR (date, motif du refus, numéro de version soumis).
 2. Si une publicité doit être rétablie sans réseau dans l'application, réaliser la récompense par le
    navigateur ([annexe](../specs/annexe-recompense-navigateur.md), ticket M8-07, aujourd'hui « Reporté »).
+
+## Site (M11-02)
+
+En cas de bascule, le site décrit la variante `offline` :
+
+- **Politique** (`site/confidentialite.html`, `site/privacy.html`) : la section 5, « Publicité », est
+  remplacée par « SeekMind n'affiche aucune publicité et n'a pas accès à Internet. » / « SeekMind shows no
+  ads and has no Internet access. ». Le §3 garde « Rien n'est transmis ».
+- **FAQ** (`site/faq.html`, `site/faq-en.html`) : la question « Pourquoi des publicités ? » devient
+  « Comment fonctionnent les crédits ? » : « 5 recherches sont offertes chaque jour ; un code d'activation
+  retire cette limite. » / « 5 searches are offered every day; an activation code removes this limit. ».

@@ -1,6 +1,7 @@
 # Publishes site/ on GitHub Pages (ticket M11-02, docs/04-prerequis.md §2.1). Runs only once the
 # project owner has turned Pages on and set the repository variable PAGES_ENABLED to "true": before
-# that, a push to main must not fail on a missing Pages site.
+# that, a push to main must not fail on a missing Pages site. A page still holding a placeholder to fill
+# in is never published (check-site.sh --release).
 name: pages
 
 on:
@@ -31,7 +32,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Check the site
-        run: scripts/check-site.sh site
+        run: scripts/check-site.sh --release site
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
