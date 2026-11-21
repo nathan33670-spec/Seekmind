@@ -194,3 +194,17 @@ proposer un ADR (bibliothèque native de tokenisation).
 
 **Validation manuelle** — sur la piste de test interne de Google Play : téléchargement du pack
 multilingue, activation, recherche dans une autre langue, suppression.
+
+Mode opératoire. Le lot est produit par le workflow manuel `bundle` (Actions > bundle > Run workflow),
+jamais sur un poste : artefact `app-ads-release-<n>`, signé par la clé d'import si les secrets
+`UPLOAD_KEYSTORE_*` et `UPLOAD_KEY_*` sont définis ([prérequis §3](../04-prerequis.md#3-clés-et-secrets)).
+L'écran des langues arrive avec M6-06 : la validation se fait après sa fusion.
+
+1. Play Console : application `fr.corsicajack.seekmind`, Play App Signing, piste de test interne et sa
+   liste de testeurs.
+2. Téléverser l'AAB sur la piste, s'inscrire par le lien de test, installer l'application **depuis Play**
+   (le pack ne passe par Play que dans ce cas).
+3. Réglages > Langues : télécharger le pack multilingue (en données mobiles, Play demande confirmation),
+   l'utiliser (la recherche par mots-clés répond pendant la reconstruction), retrouver par une
+   paraphrase une page vue en anglais ou en espagnol, supprimer le pack (retour à `fr`).
+4. Consigner le résultat de chaque étape dans la PR de clôture du ticket.

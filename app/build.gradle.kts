@@ -21,7 +21,8 @@ android {
 
     defaultConfig {
         applicationId = "fr.corsicajack.seekmind"
-        versionCode = 1
+        // Each bundle uploaded to Play needs a new version code: the bundle workflow passes its run number.
+        versionCode = providers.gradleProperty("seekmind.versionCode").map(String::toInt).getOrElse(1)
         versionName = "0.1.0"
         // The end-to-end tests that replace a binding (@HiltAndroidTest) run apart, with the Hilt test
         // application (docs/06-qualite-tests-ci.md §4): -Pseekmind.hiltTests=true.
