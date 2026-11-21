@@ -63,10 +63,7 @@ class AndroidDeviceSignalsDeviceTest {
         shell("dumpsys battery set status 3") // BATTERY_STATUS_DISCHARGING
         shell("dumpsys battery set level 50")
         awaitSignals("unplugged at 50 %") { !it.charging && it.batteryPercent == 50 }
-        // `cmd power set-mode` has no effect on some images (API 36): the global setting is what the
-        // power manager follows, and it sends ACTION_POWER_SAVE_MODE_CHANGED.
-        shell("cmd power set-mode 1")
-        shell("settings put global low_power 1")
+        enablePowerSaver()
         awaitReason(ThrottleReason.POWER_SAVE)
         shell("cmd power set-mode 0")
         shell("settings put global low_power 0")
@@ -88,6 +85,27 @@ class AndroidDeviceSignalsDeviceTest {
         signals.stop()
         signals.stop() // and tearDown stops once more
         AndroidDeviceSignals(instrumentation.targetContext) { it.run() }.stop() // never started
+    }
+
+    /**
+     * Turns the battery saver on, and checks that the power manager did. `cmd power set-mode` has no
+     * effect on some images (API 36): the global setting is what the power manager follows, and it sends
+     * ACTION_POWER_SAVE_MODE_CHANGED. On the API 34 emulator, a write that follows the unplug closely is
+     * sometimes ignored, the setting reading 1 while the mode stays off: the request is then sent again,
+     * from off, a few times. The governor's own reading is checked afterwards, unchanged.
+     */
+    private fun enablePowerSaver() {
+        val power = instrumentation.targetContext.getSystemService(PowerManager::class.java)
+        repeat(POWER_SAVER_ATTEMPTS) {
+            shell("cmd power set-mode 1")
+            shell("settings put global low_power 1")
+            val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS
+            while (!power.isPowerSaveMode && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(POLL_MS)
+            if (power.isPowerSaveMode) return
+            shell("cmd power set-mode 0")
+            shell("settings put global low_power 0")
+            SystemClock.sleep(POLL_MS)
+        }
     }
 
     private fun reset() {
@@ -147,5 +165,6 @@ class AndroidDeviceSignalsDeviceTest {
     private companion object {
         const val TIMEOUT_MS = 5_000L
         const val POLL_MS = 50L
+        const val POWER_SAVER_ATTEMPTS = 3
     }
 }

@@ -82,17 +82,20 @@ class SecureWindowProbeDeviceTest {
     private fun probeScreen(activity: String, needImage: Boolean = false): ProbeResult {
         // -S: the fixture restarts, so that no window of the previous screen (a secure one) is left.
         shell("am start -W -S -n $FIXTURE_PACKAGE/$FIXTURE_PACKAGE.$activity")
+        waitUntil("$activity on screen") { service().rootInActiveWindow?.packageName == FIXTURE_PACKAGE }
+        // Lets the window finish drawing, and the system's own interval since any previous screenshot elapse.
+        SystemClock.sleep(SETTLE_MS)
+        // The window is read after the settling, not before: the first window of the fixture on screen may be
+        // its splash screen, which is gone by now, and a screenshot of it fails (Unknown).
         var meta: ScreenMeta? = null
         var bounds: IntRect? = null
-        waitUntil("$activity on screen") {
+        waitUntil("$activity settled") {
             val root = service().rootInActiveWindow ?: return@waitUntil false
             if (root.packageName != FIXTURE_PACKAGE) return@waitUntil false
             meta = ScreenMeta(FIXTURE_PACKAGE, "$FIXTURE_PACKAGE.$activity", null, root.windowId, clock.nowMillis())
             bounds = Rect().also(root::getBoundsInScreen).let { IntRect(it.left, it.top, it.right, it.bottom) }
             true
         }
-        // Lets the window finish drawing, and the system's own interval since any previous screenshot elapse.
-        SystemClock.sleep(SETTLE_MS)
         val probe = ScreenshotSecureWindowProbe(
             shots = A11yScreenshotSource(service(), OcrConfig(), clock),
             ocr = ocr,
