@@ -8,9 +8,6 @@ import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
@@ -74,6 +70,9 @@ import fr.corsicajack.seekmind.navigation.TopLevelDestination
 import fr.corsicajack.seekmind.navigation.navigateToTopLevel
 import fr.corsicajack.seekmind.onboarding.InstalledFamilyApps
 import fr.corsicajack.seekmind.search.SearchStack
+import fr.corsicajack.seekmind.settings.AppsSettingsScreen
+import fr.corsicajack.seekmind.settings.SettingsBindings
+import fr.corsicajack.seekmind.settings.SettingsScreen
 import fr.corsicajack.seekmind.ui.SeekMindRoot
 import java.time.LocalDate
 import java.time.ZoneId
@@ -130,6 +129,8 @@ class MainActivity : SecureActivity() {
 
     @Inject lateinit var pause: PauseController
 
+    @Inject lateinit var settingsBindings: SettingsBindings
+
     /** Resolved off the main thread on first use: reading the rules is not done at start-up. */
     @Inject lateinit var sourceReturn: dagger.Lazy<SourceReturn>
 
@@ -153,7 +154,14 @@ class MainActivity : SecureActivity() {
                     // The welcome flow at the first start, or the disclosure reopened from the banner.
                     val start = onboarding ?: if (!loaded.onboardingDone) OnboardingStart.WELCOME else null
                     if (start != null) {
-                        OnboardingContent(start) { onboarding = null }
+                        OnboardingContent(
+                            start = start,
+                            onDownloadPack = {
+                                // The download is the user's « Télécharger » (docs/specs/embeddings.md §5.4).
+                                applicationScope.launch { settingsBindings.downloadMultilingualPack() }
+                                navController.navigateToTopLevel(TopLevelDestination.SETTINGS)
+                            },
+                        ) { onboarding = null }
                         return@LockGate
                     }
                     SeekMindRoot(
@@ -164,7 +172,8 @@ class MainActivity : SecureActivity() {
                         journalContent = { open -> JournalContent(open) },
                         captureContent = { id, close -> CaptureContent(id, close) },
                         helpContent = { ServiceHelpScreen() },
-                        settingsContent = { SettingsContent() },
+                        settingsContent = { openApps -> SettingsContent(openApps) },
+                        appsContent = { AppsSettingsScreen(settingsBindings) },
                     )
                 }
             }
@@ -318,7 +327,7 @@ class MainActivity : SecureActivity() {
 
     /** The welcome flow (docs/specs/ui-ux.md §3.1); [onDone] when it ends, accepted or refused. */
     @Composable
-    private fun OnboardingContent(start: OnboardingStart, onDone: () -> Unit) {
+    private fun OnboardingContent(start: OnboardingStart, onDownloadPack: () -> Unit, onDone: () -> Unit) {
         var help by rememberSaveable { mutableStateOf(false) }
         val model = viewModel(key = "onboarding-$start") {
             OnboardingViewModel(
@@ -327,6 +336,7 @@ class MainActivity : SecureActivity() {
                 serviceEnabled = captureStatus.status.map { it is CaptureStatus.Active || it is CaptureStatus.Paused },
                 isDeviceSecure = appLock::isDeviceSecure,
                 now = System::currentTimeMillis,
+                offerLanguagePack = start == OnboardingStart.WELCOME && noFrenchLocale(),
             )
         }
         val apps by produceState(emptyMap<AppFamily, List<FamilyApp>>()) {
@@ -343,6 +353,7 @@ class MainActivity : SecureActivity() {
             onOpenAccessibilitySettings = ::openAccessibilitySettings,
             onHelp = { help = true },
             onFinished = { onDone() },
+            onDownloadPack = onDownloadPack,
         )
     }
 
@@ -371,7 +382,7 @@ class MainActivity : SecureActivity() {
     }
 
     @Composable
-    private fun SettingsContent() {
+    private fun SettingsContent(openApps: () -> Unit) {
         val security = viewModel {
             SecuritySettingsViewModel(settings, appLock::isDeviceSecure, appLock::onAuthenticated)
         }
@@ -382,18 +393,31 @@ class MainActivity : SecureActivity() {
                 deactivate = { withContext(Dispatchers.IO) { activator.get().deactivate() } },
             )
         }
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            SecuritySettingsRoute(viewModel = security)
-            val privacy = rewardProvider.orElse(null)
-            val privacyRequired by (privacy?.privacyOptionsRequired ?: remember { MutableStateFlow(false) })
-                .collectAsStateWithLifecycle()
-            val scope = rememberCoroutineScope()
-            ActivationSettingsRoute(
-                viewModel = activation,
-                privacyOptionsRequired = privacyRequired,
-                onPrivacyOptions = { scope.launch { privacy?.showPrivacyOptions(this@MainActivity) } },
-            )
-        }
+        SettingsScreen(
+            bindings = settingsBindings,
+            openApps = openApps,
+            onReadDisclosure = { onboarding = OnboardingStart.DISCLOSURE },
+            onActivate = ::openAccessibilitySettings,
+            onWipe = ::resetEverything,
+            security = { SecuritySettingsRoute(viewModel = security) },
+            activation = {
+                val privacy = rewardProvider.orElse(null)
+                val privacyRequired by (privacy?.privacyOptionsRequired ?: remember { MutableStateFlow(false) })
+                    .collectAsStateWithLifecycle()
+                val scope = rememberCoroutineScope()
+                ActivationSettingsRoute(
+                    viewModel = activation,
+                    privacyOptionsRequired = privacyRequired,
+                    onPrivacyOptions = { scope.launch { privacy?.showPrivacyOptions(this@MainActivity) } },
+                )
+            },
+        )
+    }
+
+    /** No language of the phone is French: the multilingual pack is offered (docs/specs/embeddings.md §5.4). */
+    private fun noFrenchLocale(): Boolean {
+        val locales = android.content.res.Resources.getSystem().configuration.locales
+        return (0 until locales.size()).none { locales[it].language == "fr" }
     }
 
     private companion object {

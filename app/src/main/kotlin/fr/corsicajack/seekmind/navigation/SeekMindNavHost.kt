@@ -24,6 +24,9 @@ import fr.corsicajack.seekmind.core.designsystem.theme.Spacing
 /** Test tag of the detail of a capture. */
 const val CAPTURE_SCREEN_TAG = "screen_capture"
 
+/** Test tag of the list of the installed applications. */
+const val APPS_SCREEN_TAG = "screen_apps"
+
 /** Test tag of the troubleshooting page. */
 const val SERVICE_HELP_SCREEN_TAG = "screen_service_help"
 
@@ -31,10 +34,11 @@ const val SERVICE_HELP_SCREEN_TAG = "screen_service_help"
 fun screenTag(destination: TopLevelDestination): String = "screen_${destination.name.lowercase()}"
 
 /**
- * Navigation graph of [fr.corsicajack.seekmind.MainActivity]. Settings holds only [settingsContent] until its
- * ticket (M6-06) replaces it, apart from [settingsContent], its Security section (M6-07); [searchContent] is the search (M6-03), [journalContent] the journal (M6-05),
- * [captureContent] the detail of a capture (M6-04), [helpContent] the troubleshooting page (M6-09). The
- * first two receive the action that opens a detail; the search also receives the one that opens the help.
+ * Navigation graph of [fr.corsicajack.seekmind.MainActivity]: [searchContent] is the search (M6-03),
+ * [journalContent] the journal (M6-05), [captureContent] the detail of a capture (M6-04), [helpContent] the
+ * troubleshooting page (M6-09), [settingsContent] the settings and [appsContent] their list of applications
+ * (M6-06). The first two receive the action that opens a detail; the search also receives the one that opens
+ * the help, and the settings the one that opens the list of applications.
  */
 @Composable
 fun SeekMindNavHost(
@@ -44,7 +48,8 @@ fun SeekMindNavHost(
     journalContent: @Composable (openCapture: (Long) -> Unit) -> Unit = {},
     captureContent: @Composable (captureId: Long, close: () -> Unit) -> Unit = { _, _ -> },
     helpContent: @Composable () -> Unit = {},
-    settingsContent: @Composable () -> Unit = {},
+    settingsContent: @Composable (openApps: () -> Unit) -> Unit = {},
+    appsContent: @Composable () -> Unit = {},
 ) {
     val openCapture: (Long) -> Unit = { id -> navController.navigate(CaptureRoute(id)) }
     val openHelp: () -> Unit = { navController.navigate(ServiceHelpRoute) }
@@ -69,8 +74,12 @@ fun SeekMindNavHost(
             ContentWidth(modifier = Modifier.testTag(SERVICE_HELP_SCREEN_TAG)) { helpContent() }
         }
         composable<SettingsRoute> {
-            // The sections arrive with their tickets: Security (M6-07), the others with M6-06.
-            ContentWidth(modifier = Modifier.testTag(screenTag(TopLevelDestination.SETTINGS))) { settingsContent() }
+            ContentWidth(modifier = Modifier.testTag(screenTag(TopLevelDestination.SETTINGS))) {
+                settingsContent { navController.navigate(AppsSettingsRoute) }
+            }
+        }
+        composable<AppsSettingsRoute> {
+            ContentWidth(modifier = Modifier.testTag(APPS_SCREEN_TAG)) { appsContent() }
         }
     }
 }

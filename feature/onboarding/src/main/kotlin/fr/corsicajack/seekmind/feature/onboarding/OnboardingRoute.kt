@@ -16,9 +16,16 @@ fun OnboardingRoute(
     onHelp: () -> Unit,
     onFinished: (refused: Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    /** « Télécharger » on the language pack screen, once the flow has ended. */
+    onDownloadPack: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.step) { if (state.step == OnboardingStep.DONE) onFinished(state.refused) }
+    LaunchedEffect(state.step) {
+        if (state.step == OnboardingStep.DONE) {
+            if (state.downloadPack) onDownloadPack()
+            onFinished(state.refused)
+        }
+    }
     OnboardingScreen(
         state = state,
         familyApps = familyApps,
@@ -33,6 +40,7 @@ fun OnboardingRoute(
         onHelp = onHelp,
         onContinueAfterConfirmation = viewModel::continueAfterConfirmation,
         onChooseLock = viewModel::chooseLock,
+        onChoosePack = viewModel::choosePack,
         onLeave = viewModel::leave,
         modifier = modifier,
     )

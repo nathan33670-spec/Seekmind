@@ -29,6 +29,10 @@ data class CaptureRoute(val captureId: Long)
 @Serializable
 data object ServiceHelpRoute
 
+/** Settings → Applications: the list of the installed applications (ticket M6-06). */
+@Serializable
+data object AppsSettingsRoute
+
 /** The three destinations of the bottom bar (docs/specs/ui-ux.md §2), in display order. */
 enum class TopLevelDestination(val route: Any, @param:StringRes val label: Int, @param:DrawableRes val icon: Int) {
     SEARCH(SearchRoute, R.string.app_nav_search, SeekMindIcons.Search),

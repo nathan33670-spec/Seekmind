@@ -122,6 +122,10 @@ Applications liste les applications lançables avec leur état effectif et son o
 défaut : application bancaire »). Réintégrer une application de la liste souple demande une
 confirmation. Les applications de la liste stricte sont affichées verrouillées.
 
+L'état effectif et son origine sont rendus par `DefaultPrivacyGate.statusOf(packageName, choices)` : un
+`AppStatus`, avec la règle qui a décidé (`AppStatusReason`), la famille et la liste sensible. `checkPackage`
+en tire sa décision : l'écran montre exactement ce que fait la capture (`PrivacyGateTest`).
+
 ### 3.4 Familles d'applications
 
 À l'installation, avant d'activer le service, l'utilisateur choisit ce que SeekMind mémorise (EF-ONB-07).

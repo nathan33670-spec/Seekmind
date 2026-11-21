@@ -139,7 +139,7 @@ Toute chaîne ajoutée est fournie en français et en anglais dès son ticket ; 
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | M6-01, M2-07, M1-06, M4-07 | `feature:settings`, `feature:onboarding` | [ui-ux §3.5](../specs/ui-ux.md) · [embeddings §5](../specs/embeddings.md) · EF-SET · EF-PRIV-05, 08, 09, 12 · EF-LANG-02 à 04 |
+| Fait | M6-01, M2-07, M1-06, M4-07 | `feature:settings`, `feature:onboarding` | [ui-ux §3.5](../specs/ui-ux.md) · [embeddings §5](../specs/embeddings.md) · EF-SET · EF-PRIV-05, 08, 09, 12 · EF-LANG-02 à 04 |
 
 **À faire**
 

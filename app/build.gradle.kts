@@ -16,6 +16,11 @@ val admobAppId: String = providers.gradleProperty("seekmind.admob.appId")
 val admobRewardedUnitId: String = providers.gradleProperty("seekmind.admob.rewardedUnitId")
     .getOrElse("ca-app-pub-3940256099942544/5224354917")
 
+// The privacy policy, opened from Settings → À propos (docs/04-prerequis.md §2.1): a build parameter, so that
+// another site can replace GitHub Pages without touching the code.
+val privacyPolicyUrl: String = providers.gradleProperty("seekmind.privacyPolicyUrl")
+    .getOrElse("https://nathan33670-spec.github.io/Seekmind/confidentialite.html")
+
 android {
     namespace = "fr.corsicajack.seekmind"
 
@@ -23,6 +28,7 @@ android {
         applicationId = "fr.corsicajack.seekmind"
         versionCode = 1
         versionName = "0.1.0"
+        buildConfigField("String", "PRIVACY_POLICY_URL", "\"$privacyPolicyUrl\"")
         // The end-to-end tests that replace a binding (@HiltAndroidTest) run apart, with the Hilt test
         // application (docs/06-qualite-tests-ci.md §4): -Pseekmind.hiltTests=true.
         if (providers.gradleProperty("seekmind.hiltTests").orNull == "true") {

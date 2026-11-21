@@ -1,0 +1,24 @@
+SeekMind uses the following third-party components.
+
+Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+- Android Jetpack (AndroidX): Activity, AppCompat, Compose, Core, DataStore, Fragment, Lifecycle, Navigation, Room, SQLite, Startup, WorkManager and their dependencies
+- Kotlin standard library, kotlinx.coroutines, kotlinx.serialization (JetBrains)
+- Dagger and Hilt (Google)
+- Guava, Error Prone annotations, J2ObjC annotations (Google)
+- Okio (Square)
+- JSpecify
+- Google Play Core: Asset Delivery
+
+BSD-style licence
+- SQLCipher for Android (Zetetic LLC), https://www.zetetic.net/sqlcipher/license/
+
+MIT License
+- ONNX Runtime (Microsoft)
+- multilingual-e5-small embedding model (intfloat), from which the bundled French model and the multilingual pack are derived
+- Checker Framework qualifiers
+
+Terms of Google APIs and ML Kit
+- ML Kit Text Recognition (Google), https://developers.google.com/ml-kit/terms
+
+Google Mobile Ads SDK and User Messaging Platform (version with ads only)
+- Google, https://developers.google.com/admob/terms

@@ -160,6 +160,52 @@ class PrivacyGateTest {
         assertThat(lax.redact("Carte 4111 1111 1111 1111").maskedCount).isEqualTo(1)
     }
 
+    // --- statusOf: what Settings → Applications shows ---------------------------------------------
+
+    @Test
+    fun `statusOf says what checkPackage decides, and why`() {
+        for (listed in Listed.entries) {
+            for (rule in listOf(null, AppRuleMode.EXCLUDED, AppRuleMode.INCLUDED)) {
+                for (familyEnabled in listOf(true, false)) {
+                    val pkg = listed.packageName
+                    choices = UserPrivacyChoices(
+                        rules = rule?.let { mapOf(pkg to it) } ?: emptyMap(),
+                        enabledFamilies = if (familyEnabled) AppFamily.entries.toSet() else emptySet(),
+                    )
+                    val status = gate.statusOf(pkg, choices)
+                    assertWithMessage("list=%s rule=%s family=%s", listed, rule, familyEnabled)
+                        .that(status.remembered).isEqualTo(gate.checkPackage(meta(pkg)) == GateDecision.Allow)
+                    val expected = when {
+                        listed == Listed.STRICT_LIST -> AppStatusReason.STRICT_LIST
+                        rule == AppRuleMode.EXCLUDED -> AppStatusReason.USER_EXCLUDED
+                        rule == AppRuleMode.INCLUDED -> AppStatusReason.USER_INCLUDED
+                        listed == Listed.SOFT_LIST -> AppStatusReason.SOFT_LIST
+                        !familyEnabled -> AppStatusReason.FAMILY_DISABLED
+                        else -> AppStatusReason.FAMILY_ENABLED
+                    }
+                    assertThat(status.reason).isEqualTo(expected)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `statusOf locks the strict list and the ignored packages, and names the family`() {
+        assertThat(gate.statusOf(STRICT, choices).locked).isTrue()
+        assertThat(gate.statusOf(LAUNCHER, choices).locked).isTrue()
+        assertThat(gate.statusOf(SOFT, choices).locked).isFalse()
+        assertThat(gate.statusOf(SOFT, choices).level).isEqualTo(SensitiveApps.Level.SOFT)
+        assertThat(gate.statusOf(CHAT, choices).family).isEqualTo(AppFamily.MESSAGING)
+        assertThat(gate.statusOf(STRICT, choices).family).isNull()
+    }
+
+    @Test
+    fun `statusOf rejects until the choices are read`() {
+        val status = gate.statusOf(PLAIN, null)
+        assertThat(status.reason).isEqualTo(AppStatusReason.CHOICES_UNKNOWN)
+        assertThat(status.remembered).isFalse()
+    }
+
     private fun gate(config: PrivacyConfig) = DefaultPrivacyGate(
         config = config,
         sensitive = sensitive,

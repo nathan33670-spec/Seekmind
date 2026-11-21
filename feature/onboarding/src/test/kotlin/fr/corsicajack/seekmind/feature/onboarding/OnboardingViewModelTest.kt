@@ -60,8 +60,8 @@ class OnboardingViewModelTest {
         dir.deleteRecursively()
     }
 
-    private fun model(start: OnboardingStart = OnboardingStart.WELCOME) =
-        OnboardingViewModel(settings, start, service, { secure }, { NOW }).also { models += it }
+    private fun model(start: OnboardingStart = OnboardingStart.WELCOME, offerPack: Boolean = false) =
+        OnboardingViewModel(settings, start, service, { secure }, { NOW }, offerPack).also { models += it }
 
     /** DataStore writes on its own thread: waits for the step (or fails after 5 s). */
     private fun OnboardingViewModel.await(step: OnboardingStep) = runBlocking {
@@ -153,6 +153,59 @@ class OnboardingViewModelTest {
         model.continueAfterConfirmation()
         model.await(OnboardingStep.DONE)
         assertThat(current().lockEnabled).isTrue()
+    }
+
+    @Test
+    fun `the language pack is offered last when no language of the phone is French`() {
+        val model = model(OnboardingStart.DISCLOSURE, offerPack = true)
+        model.accept()
+        model.await(OnboardingStep.FAMILIES)
+        model.confirmFamilies()
+        model.await(OnboardingStep.ACTIVATE)
+        service.value = true
+        model.await(OnboardingStep.CONFIRMED)
+        model.continueAfterConfirmation()
+        model.await(OnboardingStep.LOCK)
+        model.chooseLock(true)
+        model.await(OnboardingStep.LANGUAGE_PACK)
+        // The flow is not over yet: it would close before the offer.
+        assertThat(current().onboardingDone).isFalse()
+        model.choosePack(download = true)
+        model.await(OnboardingStep.DONE)
+        assertThat(current().onboardingDone).isTrue()
+        assertThat(model.state.value.downloadPack).isTrue()
+    }
+
+    @Test
+    fun `later, or back, on the language pack downloads nothing`() {
+        secure = false
+        service.value = true
+        for (leave in listOf(false, true)) {
+            val model = model(OnboardingStart.DISCLOSURE, offerPack = true)
+            model.accept()
+            model.await(OnboardingStep.FAMILIES)
+            model.confirmFamilies()
+            model.await(OnboardingStep.CONFIRMED)
+            model.continueAfterConfirmation()
+            model.await(OnboardingStep.LANGUAGE_PACK)
+            if (leave) model.leave() else model.choosePack(download = false)
+            model.await(OnboardingStep.DONE)
+            assertThat(model.state.value.downloadPack).isFalse()
+        }
+    }
+
+    @Test
+    fun `no language pack step when the phone is in French`() {
+        secure = false
+        service.value = true
+        val model = model(OnboardingStart.DISCLOSURE)
+        model.accept()
+        model.await(OnboardingStep.FAMILIES)
+        model.confirmFamilies()
+        model.await(OnboardingStep.CONFIRMED)
+        model.continueAfterConfirmation()
+        model.await(OnboardingStep.DONE)
+        assertThat(model.state.value.downloadPack).isFalse()
     }
 
     @Test
