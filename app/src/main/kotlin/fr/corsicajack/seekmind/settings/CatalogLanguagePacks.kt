@@ -9,7 +9,7 @@ import fr.corsicajack.seekmind.engine.embedding.catalog.FileModelPackInstaller
 import fr.corsicajack.seekmind.engine.embedding.catalog.ImportResult
 import fr.corsicajack.seekmind.engine.embedding.catalog.ModelPackInstaller
 import fr.corsicajack.seekmind.feature.settings.LanguagePacks
-import java.io.FileNotFoundException
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -37,7 +37,8 @@ class CatalogLanguagePacks(
         return try {
             val stream = resolver.openInputStream(Uri.parse(uri)) ?: return false
             stream.use { file.import(spec, it) } == ImportResult.Imported
-        } catch (_: FileNotFoundException) {
+        } catch (_: IOException) {
+            // FileNotFoundException included: the document is gone or unreadable.
             false
         } catch (_: SecurityException) {
             false

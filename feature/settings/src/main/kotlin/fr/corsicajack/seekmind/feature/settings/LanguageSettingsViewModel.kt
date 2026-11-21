@@ -144,7 +144,14 @@ class LanguageSettingsViewModel(
     fun import(id: String, uri: String) {
         val current = catalog.value ?: return
         viewModelScope.launch {
-            if (!current.import(id, uri)) error.value = LanguageError.IMPORT_INVALID
+            val imported = try {
+                current.import(id, uri)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                false
+            }
+            if (!imported) error.value = LanguageError.IMPORT_INVALID
         }
     }
 
@@ -176,7 +183,15 @@ class LanguageSettingsViewModel(
 
     fun remove(id: String) {
         val current = catalog.value ?: return
-        viewModelScope.launch { current.remove(id) }
+        viewModelScope.launch {
+            try {
+                current.remove(id)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                error.value = LanguageError.ACTIVATION_FAILED
+            }
+        }
     }
 
     fun errorShown() {

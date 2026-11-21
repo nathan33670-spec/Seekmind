@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fr.corsicajack.seekmind.apps.PackageManagerAppLabels
 import fr.corsicajack.seekmind.core.common.Clock
+import fr.corsicajack.seekmind.core.common.SmLog
 import fr.corsicajack.seekmind.core.database.DatabaseHandle
 import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
@@ -30,6 +31,7 @@ import fr.corsicajack.seekmind.feature.settings.PauseChoice
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Provider
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.emitAll
@@ -119,10 +121,20 @@ class SettingsBindings @Inject constructor(
     suspend fun confirmPackDownload(activity: android.app.Activity): Boolean =
         (installer as? PlayModelPackInstaller)?.requestConfirmation(activity) ?: false
 
-    /** « Télécharger » at the end of the welcome flow: a Play download, on the user's action (§5.4). */
+    /**
+     * « Télécharger » at the end of the welcome flow: a Play download, on the user's action (§5.4). The request
+     * starts it; its progress, and Play's confirmation when one is needed, are on Settings → Langues, which the
+     * flow opens next. A failure is counted, never thrown: the user can try again from there.
+     */
     suspend fun downloadMultilingualPack() {
         if (installer !is PlayModelPackInstaller) return
-        catalog.await().install(MULTI).collect {}
+        try {
+            catalog.await().install(MULTI)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            SmLog.w(TAG, "pack_download_failed", failure)
+        }
     }
 
     private suspend fun setRule(packageName: String, mode: AppRuleMode?) {
@@ -143,5 +155,6 @@ class SettingsBindings @Inject constructor(
 
     private companion object {
         const val MULTI = "multi"
+        const val TAG = "SettingsBindings"
     }
 }
