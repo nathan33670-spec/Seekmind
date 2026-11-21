@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import fr.corsicajack.seekmind.apps.PackageManagerAppLabels
+import fr.corsicajack.seekmind.capture.DeletableCaptures
 import fr.corsicajack.seekmind.core.common.Clock
 import fr.corsicajack.seekmind.core.common.SmLog
 import fr.corsicajack.seekmind.core.database.DatabaseHandle
@@ -54,6 +55,7 @@ class SettingsBindings @Inject constructor(
     private val installer: ModelPackInstaller,
     private val file: FileModelPackInstaller,
     private val clock: Clock,
+    private val deletable: DeletableCaptures,
 ) {
     private val labels = PackageManagerAppLabels(context.packageManager)
 
@@ -93,8 +95,8 @@ class SettingsBindings @Inject constructor(
         },
         setRetentionDays = settings::setRetentionDays,
         setBudgetBytes = settings::setStorageBudgetBytes,
-        deleteRange = { from, to -> db()?.captures?.deleteByRange(from, to) },
-        deletePackage = { db()?.captures?.deleteByPackage(it) },
+        deleteRange = { from, to -> deletable.store()?.deleteByRange(from, to) },
+        deletePackage = { deletable.store()?.deleteByPackage(it) },
         now = clock::nowMillis,
         io = Dispatchers.IO,
     )

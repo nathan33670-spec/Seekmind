@@ -140,8 +140,13 @@ Ensuite, hors transaction : si des fragments sont en attente, s'assurer que le t
 implémentation WorkManager arrive avec `EmbeddingWorker` (M4-05).
 
 Le cache des empreintes par paquet est vidé par `IngestService.forget()` après toute suppression de
-captures (journal, « tout effacer ») : un nouvel écran ne doit jamais être rattaché à une capture
-supprimée.
+captures : un nouvel écran ne doit jamais être rattaché à une capture supprimée.
+
+Dans `:app`, les écrans qui suppriment (détail, journal, Réglages › Données) reçoivent le magasin des
+captures par `DeletableCaptures`. Après chaque `delete`, `deleteByPackage` ou `deleteByRange`, même en
+échec, ce magasin appelle `CaptureForgetting.afterDeletion()`, qui poste `forget()` sur le fil de capture,
+le seul qui touche l'`IngestService` de `StoredCaptureSink` (`ForgettingCaptureStoreTest`). « Tout
+effacer » n'en a pas besoin : l'application se ferme.
 
 ## 7. Calcul différé des vecteurs
 

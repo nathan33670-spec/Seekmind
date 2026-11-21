@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import fr.corsicajack.seekmind.apps.PackageManagerAppLabels
 import fr.corsicajack.seekmind.capture.CaptureDeletions
+import fr.corsicajack.seekmind.capture.DeletableCaptures
 import fr.corsicajack.seekmind.core.common.SmLog
 import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.database.WipeService
@@ -119,6 +120,9 @@ class MainActivity : SecureActivity() {
     @Inject lateinit var wipe: WipeService
 
     @Inject lateinit var deletions: CaptureDeletions
+
+    /** The capture store of the screens that delete: the ingestion forgets what it learnt afterwards. */
+    @Inject lateinit var deletableCaptures: DeletableCaptures
 
     @Inject lateinit var families: AppFamilies
 
@@ -267,7 +271,7 @@ class MainActivity : SecureActivity() {
             CaptureDetailViewModel(
                 captureId = captureId,
                 terms = terms,
-                store = { (database.get() as? DatabaseState.Ready)?.database?.captures },
+                store = deletableCaptures::store,
                 labels = PackageManagerAppLabels(packageManager),
                 resolver = sourceReturn.get().resolver,
                 io = Dispatchers.IO,
@@ -361,7 +365,7 @@ class MainActivity : SecureActivity() {
     private fun JournalContent(openCapture: (Long) -> Unit) {
         val journal = viewModel {
             JournalViewModel(
-                store = { (database.get() as? DatabaseState.Ready)?.database?.captures },
+                store = deletableCaptures::store,
                 labels = PackageManagerAppLabels(packageManager),
                 zone = ZoneId::systemDefault,
                 io = Dispatchers.IO,
