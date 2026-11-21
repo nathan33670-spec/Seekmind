@@ -35,7 +35,7 @@ prépare les contenus et les artefacts.
 
 | Statut | Dépend de | Modules | Référence |
 |---|---|---|---|
-| À faire | — | `site/`, `.github/workflows` | [sécurité §7](../07-securite-vie-privee.md#7-politique-de-confidentialité) · [prérequis §2.1](../04-prerequis.md#21-site-sur-github-pages) |
+| En cours — reste la relecture juridique, les emplacements à compléter, l'activation de Pages et `app-ads.txt` par le porteur | — | `site/`, `.github/workflows` | [sécurité §7](../07-securite-vie-privee.md#7-politique-de-confidentialité) · [prérequis §2.1](../04-prerequis.md#21-site-sur-github-pages) |
 
 **À faire**
 
@@ -48,6 +48,8 @@ prépare les contenus et les artefacts.
 3. Workflow `pages` : publication de `site/` sur GitHub Pages.
 4. Modèle de fichier `app-ads.txt` et marche à suivre pour le placer à la racine du site du compte
    (prérequis §2.1).
+5. Conditions d'utilisation (FR et EN), et politique renforcée (version 2 : tableau des données, base
+   légale, sécurité, autorisations, droits, suppression), à la demande du porteur.
 
 **Critères d'acceptation**
 

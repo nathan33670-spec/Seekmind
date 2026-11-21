@@ -71,6 +71,9 @@ jobs:
       - name: Tests of the guard scripts
         run: scripts/tests/test-guard-scripts.sh
 
+      - name: Static site
+        run: scripts/check-site.sh site
+
       - name: Set up Python
         if: hashFiles('tools/**/requirements*.txt') != ''
         uses: actions/setup-python@v7

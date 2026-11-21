@@ -1,0 +1,50 @@
+<!doctype html>
+<!-- Frequently asked questions (ticket M11-02). No script, no external resource: the policy below allows nothing but the inline style. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>SeekMind — Frequently asked questions</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 24px 16px; max-width: 720px; line-height: 1.6; color: #1b1b1f; background: #fefbff; }
+  @media (prefers-color-scheme: dark) { body { color: #e4e1e6; background: #1b1b1f; } a { color: #b8c3ff; } }
+  h1 { font-size: 1.7em; line-height: 1.25; } h2 { font-size: 1.2em; margin-top: 1.8em; }
+  nav { font-size: 0.95em; margin-bottom: 1.5em; } nav a { margin-right: 1em; }
+  .todo { background: #ffe08a; color: #1b1b1f; padding: 0 4px; border-radius: 3px; }
+  .small { font-size: 0.9em; opacity: 0.85; }
+</style>
+</head>
+<body>
+<nav><a href="index.html">Home</a><a href="faq-en.html">FAQ</a><a href="assistance.html">Support</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms of use</a><a href="faq.html" hreflang="fr">Français</a></nav>
+<h1>Frequently asked questions</h1>
+
+<h2>What does SeekMind read?</h2>
+<p>The text shown on screen in the apps you chose, the name of the app, the title of the screen and the address of web pages. When a screen holds mostly images, SeekMind recognises the text of the image, in memory; the image is never saved.</p>
+
+<h2>What does it not read?</h2>
+<p>Password fields, private browsing, screens protected by the app that shows them, sensitive apps (banking, password managers, authentication…) and SeekMind itself. Card numbers and IBANs are masked before anything is stored. SeekMind never acts for you in other apps.</p>
+
+<h2>What are app families?</h2>
+<p>Apps are sorted into four families: messaging and e-mail, browsers, social media and video, others. You choose at installation which ones SeekMind remembers, and you can change your mind in Settings › Apps, or exclude a given app.</p>
+
+<h2>Are protected screens always recognised?</h2>
+<p>On Android 14 and later, the system tells SeekMind that a screen is protected: it is never read. On Android 11 to 13, the system does not tell; SeekMind recognises a protected screen by its image being entirely black. This detection is very reliable, but not absolute. Known banking and password apps are excluded in any case.</p>
+
+<h2>What about private browsing?</h2>
+<p>Chrome, Firefox, Samsung Internet and the browsers based on Chromium protect their private tabs: SeekMind does not read them. If you allowed screenshots in private browsing in your browser’s settings, this protection is gone. SeekMind still recognises most private tabs by their markers, without guarantee. Leave that setting off, or exclude the browser.</p>
+
+<h2>Why ads?</h2>
+<p>Searches use credits. You get 10 when you install SeekMind; after that, a rewarded ad watched to the end gives 5. When no ad is available, SeekMind gives you one search, up to three times a day. Ads are shown only at your request, from the “Keep searching” sheet; no other ad is shown. These ads are provided by Google and are never chosen from what SeekMind read: nothing it remembered is passed to the ad network. An activation code removes credits.</p>
+
+<h2>What are language packs?</h2>
+<p>Search by meaning is done by a model installed on the phone, made for French. For other languages, an optional pack can be downloaded by Google Play, at your request. Keyword search works in every language.</p>
+
+<h2>How do I delete my data?</h2>
+<p>In the journal, delete a capture; in Settings › Data, delete a period, an app or everything. By default, captures older than 90 days are deleted automatically. Uninstalling SeekMind deletes all its data. Nothing exists anywhere but on your phone: there is nothing else to delete.</p>
+
+<h2>The service stops by itself</h2>
+<p>Some manufacturers stop apps in the background to save battery. Settings › The service stops by itself shows the setting to change for your phone.</p>
+</body>
+</html>

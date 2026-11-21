@@ -1,0 +1,131 @@
+<!doctype html>
+<!-- Privacy policy, French (ticket M11-02, docs/07-securite-vie-privee.md §7). No script, no external resource: the policy below allows nothing but the inline style. -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>SeekMind — Politique de confidentialité</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 24px 16px; max-width: 720px; line-height: 1.6; color: #1b1b1f; background: #fefbff; }
+  @media (prefers-color-scheme: dark) { body { color: #e4e1e6; background: #1b1b1f; } a { color: #b8c3ff; } .key { background: #2a2a33 !important; border-color: #46464f !important; } }
+  h1 { font-size: 1.7em; line-height: 1.25; } h2 { font-size: 1.2em; margin-top: 1.8em; }
+  nav { font-size: 0.95em; margin-bottom: 1.5em; } nav a { margin-right: 1em; display: inline-block; }
+  .todo { background: #ffe08a; color: #1b1b1f; padding: 0 4px; border-radius: 3px; }
+  .small { font-size: 0.9em; opacity: 0.85; }
+  .key { background: #eef0ff; border: 1px solid #c5c8e0; border-radius: 8px; padding: 4px 16px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { border: 1px solid #c5c6d0; padding: 6px 8px; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<nav><a href="index.html">Accueil</a><a href="faq.html">FAQ</a><a href="assistance.html">Assistance</a><a href="confidentialite.html">Confidentialité</a><a href="conditions.html">Conditions d’utilisation</a><a href="privacy.html" hreflang="en">English</a></nav>
+<h1>Politique de confidentialité de SeekMind</h1>
+<p class="small">En vigueur le <span class="todo">[À COMPLÉTER : date]</span>. Version 2.</p>
+
+<div class="key">
+<h2>L’essentiel</h2>
+<ol>
+<li><strong>Tout reste sur votre téléphone.</strong> Ce que SeekMind mémorise est chiffré sur l’appareil et n’en sort jamais : ni vers l’éditeur, ni vers le réseau publicitaire, ni vers personne.</li>
+<li><strong>L’éditeur ne reçoit rien.</strong> Aucun compte, aucune statistique d’usage, aucun rapport de plantage, aucun serveur.</li>
+<li><strong>Rien n’est lu sans votre accord.</strong> La lecture ne commence qu’après votre accord explicite et le choix des applications à mémoriser. Vous pouvez la mettre en pause ou la retirer à tout moment.</li>
+<li><strong>Le sensible est écarté d’office.</strong> Mots de passe, banque, authentification, navigation privée et écrans protégés ne sont jamais mémorisés ; cartes bancaires et IBAN sont masqués.</li>
+<li><strong>Aucune image n’est enregistrée</strong> et SeekMind n’agit jamais à votre place dans les autres applications.</li>
+<li><strong>La publicité est à votre demande</strong>, et elle ne reçoit rien de ce que SeekMind a mémorisé.</li>
+</ol>
+</div>
+
+<h2>1. Qui édite l’application</h2>
+<p>SeekMind est éditée par <span class="todo">[À COMPLÉTER : nom de l’éditeur]</span>. Contact pour toute question sur vos données : <span class="todo">[À COMPLÉTER : adresse e-mail d’assistance]</span>.</p>
+<p>Ce que SeekMind mémorise est traité uniquement sur votre téléphone, sous votre seul contrôle : l’éditeur n’y a pas accès et n’en reçoit aucune copie. Le code source de l’application est public, sur <a href="https://github.com/nathan33670-spec/Seekmind">GitHub</a>, ce qui permet à chacun de vérifier ces engagements.</p>
+
+<h2>2. Ce que SeekMind lit, et pourquoi</h2>
+<p>Pour vous permettre de retrouver ce que vous avez vu, SeekMind utilise le service d’accessibilité d’Android (API <code>AccessibilityService</code>), après votre accord explicite.</p>
+<ul>
+<li>Il lit le texte affiché dans les applications que vous avez choisi de mémoriser, le nom de l’application, le titre de l’écran et l’adresse des pages web.</li>
+<li>Quand un écran contient surtout des images ou de la vidéo, il analyse ponctuellement l’image de l’écran pour y reconnaître du texte. Cette image n’existe qu’en mémoire vive, quelques instants : elle n’est jamais enregistrée, ni sur le téléphone, ni ailleurs.</li>
+<li>Le seul but est de constituer, sur votre téléphone, votre index de recherche personnel. Ces données ne servent ni à la publicité, ni à la mesure d’audience, ni au profilage.</li>
+</ul>
+<p><strong>Ce que SeekMind ne lit jamais.</strong> Les champs de mot de passe, la navigation privée, les écrans protégés par l’application qui les affiche, les applications sensibles (gestionnaires de mots de passe et d’authentification, d’office ; banque, paiement, santé, administration, sauf si vous les réintégrez vous-même) et SeekMind lui-même. Les numéros de carte bancaire, les IBAN et les numéros de sécurité sociale français sont masqués avant tout enregistrement. Le service est passif : il n’effectue aucune action, aucun geste, aucune saisie dans les autres applications.</p>
+
+<h2>3. Les données, une par une</h2>
+<div class="scroll"><table>
+<tr><th>Donnée</th><th>Pourquoi</th><th>Où</th><th>Combien de temps</th><th>Transmise ?</th></tr>
+<tr><td>Texte des écrans, nom de l’application, titre, adresse web</td><td>Votre index de recherche</td><td>Téléphone, base chiffrée</td><td>90 jours par défaut (30, 90, 180, 365 jours ou sans limite) et 500 Mo au plus par défaut</td><td>Jamais</td></tr>
+<tr><td>Image d’un écran, pour en reconnaître le texte</td><td>Lire le texte des images</td><td>Mémoire vive seulement</td><td>Le temps de l’analyse, jamais enregistrée</td><td>Jamais</td></tr>
+<tr><td>Représentation du sens des textes (vecteurs)</td><td>Recherche par le sens</td><td>Téléphone, base chiffrée</td><td>Comme le texte dont ils sont tirés</td><td>Jamais</td></tr>
+<tr><td>Historique de vos recherches</td><td>Retrouver vos recherches</td><td>Téléphone, base chiffrée</td><td>90 jours ; désactivable et effaçable</td><td>Jamais</td></tr>
+<tr><td>Vos réglages et la date de votre accord</td><td>Respecter vos choix</td><td>Téléphone</td><td>Jusqu’à « Tout effacer » ou la désinstallation</td><td>Jamais</td></tr>
+<tr><td>Compteurs de diagnostic (nombres seulement, aucun texte)</td><td>Comprendre un problème</td><td>Téléphone, base chiffrée</td><td>30 jours</td><td>Seulement si vous les partagez vous-même</td></tr>
+<tr><td>Crédits de recherche et code d’activation</td><td>Fonctionnement des crédits</td><td>Téléphone, base chiffrée</td><td>Jusqu’à « Tout effacer » ou la désinstallation</td><td>Jamais</td></tr>
+<tr><td>Données techniques et publicitaires (version avec publicité, à votre demande)</td><td>Afficher une annonce récompensée</td><td>Google</td><td>Selon la politique de Google</td><td>À Google, voir §6</td></tr>
+</table></div>
+
+<h2>4. Base légale</h2>
+<p>La lecture de l’écran repose sur votre <strong>consentement</strong> (article 6.1.a du RGPD), donné dans l’application après un écran qui décrit précisément ce qui est lu. Il est daté, il porte sur une version précise de ce texte, et il peut être retiré à tout moment dans Réglages › Mémorisation, ce qui arrête aussitôt toute lecture. Si le texte de cet écran change sur le fond, l’application vous redemande votre accord.</p>
+<p>Pour la publicité, dans l’Espace économique européen, au Royaume-Uni et en Suisse, votre consentement est recueilli par la fenêtre de Google avant la première annonce (voir §6).</p>
+
+<h2>5. Sécurité</h2>
+<ul>
+<li>Base de données chiffrée (SQLCipher, AES-256, intégrité contrôlée page par page). Sa clé est elle-même chiffrée par une clé matérielle du téléphone, que le système ne laisse pas sortir (Android Keystore, puce sécurisée quand elle existe).</li>
+<li>Verrouillage de l’application par empreinte, visage ou code du téléphone, activé par défaut.</li>
+<li>Sauvegardes et transferts automatiques d’Android désactivés : vos données ne partent pas dans une sauvegarde en ligne.</li>
+<li>Aucun journal technique ne contient de texte lu, de titre, d’adresse ou de recherche.</li>
+<li>Rien n’est copié dans le presse-papiers sans une action de votre part.</li>
+<li>« Tout effacer » détruit la base et sa clé.</li>
+</ul>
+
+<h2>6. Publicité</h2>
+<p>La version publiée sur Google Play propose des annonces récompensées fournies par Google (AdMob), pour obtenir des crédits de recherche. Une annonce est chargée quand vous ouvrez la feuille « Continuer à chercher », qui s’ouvre aussi d’elle-même quand vos crédits sont épuisés ; elle n’est montrée que si vous touchez « Regarder une publicité ». Aucune autre annonce n’est affichée, ni bannière, ni annonce plein écran imposée.</p>
+<p>À cette occasion, le SDK de Google collecte des données, selon vos choix : identifiant publicitaire de l’appareil, données techniques (modèle, système, langue), adresse IP (dont une localisation approximative peut être déduite) et interactions avec l’annonce. Google traite ces données comme responsable de traitement, y compris hors de l’Union européenne, comme décrit dans la page <a href="https://policies.google.com/technologies/partner-sites">« Comment Google utilise les informations des sites ou applications qui utilisent ses services »</a> et dans les <a href="https://policies.google.com/privacy">règles de confidentialité de Google</a>.</p>
+<p>Dans l’Espace économique européen, au Royaume-Uni et en Suisse, une fenêtre de consentement s’affiche avant la première annonce. Vous pouvez modifier vos choix à tout moment dans Réglages › Activation › Confidentialité des publicités. Vous pouvez aussi réinitialiser ou supprimer votre identifiant publicitaire dans les réglages d’Android.</p>
+<p><strong>Ce que SeekMind a mémorisé n’est jamais transmis au réseau publicitaire</strong> : le module publicitaire est isolé du reste de l’application et ne reçoit aucune donnée de l’utilisateur ; aucune requête d’annonce ne porte de mot-clé, d’adresse ni de ciblage issu de vos écrans ou de vos recherches. Tant que la feuille « Continuer à chercher » n’a pas été ouverte, l’application n’émet rien sur le réseau.</p>
+<p>Une version sans publicité ni accès à Internet existe ; elle ne se connecte jamais au réseau.</p>
+
+<h2>7. Packs de langue</h2>
+<p>Les packs de langue facultatifs sont téléchargés par Google Play, à votre demande seulement. Google Play traite ce téléchargement comme celui de toute application ; SeekMind n’y joint aucune donnée.</p>
+
+<h2>8. Codes d’activation</h2>
+<p>Un code d’activation est vérifié sur votre téléphone, sans connexion. Aucune donnée n’est transmise pour l’activer. La page web qui relaie les liens d’activation ne transmet rien : le code reste dans votre navigateur.</p>
+
+<h2>9. Autorisations demandées par l’application</h2>
+<div class="scroll"><table>
+<tr><th>Autorisation</th><th>Pourquoi</th></tr>
+<tr><td>Service d’accessibilité (activé par vous dans les réglages d’Android)</td><td>Lire le texte des écrans, §2</td></tr>
+<tr><td>Biométrie</td><td>Verrouiller l’application</td></tr>
+<tr><td>Exécution en arrière-plan, démarrage du téléphone</td><td>Indexer et faire le ménage la nuit, de préférence en charge</td></tr>
+<tr><td>Service de premier plan « synchronisation »</td><td>Installer un pack de langue téléchargé par Google Play</td></tr>
+<tr><td>Internet, état du réseau, identifiant publicitaire (version avec publicité seulement)</td><td>Annonces récompensées, §6. Aucune autre partie de l’application n’utilise le réseau.</td></tr>
+</table></div>
+<p>SeekMind ne demande ni vos contacts, ni votre position, ni l’accès à vos photos, fichiers, micro ou appareil photo.</p>
+
+<h2>10. Vos contrôles et vos droits</h2>
+<ul>
+<li>Choisir les familles d’applications mémorisées (messageries, navigateurs, réseaux sociaux, autres) et exclure ou réintégrer une application.</li>
+<li>Mettre la mémorisation en pause, depuis l’application ou la tuile des réglages rapides ; retirer votre consentement.</li>
+<li>Consulter tout ce qui a été mémorisé, dans le journal ; supprimer une capture, une période, une application, ou tout effacer ; régler la durée de conservation.</li>
+<li>Protéger l’application par votre empreinte ou votre code.</li>
+<li>Désactiver le service d’accessibilité, ce qui arrête toute lecture.</li>
+</ul>
+<p>Vous disposez des droits d’accès, de rectification, d’effacement, de limitation, d’opposition et de portabilité prévus par le RGPD. Comme vos données ne sont que sur votre téléphone, vous les exercez directement dans l’application : l’éditeur ne détient aucune donnée vous concernant et ne peut donc ni les consulter, ni les communiquer. Pour les données publicitaires, adressez-vous à Google. Pour toute question, écrivez à l’adresse du §1. Vous pouvez aussi introduire une réclamation auprès de l’autorité de protection des données de votre pays (en France, la <a href="https://www.cnil.fr/">CNIL</a>).</p>
+
+<h2 id="suppression">11. Supprimer vos données</h2>
+<p>SeekMind ne crée aucun compte et ne conserve rien en dehors de votre téléphone : il n’y a rien à supprimer ailleurs.</p>
+<ul>
+<li>Une capture : dans le journal, touchez-la puis « Supprimer ».</li>
+<li>Une période ou une application : Réglages › Données.</li>
+<li>Tout : Réglages › Données › Tout effacer (la base et sa clé sont détruites).</li>
+<li>Automatiquement : au-delà de la durée de conservation choisie.</li>
+<li>Définitivement : désinstaller SeekMind supprime toutes ses données.</li>
+</ul>
+
+<h2>12. Ce site</h2>
+<p>Ce site est hébergé par GitHub Pages. Comme tout hébergeur, GitHub enregistre l’adresse IP des visiteurs dans ses journaux techniques, selon sa propre politique de confidentialité. Le site ne dépose aucun cookie, n’exécute aucun script de mesure et ne charge rien d’ailleurs.</p>
+
+<h2>13. Mineurs, modifications, droit applicable</h2>
+<p>SeekMind n’est pas destinée aux enfants ; elle s’adresse aux adultes. Toute modification de cette politique est publiée sur cette page, avec sa date et son numéro de version ; si elle change ce que l’application lit, l’application vous demande de nouveau votre accord. Droit applicable : <span class="todo">[À COMPLÉTER : droit applicable et autorité de contrôle, après relecture juridique]</span>.</p>
+<p class="small">Voir aussi les <a href="conditions.html">conditions d’utilisation</a>.</p>
+</body>
+</html>
