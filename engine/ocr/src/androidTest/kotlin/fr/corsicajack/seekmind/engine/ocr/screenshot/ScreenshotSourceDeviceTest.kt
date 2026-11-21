@@ -52,15 +52,17 @@ class ScreenshotSourceDeviceTest {
         }
         waitUntil("service connected") { ScreenshotProbeService.instance != null }
         shell("am start -W -n $FIXTURE_PACKAGE/$FIXTURE_PACKAGE.PlainTextActivity")
-        waitUntil("fixture on screen") {
+        waitUntil("fixture on screen") { service().rootInActiveWindow?.packageName == FIXTURE_PACKAGE }
+        // Lets the window finish drawing, and the system's own interval since any previous screenshot elapse.
+        SystemClock.sleep(SETTLE_MS)
+        // Read after the settling: the first window of the fixture may be its splash screen, gone by now.
+        waitUntil("fixture settled") {
             val root = service().rootInActiveWindow ?: return@waitUntil false
             if (root.packageName != FIXTURE_PACKAGE) return@waitUntil false
             windowId = root.windowId
             windowBounds = Rect().also(root::getBoundsInScreen).let { IntRect(it.left, it.top, it.right, it.bottom) }
             true
         }
-        // Lets the window finish drawing, and the system's own interval since any previous screenshot elapse.
-        SystemClock.sleep(SETTLE_MS)
     }
 
     @Test
