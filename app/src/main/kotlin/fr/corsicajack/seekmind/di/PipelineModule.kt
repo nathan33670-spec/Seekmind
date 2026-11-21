@@ -1,7 +1,6 @@
 package fr.corsicajack.seekmind.di
 
 import android.content.Context
-import androidx.work.WorkManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -9,14 +8,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import fr.corsicajack.seekmind.capture.ConnectedOcrEngine
 import fr.corsicajack.seekmind.capture.ConnectedScreenshots
+import fr.corsicajack.seekmind.capture.StoredCaptureSink
 import fr.corsicajack.seekmind.core.common.Clock
 import fr.corsicajack.seekmind.core.database.DatabaseState
 import fr.corsicajack.seekmind.core.database.settings.SettingsRepository
-import fr.corsicajack.seekmind.core.model.IngestResult
 import fr.corsicajack.seekmind.core.model.PipelineEvent
-import fr.corsicajack.seekmind.core.model.RawCapture
 import fr.corsicajack.seekmind.core.model.config.CaptureConfig
-import fr.corsicajack.seekmind.core.model.config.IndexConfig
 import fr.corsicajack.seekmind.core.model.config.OcrConfig
 import fr.corsicajack.seekmind.core.model.config.PrivacyConfig
 import fr.corsicajack.seekmind.core.model.port.CaptureSink
@@ -38,10 +35,7 @@ import fr.corsicajack.seekmind.engine.capture.tree.TreeExtractor
 import fr.corsicajack.seekmind.engine.capture.url.BrowserProfiles
 import fr.corsicajack.seekmind.engine.capture.url.UrlExtractor
 import fr.corsicajack.seekmind.engine.capture.url.UrlTracker
-import fr.corsicajack.seekmind.engine.index.EmbeddingScheduler as IngestScheduler
-import fr.corsicajack.seekmind.engine.index.IngestService
 import fr.corsicajack.seekmind.engine.index.SimHash
-import fr.corsicajack.seekmind.engine.index.embedding.EmbeddingScheduler
 import fr.corsicajack.seekmind.engine.ocr.policy.OcrPolicy
 import fr.corsicajack.seekmind.engine.ocr.probe.ScreenshotSecureWindowProbe
 import fr.corsicajack.seekmind.engine.ocr.recognition.MlKitOcrEngine
@@ -120,33 +114,10 @@ object PipelineModule {
         )
     }
 
-    /**
-     * Storage through the database once it is open; a capture before that, or with the database
-     * unavailable, fails and is counted as an error (§6).
-     */
+    /** Storage through the database (StoredCaptureSink), whose memory the deletions clear. */
     @Provides
     @Singleton
-    fun captureSink(
-        @ApplicationContext context: Context,
-        database: Provider<DatabaseState>,
-        clock: Clock,
-        config: IndexConfig,
-    ): CaptureSink {
-        val scheduler = IngestScheduler {
-            EmbeddingScheduler.scheduleCharging(WorkManager.getInstance(context), after = false)
-        }
-        return object : CaptureSink {
-            private var service: IngestService? = null
-
-            override suspend fun ingest(raw: RawCapture): IngestResult {
-                val ingest = service ?: run {
-                    val ready = checkNotNull(database.get() as? DatabaseState.Ready) { "database unavailable" }
-                    IngestService(ready.database.captures, scheduler, clock, config).also { service = it }
-                }
-                return ingest.ingest(raw)
-            }
-        }
-    }
+    fun captureSink(sink: StoredCaptureSink): CaptureSink = sink
 
     @Provides
     @Singleton
