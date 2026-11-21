@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Privacy policy (ticket M11-02, docs/07-securite-vie-privee.md §7). No script, no external resource: the policy below allows nothing but the inline style. -->
+<!-- Privacy policy, English (ticket M11-02, docs/07-securite-vie-privee.md §7). No script, no external resource: the policy below allows nothing but the inline style. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -9,63 +9,123 @@
 <title>SeekMind — Privacy policy</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 24px 16px; max-width: 720px; line-height: 1.6; color: #1b1b1f; background: #fefbff; }
-  @media (prefers-color-scheme: dark) { body { color: #e4e1e6; background: #1b1b1f; } a { color: #b8c3ff; } }
+  @media (prefers-color-scheme: dark) { body { color: #e4e1e6; background: #1b1b1f; } a { color: #b8c3ff; } .key { background: #2a2a33 !important; border-color: #46464f !important; } }
   h1 { font-size: 1.7em; line-height: 1.25; } h2 { font-size: 1.2em; margin-top: 1.8em; }
-  nav { font-size: 0.95em; margin-bottom: 1.5em; } nav a { margin-right: 1em; }
+  nav { font-size: 0.95em; margin-bottom: 1.5em; } nav a { margin-right: 1em; display: inline-block; }
   .todo { background: #ffe08a; color: #1b1b1f; padding: 0 4px; border-radius: 3px; }
   .small { font-size: 0.9em; opacity: 0.85; }
+  .key { background: #eef0ff; border: 1px solid #c5c8e0; border-radius: 8px; padding: 4px 16px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { border: 1px solid #c5c6d0; padding: 6px 8px; text-align: left; vertical-align: top; }
 </style>
 </head>
 <body>
-<nav><a href="index.html">Home</a><a href="faq-en.html">FAQ</a><a href="assistance.html">Support</a><a href="privacy.html">Privacy</a><a href="confidentialite.html" hreflang="fr">Français</a></nav>
+<nav><a href="index.html">Home</a><a href="faq-en.html">FAQ</a><a href="assistance.html">Support</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms of use</a><a href="confidentialite.html" hreflang="fr">Français</a></nav>
 <h1>SeekMind privacy policy</h1>
-<p class="small">Effective <span class="todo">[TO FILL IN: date]</span>.</p>
+<p class="small">Effective <span class="todo">[TO FILL IN: date]</span>. Version 2.</p>
+
+<div class="key">
+<h2>The essentials</h2>
+<ol>
+<li><strong>Everything stays on your phone.</strong> What SeekMind remembers is encrypted on the device and never leaves it: not to the publisher, not to the ad network, not to anyone.</li>
+<li><strong>The publisher receives nothing.</strong> No account, no usage statistics, no crash reports, no server.</li>
+<li><strong>Nothing is read without your consent.</strong> Reading only starts once you have agreed explicitly and chosen which apps to remember. You can pause it or withdraw your consent at any time.</li>
+<li><strong>Sensitive content is left out from the start.</strong> Passwords, banking, authentication, private browsing and protected screens are never remembered; card numbers and IBANs are masked.</li>
+<li><strong>No image is ever stored</strong>, and SeekMind never acts on your behalf in other apps.</li>
+<li><strong>Ads are shown only when you ask</strong>, and they receive nothing SeekMind has remembered.</li>
+</ol>
+</div>
 
 <h2>1. Who publishes the app</h2>
-<p>SeekMind is published by <span class="todo">[TO FILL IN: publisher’s name]</span>. Contact: <span class="todo">[TO FILL IN: support e-mail address]</span>.</p>
+<p>SeekMind is published by <span class="todo">[TO FILL IN: publisher’s name]</span>. Contact for any question about your data: <span class="todo">[TO FILL IN: support e-mail address]</span>.</p>
+<p>What SeekMind remembers is processed only on your phone, under your sole control: the publisher has no access to it and receives no copy of it. The app’s source code is public, on <a href="https://github.com/nathan33670-spec/Seekmind">GitHub</a>, so that anyone can check these commitments.</p>
 
 <h2>2. What SeekMind reads, and why</h2>
-<p>To let you find again what you saw, SeekMind uses Android’s accessibility service (AccessibilityService API), after your explicit consent.</p>
+<p>To let you find again what you have seen, SeekMind uses Android’s accessibility service (the <code>AccessibilityService</code> API), after your explicit consent.</p>
 <ul>
-<li>It reads the text shown in the apps you use, the name of the app, the title of the screen and the address of web pages.</li>
-<li>When a screen holds mostly images or video, it occasionally analyses the image of the screen to recognise text in it. This image is processed in memory and never saved.</li>
-<li>The only purpose is to build, on your phone, your personal search index.</li>
+<li>It reads the text shown in the apps you chose to remember, the app’s name, the screen’s title and the address of web pages.</li>
+<li>When a screen holds mostly pictures or video, it occasionally analyses the screen image to recognise text in it. That image only exists in memory, for a moment: it is never stored, on the phone or anywhere else.</li>
+<li>The only purpose is to build your personal search index, on your phone. This data is not used for advertising, audience measurement or profiling.</li>
 </ul>
-<p><strong>What SeekMind does not read.</strong> Password fields, private browsing, protected screens and sensitive apps (banking, password managers…) are never remembered. Card numbers and IBANs are masked before anything is stored. SeekMind never takes any action for you in other apps.</p>
+<p><strong>What SeekMind never reads.</strong> Password fields, private browsing, screens protected by the app that shows them, sensitive apps (password managers and authenticators, always; banking, payment, health and public administration, unless you include them yourself) and SeekMind itself. Card numbers, IBANs and French social security numbers are masked before anything is stored. The service is passive: it performs no action, gesture or input in other apps.</p>
 
-<h2>3. Where the data is</h2>
-<p>Everything SeekMind remembers (text, titles, addresses, search index) stays on your phone, in an encrypted database whose key is protected by the system. Nothing is sent, neither to the publisher, nor to the ad network, nor to anyone. There is no account. Android’s automatic backups and transfers are turned off for this data.</p>
+<h2>3. The data, one by one</h2>
+<div class="scroll"><table>
+<tr><th>Data</th><th>Why</th><th>Where</th><th>How long</th><th>Sent anywhere?</th></tr>
+<tr><td>Text of screens, app name, title, web address</td><td>Your search index</td><td>Phone, encrypted database</td><td>90 days by default (30, 90, 180, 365 days or no limit), and 500 MB at most by default</td><td>Never</td></tr>
+<tr><td>Image of a screen, to recognise its text</td><td>Reading the text of images</td><td>Memory only</td><td>The time of the analysis, never stored</td><td>Never</td></tr>
+<tr><td>Representation of the meaning of texts (vectors)</td><td>Search by meaning</td><td>Phone, encrypted database</td><td>As long as the text they come from</td><td>Never</td></tr>
+<tr><td>Your search history</td><td>Finding your searches again</td><td>Phone, encrypted database</td><td>90 days; can be turned off and cleared</td><td>Never</td></tr>
+<tr><td>Your settings and the date of your consent</td><td>Following your choices</td><td>Phone</td><td>Until “Erase everything” or uninstallation</td><td>Never</td></tr>
+<tr><td>Diagnostic counters (numbers only, no text)</td><td>Understanding a problem</td><td>Phone, encrypted database</td><td>30 days</td><td>Only if you share them yourself</td></tr>
+<tr><td>Search credits and activation code</td><td>Running the credits</td><td>Phone, encrypted database</td><td>Until “Erase everything” or uninstallation</td><td>Never</td></tr>
+<tr><td>Technical and advertising data (version with ads, when you ask)</td><td>Showing a rewarded ad</td><td>Google</td><td>Under Google’s policy</td><td>To Google, see §6</td></tr>
+</table></div>
 
-<h2>4. What the publisher receives</h2>
-<p>Nothing. SeekMind collects no usage statistics and sends no crash reports.</p>
+<h2>4. Legal basis</h2>
+<p>Reading the screen is based on your <strong>consent</strong> (Article 6(1)(a) of the GDPR), given in the app after a screen that describes exactly what is read. It is dated, it covers a given version of that text, and it can be withdrawn at any time in Settings › Memorisation, which stops all reading at once. If the substance of that screen changes, the app asks for your consent again.</p>
+<p>For ads, in the European Economic Area, the United Kingdom and Switzerland, your consent is collected by Google’s consent form before the first ad (see §6).</p>
 
-<h2>5. Advertising</h2>
+<h2>5. Security</h2>
 <ul>
-<li>SeekMind offers rewarded ads provided by Google (AdMob), to earn search credits. An ad is loaded when you open the “Keep searching” sheet, which also opens by itself when you run out of credits; it is shown only if you tap “Watch an ad”. No other ad is shown.</li>
-<li>When it does, Google’s SDK collects data, according to your choices: the device’s advertising ID, technical data (model, system, language), IP address and interactions with the ad. This processing is Google’s, as described in <a href="https://policies.google.com/technologies/partner-sites">“How Google uses information from sites or apps that use our services”</a>.</li>
-<li>In the European Economic Area, the United Kingdom and Switzerland, a consent form is shown before the first ad. You can change your choices at any time in Settings › Activation › Ad privacy. You can also reset or delete your advertising ID in Android’s settings.</li>
-<li><strong>What SeekMind remembered is never passed to the ad network</strong>: no ad request carries a keyword, an address or any targeting taken from your screens or your searches. Until that sheet has been opened, the app sends nothing over the network.</li>
+<li>Encrypted database (SQLCipher, AES-256, integrity checked page by page). Its key is itself encrypted by a hardware key of the phone that the system never lets out (Android Keystore, secure chip where available).</li>
+<li>App lock by fingerprint, face or the phone’s code, on by default.</li>
+<li>Android’s automatic backups and transfers are turned off: your data does not go into an online backup.</li>
+<li>No technical log holds any text read, title, address or search.</li>
+<li>Nothing is copied to the clipboard without an action of yours.</li>
+<li>“Erase everything” destroys the database and its key.</li>
 </ul>
 
-<h2>6. Language packs</h2>
-<p>Optional language packs are downloaded by Google Play, at your request. Google Play handles this download like that of any app; SeekMind adds no data to it.</p>
+<h2>6. Ads</h2>
+<p>The version published on Google Play offers rewarded ads from Google (AdMob), to earn search credits. An ad is loaded when you open the “Keep searching” sheet, which also opens by itself when your credits run out; it is only shown if you tap “Watch an ad”. No other ad is shown: no banner, no forced full-screen ad.</p>
+<p>At that point, Google’s SDK collects data, according to your choices: the device’s advertising ID, technical data (model, system, language), the IP address (from which an approximate location may be inferred) and interactions with the ad. Google processes this data as a controller, including outside the European Union, as described in <a href="https://policies.google.com/technologies/partner-sites">“How Google uses information from sites or apps that use our services”</a> and in <a href="https://policies.google.com/privacy">Google’s privacy policy</a>.</p>
+<p>In the European Economic Area, the United Kingdom and Switzerland, a consent form appears before the first ad. You can change your choices at any time in Settings › Activation › Ad privacy. You can also reset or delete your advertising ID in Android’s settings.</p>
+<p><strong>What SeekMind has remembered is never sent to the ad network</strong>: the ad module is isolated from the rest of the app and receives no user data; no ad request carries a keyword, an address or any targeting drawn from your screens or your searches. Until the “Keep searching” sheet has been opened, the app sends nothing over the network.</p>
+<p>A version without ads and without Internet access exists; it never connects to the network.</p>
 
-<h2>7. Your controls</h2>
-<ul>
-<li>Choose which families of apps are remembered (messaging, browsers, social media, others) and exclude apps.</li>
-<li>Pause remembering, from the app or from the quick settings tile.</li>
-<li>Delete a capture, a period, an app or everything; set how long captures are kept (90 days by default).</li>
-<li>Protect the app with your fingerprint or your PIN.</li>
-<li>Turn off the accessibility service, which stops all reading. Uninstalling the app deletes all its data.</li>
-</ul>
+<h2>7. Language packs</h2>
+<p>Optional language packs are downloaded by Google Play, only when you ask. Google Play handles that download like that of any app; SeekMind adds no data to it.</p>
 
 <h2>8. Activation codes</h2>
 <p>An activation code is checked on your phone, offline. No data is sent to activate it. The web page that relays activation links sends nothing: the code stays in your browser.</p>
 
-<h2>This site</h2>
+<h2>9. Permissions the app asks for</h2>
+<div class="scroll"><table>
+<tr><th>Permission</th><th>Why</th></tr>
+<tr><td>Accessibility service (turned on by you in Android’s settings)</td><td>Reading the text of screens, §2</td></tr>
+<tr><td>Biometrics</td><td>Locking the app</td></tr>
+<tr><td>Background work, start at boot</td><td>Indexing and clean-up at night, preferably while charging</td></tr>
+<tr><td>“Data sync” foreground service</td><td>Installing a language pack downloaded by Google Play</td></tr>
+<tr><td>Internet, network state, advertising ID (version with ads only)</td><td>Rewarded ads, §6. No other part of the app uses the network.</td></tr>
+</table></div>
+<p>SeekMind does not ask for your contacts, location, photos, files, microphone or camera.</p>
+
+<h2>10. Your controls and your rights</h2>
+<ul>
+<li>Choose the families of apps remembered (messaging, browsers, social networks, others) and exclude or include an app.</li>
+<li>Pause memorisation, from the app or the quick settings tile; withdraw your consent.</li>
+<li>See everything that was remembered, in the journal; delete a capture, a period, an app, or erase everything; set how long captures are kept.</li>
+<li>Protect the app with your fingerprint or code.</li>
+<li>Turn the accessibility service off, which stops all reading.</li>
+</ul>
+<p>You have the rights of access, rectification, erasure, restriction, objection and portability set out in the GDPR. Since your data is only on your phone, you exercise them directly in the app: the publisher holds no data about you and can therefore neither see nor disclose it. For advertising data, contact Google. For any question, write to the address in §1. You may also lodge a complaint with the data protection authority of your country (in France, the <a href="https://www.cnil.fr/">CNIL</a>).</p>
+
+<h2 id="deletion">11. Deleting your data</h2>
+<p>SeekMind creates no account and keeps nothing outside your phone: there is nothing to delete anywhere else.</p>
+<ul>
+<li>One capture: in the journal, tap it, then “Delete”.</li>
+<li>A period or an app: Settings › Data.</li>
+<li>Everything: Settings › Data › Erase everything (the database and its key are destroyed).</li>
+<li>Automatically: beyond the retention period you chose.</li>
+<li>For good: uninstalling SeekMind deletes all its data.</li>
+</ul>
+
+<h2>12. This site</h2>
 <p>This site is hosted by GitHub Pages. Like any host, GitHub records visitors’ IP addresses in its technical logs, under its own privacy policy. The site sets no cookie, runs no measurement script and loads nothing from elsewhere.</p>
 
-<h2>9. Children, changes, governing law</h2>
-<p>SeekMind is not meant for children; it is meant for adults. Any change to this policy is published on this page, with its date; if it changes what the app reads, the app asks for your consent again. Governing law: <span class="todo">[TO FILL IN: governing law and supervisory authority, after legal review]</span>.</p>
+<h2>13. Children, changes, governing law</h2>
+<p>SeekMind is not meant for children; it is meant for adults. Any change to this policy is published on this page, with its date and version number; if it changes what the app reads, the app asks for your consent again. Governing law: <span class="todo">[TO FILL IN: governing law and supervisory authority, after legal review]</span>.</p>
+<p class="small">See also the <a href="terms.html">terms of use</a>.</p>
 </body>
 </html>

@@ -120,6 +120,20 @@ Plan du document à publier sur le site (rédaction : ticket M11-02, relecture j
 8. Codes d'activation : vérifiés sur l'appareil ; aucune donnée transmise.
 9. Mineurs ; modifications de la politique ; droit applicable.
 
+Version 2 (M11-02, à la demande du porteur, 21 novembre 2026), qui ajoute :
+
+- un encadré « L'essentiel » ;
+- le tableau des données (finalité, lieu, durée, transmission) ;
+- la base légale (consentement, article 6.1.a du RGPD) ;
+- les mesures de sécurité ;
+- les autorisations Android et leur raison ;
+- les droits prévus par le RGPD et la réclamation auprès de l'autorité de contrôle ;
+- la suppression des données (ancre `#suppression`) ;
+- les transferts hors de l'Union européenne par Google, pour la publicité.
+
+Les conditions d'utilisation (`site/conditions.html`, `site/terms.html`) l'accompagnent. L'ensemble
+attend la relecture juridique.
+
 ## 8. Liste de contrôle de sécurité (ticket M10-05)
 
 - [x] Manifeste fusionné `release` de chaque variante : permissions du tableau 10.3 de l'architecture, rien de plus.
