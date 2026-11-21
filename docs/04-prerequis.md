@@ -132,7 +132,7 @@ Créée par les tickets M0-02 à M0-04 et M0-08. GitHub Actions, exécuteurs `ub
 | `device-tests` | Chaque PR et `main` | Émulateurs API 30, 34 et 36 (x86_64, accélération KVM) : tests instrumentés et de bout en bout avec l'application de test, variante `ads` ; contrôle de fumée de la variante `offline` sur l'API 34 | ≤ 25 min |
 | `model` | Manuel, hebdomadaire, et sur les PR qui touchent `tools/model` ou `model.lock.json` | Reconstruit les deux modèles depuis leurs sources figées, vérifie les empreintes, régénère les jeux de référence et échoue s'ils changent, alimente le cache | ≤ 30 min |
 | `pages` | Modification de `site/` sur `main` | Publie le site statique | ≤ 2 min |
-| `bundle` | Manuel | AAB `release` de la variante `ads`, avec les deux modèles vérifiés, signé par la clé d'import si ses secrets sont définis (sinon non signé) ; numéro de version = numéro d'exécution. Sert la piste de test interne (validation de M4-07) jusqu'à `release` | ≤ 20 min |
+| `bundle` | Manuel | AAB `release` de la variante `ads`, avec les deux modèles vérifiés, signé par la clé d'import et vérifié (`jarsigner -verify -strict`) ; sans ses secrets, l'exécution échoue, sauf si l'entrée `require-signing` est décochée ; numéro de version = numéro d'exécution. Play exige des numéros strictement croissants pour toute l'application : le workflow `release` (M11-05) devra partir au-dessus du plus grand numéro déjà téléversé par `bundle`. Sert la piste de test interne (validation de M4-07) jusqu'à `release` | ≤ 20 min |
 | `release` | Étiquette `v*` | AAB signé de la variante `ads` **et** de la variante `offline`, artefacts à téléverser | ≤ 20 min |
 
 Les modèles sont mis en cache par GitHub Actions (action `.github/actions/model-artifacts`), avec pour clé

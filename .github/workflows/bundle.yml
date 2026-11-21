@@ -1,12 +1,18 @@
 # Release bundle of the `ads` variant for the internal testing track of Google Play (validation of
 # ticket M4-07: the multilingual pack is only delivered by Play). Manual. Builds both model sets, checked
 # against model.lock.json, then the bundle and its checks. If the upload key secrets of
-# docs/04-prerequis.md §3 are set, the bundle is signed with the upload key; otherwise it is left
-# unsigned, which Play refuses. The publication workflow of ticket M11-05 replaces this one.
+# docs/04-prerequis.md §3 are set, the bundle is signed with the upload key; otherwise the run fails,
+# unless `require-signing` is turned off (an unsigned bundle, which Play refuses, for a check only). The
+# publication workflow of ticket M11-05 replaces this one.
 name: bundle
 
 on:
   workflow_dispatch:
+    inputs:
+      require-signing:
+        description: Fail when the upload key secrets are not set.
+        type: boolean
+        default: true
 
 concurrency:
   group: bundle-${{ github.ref }}
@@ -60,9 +66,14 @@ jobs:
           UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
           UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
           UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+          REQUIRE_SIGNING: ${{ inputs.require-signing }}
         run: |
           aab=app/build/outputs/bundle/adsRelease/app-ads-release.aab
           if [ -z "$UPLOAD_KEYSTORE_B64" ]; then
+            if [ "$REQUIRE_SIGNING" = "true" ]; then
+              echo "::error::Upload key secrets not set: no unsigned bundle is uploaded."
+              exit 1
+            fi
             echo "::warning::Upload key secrets not set: the bundle is unsigned and Play will refuse it."
             exit 0
           fi
@@ -72,7 +83,16 @@ jobs:
           jarsigner -keystore "$keystore" -storetype PKCS12 \
             -storepass:env UPLOAD_KEYSTORE_PASSWORD -keypass:env UPLOAD_KEY_PASSWORD \
             -sigalg SHA256withRSA -digestalg SHA-256 "$aab" "$UPLOAD_KEY_ALIAS" > /dev/null
-          jarsigner -verify "$aab" > /dev/null && echo "Bundle signed."
+          # -strict: an unsigned or partly signed bundle fails. The keystore makes the upload certificate the
+          # trusted one: a bundle signed by any other key fails too.
+          jarsigner -verify -strict -keystore "$keystore" -storetype PKCS12 -storepass:env UPLOAD_KEYSTORE_PASSWORD \
+            "$aab" > "$RUNNER_TEMP/verify.txt" || {
+            echo "::error::The bundle is not signed by the upload key."
+            exit 1
+          }
+          grep -q "jar verified" "$RUNNER_TEMP/verify.txt"
+          rm -f "$RUNNER_TEMP/verify.txt"
+          echo "Bundle signed by the upload key."
 
       - name: Upload the bundle
         uses: actions/upload-artifact@v7
