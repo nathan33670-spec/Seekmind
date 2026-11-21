@@ -110,7 +110,8 @@ prépare les contenus et les artefacts.
 
 **À faire**
 
-1. Signature `release` lue depuis des secrets (jamais depuis le dépôt) ; numérotation des versions.
+1. Signature `release` lue depuis des secrets (jamais depuis le dépôt) ; numérotation des versions,
+   au-dessus du plus grand `versionCode` déjà téléversé par le workflow `bundle` (prérequis §6).
 2. Workflow `release` : sur étiquette `v*`, construction des lots signés des variantes `ads` et
    `offline`, garde-fous, mesure de taille, publication en artefacts.
 3. Identifiants AdMob de production lus dans les propriétés de build ; le build `release` échoue s'ils
