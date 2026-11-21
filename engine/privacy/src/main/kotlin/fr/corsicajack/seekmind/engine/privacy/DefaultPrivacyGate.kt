@@ -38,26 +38,35 @@ class DefaultPrivacyGate(
     private val redactor = Redactor(config.redactionMark)
     private val markers = config.privateMarkers.map { it.lowercase() }
 
-    /** PG-01, PG-02, PG-03, PG-04, PG-05, PG-06, PG-14, in this order. */
-    override fun checkPackage(meta: ScreenMeta): GateDecision {
-        val packageName = meta.packageName
-        if (packageName in ignoredPackages()) return deny(DropReason.APP_IGNORED)
+    /** PG-01, PG-02, PG-03, PG-04, PG-05, PG-06, PG-14, in this order: the decision of [statusOf]. */
+    override fun checkPackage(meta: ScreenMeta): GateDecision =
+        statusOf(meta.packageName, choices()).reason.dropReason?.let(::deny) ?: GateDecision.Allow
+
+    /**
+     * The effective state of [packageName] under [choices], with the rule that decided it
+     * (docs/specs/confidentialite.md §3.3). The capture's decision is this one: Settings → Applications
+     * explains exactly what [checkPackage] does. [choices] null: not read yet, rejected.
+     */
+    fun statusOf(packageName: String, choices: UserPrivacyChoices?): AppStatus {
         val level = sensitive.levelOf(packageName)
-        if (level == SensitiveApps.Level.STRICT) return deny(DropReason.APP_SENSITIVE)
+        fun status(reason: AppStatusReason) =
+            AppStatus(reason, if (level == null) families.familyOf(packageName) else null, level)
+        if (packageName in ignoredPackages()) return AppStatus(AppStatusReason.IGNORED, null, level)
+        if (level == SensitiveApps.Level.STRICT) return status(AppStatusReason.STRICT_LIST)
         // The user's choices are not known yet: in doubt, reject (§1).
-        val choices = choices() ?: return deny(DropReason.APP_EXCLUDED)
+        if (choices == null) return status(AppStatusReason.CHOICES_UNKNOWN)
         when (choices.rules[packageName]) {
-            AppRuleMode.EXCLUDED -> return deny(DropReason.APP_EXCLUDED)
-            AppRuleMode.INCLUDED -> return GateDecision.Allow
+            AppRuleMode.EXCLUDED -> return status(AppStatusReason.USER_EXCLUDED)
+            AppRuleMode.INCLUDED -> return status(AppStatusReason.USER_INCLUDED)
             null -> Unit
         }
-        if (level == SensitiveApps.Level.SOFT) return deny(DropReason.APP_SENSITIVE)
+        if (level == SensitiveApps.Level.SOFT) return status(AppStatusReason.SOFT_LIST)
         if (config.excludeGames && facts.category(packageName) == ApplicationInfo.CATEGORY_GAME) {
-            return deny(DropReason.APP_CATEGORY)
+            return status(AppStatusReason.GAME)
         }
-        val family = families.familyOf(packageName) ?: return deny(DropReason.APP_SENSITIVE)
-        if (family !in choices.enabledFamilies) return deny(DropReason.APP_FAMILY_DISABLED)
-        return GateDecision.Allow
+        val family = families.familyOf(packageName) ?: return status(AppStatusReason.SOFT_LIST)
+        if (family !in choices.enabledFamilies) return status(AppStatusReason.FAMILY_DISABLED)
+        return status(AppStatusReason.FAMILY_ENABLED)
     }
 
     /** PG-07, PG-08. */

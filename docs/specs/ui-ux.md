@@ -72,7 +72,10 @@ consentement, appelée par le pipeline de capture, le routeur d'événements et 
 consentement d'une version antérieure compte comme absent. Le parcours est montré au premier lancement
 (`Settings.onboardingDone`) et rouvert à la divulgation par le bandeau « Activer la mémorisation ». Après
 la validation des familles, le retour arrière termine le parcours ; ce qui a été choisi reste enregistré. La
-proposition du pack de langue n'est pas encore affichée : M6-06 la branche en fin de parcours.
+proposition du pack de langue (M6-06) est l'étape `LANGUAGE_PACK`, après le verrouillage, au premier lancement
+seulement et si aucune langue du téléphone n'est le français. `onboardingDone` n'est écrit qu'après elle.
+« Télécharger » lance le téléchargement par Google Play, qui est donc l'action de l'utilisateur, puis ouvre
+les Réglages. Hors Google Play, rien n'est téléchargé : les Réglages proposent l'import d'un fichier.
 
 ### 3.2 Recherche (`feature:search`)
 
@@ -195,6 +198,34 @@ pas de `engine:monetization`.
 | À propos | Version ; politique de confidentialité (ouvre le navigateur) ; licences tierces |
 
 « Tout effacer » demande de saisir le mot « EFFACER », puis ferme l'application sur l'écran d'accueil.
+
+Implémentation (M6-06) : `feature:settings`, une section et un ViewModel par rubrique.
+
+- `MemorisationSettingsViewModel` : retirer le consentement arrête la capture aussitôt, puisque le pipeline
+  et le routeur lisent le consentement (INV-04). L'écran propose ensuite d'effacer les données.
+- `AppsSettingsViewModel` : l'état de chaque application est donné par `DefaultPrivacyGate.statusOf`, la
+  décision même de la porte ([confidentialité §3.3](confidentialite.md)).
+  - Un interrupteur n'écrit une règle que si l'état demandé diffère de l'état par défaut. Revenu à l'état
+    par défaut, la règle est retirée.
+  - La liste stricte et les paquets toujours ignorés sont verrouillés. Mémoriser une application de la
+    liste souple demande une confirmation.
+- `DataSettingsViewModel` :
+  - durées de conservation : 30, 90, 180 et 365 jours, ou sans limite ;
+  - budgets : 250 Mo, 500 Mo, 1 Go et 2 Go ;
+  - suppressions : la dernière heure, les dernières 24 heures, les 7 ou les 30 derniers jours, ou une
+    application.
+  - La maintenance suivante lit la durée et le budget dans les réglages.
+- `LanguageSettingsViewModel` (sur `LanguagePacks`, que `:app` implémente avec le catalogue) :
+  - « Utiliser » demande une confirmation, qui annonce la reconstruction ;
+  - l'avancement de la reconstruction est le nombre de fragments en attente, relu toutes les 2 s ;
+  - la confirmation de Google Play est demandée depuis l'activité de l'écran ;
+  - hors Google Play, un fichier `.smpack` est choisi dans le sélecteur de documents.
+- `DiagnosticSettingsViewModel` : il lit les compteurs de `metric_daily`. Seules les clés faites de
+  minuscules, de chiffres et de soulignés sont gardées. Le texte partagé, par `ACTION_SEND` à la demande
+  de l'utilisateur, se compose de la version, du niveau d'Android, puis de lignes `clé=nombre`.
+- À propos : l'URL de la politique de confidentialité est un paramètre de build (`seekmind.privacyPolicyUrl`).
+  Les licences tierces sont dans `app/src/main/res/raw/third_party_licences.txt`.
+- La liste des applications est une destination à part (`AppsSettingsRoute`).
 
 ### 3.6 Verrouillage
 

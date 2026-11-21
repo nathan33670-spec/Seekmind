@@ -35,7 +35,8 @@ fun SeekMindRoot(
     journalContent: @Composable (openCapture: (Long) -> Unit) -> Unit = {},
     captureContent: @Composable (captureId: Long, close: () -> Unit) -> Unit = { _, _ -> },
     helpContent: @Composable () -> Unit = {},
-    settingsContent: @Composable () -> Unit = {},
+    settingsContent: @Composable (openApps: () -> Unit) -> Unit = {},
+    appsContent: @Composable () -> Unit = {},
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val current = backStackEntry?.destination
@@ -62,6 +63,7 @@ fun SeekMindRoot(
             captureContent = captureContent,
             helpContent = helpContent,
             settingsContent = settingsContent,
+            appsContent = appsContent,
         )
     }
 }

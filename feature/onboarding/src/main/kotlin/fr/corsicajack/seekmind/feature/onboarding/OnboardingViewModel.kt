@@ -16,7 +16,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** The screens of the welcome flow, in their order (docs/specs/ui-ux.md §3.1). */
-enum class OnboardingStep { INTRO, DISCLOSURE, FAMILIES, ACTIVATE, CONFIRMED, LOCK, DONE }
+enum class OnboardingStep { INTRO, DISCLOSURE, FAMILIES, ACTIVATE, CONFIRMED, LOCK, LANGUAGE_PACK, DONE }
 
 /** Where the flow starts: the welcome pages, or the disclosure reopened from the banner (EF-ONB-04). */
 enum class OnboardingStart { WELCOME, DISCLOSURE }
@@ -27,6 +27,8 @@ data class OnboardingUiState(
     val families: Set<AppFamily> = AppFamily.entries.toSet(),
     /** The disclosure was refused (limited mode); only meaningful once [step] is [OnboardingStep.DONE]. */
     val refused: Boolean = false,
+    /** « Télécharger » on the language pack screen; only meaningful once [step] is [OnboardingStep.DONE]. */
+    val downloadPack: Boolean = false,
 )
 
 /**
@@ -43,6 +45,11 @@ class OnboardingViewModel(
     serviceEnabled: Flow<Boolean>,
     private val isDeviceSecure: () -> Boolean,
     private val now: () -> Long,
+    /**
+     * No language of the phone is French: the multilingual pack is offered at the end (docs/specs/embeddings.md
+     * §5.4). Nothing is downloaded from here: the choice goes to the caller.
+     */
+    private val offerLanguagePack: Boolean = false,
 ) : ViewModel() {
     private val mutable = MutableStateFlow(
         OnboardingUiState(if (start == OnboardingStart.WELCOME) OnboardingStep.INTRO else OnboardingStep.DISCLOSURE),
@@ -152,13 +159,30 @@ class OnboardingViewModel(
 
             OnboardingStep.INTRO, OnboardingStep.DONE -> Unit
 
+            OnboardingStep.LANGUAGE_PACK -> finish(downloadPack = false)
+
             else -> finishLocked()
         }
     }
 
+    /** « Télécharger » or « Plus tard » on the language pack screen. */
+    fun choosePack(download: Boolean) = write {
+        if (mutable.value.step != OnboardingStep.LANGUAGE_PACK) return@write
+        finish(downloadPack = download)
+    }
+
+    /** After the lock: the language pack when it is offered, else the end. */
     private suspend fun finishLocked() {
+        if (offerLanguagePack) {
+            mutable.update { it.copy(step = OnboardingStep.LANGUAGE_PACK) }
+        } else {
+            finish(downloadPack = false)
+        }
+    }
+
+    private suspend fun finish(downloadPack: Boolean) {
         settings.setOnboardingDone()
-        mutable.update { it.copy(step = OnboardingStep.DONE) }
+        mutable.update { it.copy(step = OnboardingStep.DONE, downloadPack = downloadPack) }
     }
 
     private fun write(block: suspend () -> Unit) {

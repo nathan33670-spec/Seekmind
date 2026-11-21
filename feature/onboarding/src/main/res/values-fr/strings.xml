@@ -46,4 +46,8 @@
     <string name="onboarding_lock_title">Protéger SeekMind par votre empreinte ou votre code</string>
     <string name="onboarding_lock_enable">Activer</string>
     <string name="onboarding_lock_later">Plus tard</string>
+    <string name="onboarding_pack_title">Chercher dans d\'autres langues</string>
+    <string name="onboarding_pack_text">La recherche par mots-clés fonctionne dans toutes les langues. Pour chercher aussi par le sens dans votre langue, ajoutez le pack multilingue (118 Mo).</string>
+    <string name="onboarding_pack_download">Télécharger</string>
+    <string name="onboarding_pack_later">Plus tard</string>
 </resources>

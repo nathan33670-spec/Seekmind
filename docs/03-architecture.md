@@ -66,7 +66,7 @@ flowchart LR
 | `:core:designsystem` | Thème et composants Compose | `SeekMindTheme`, composants |
 | `:core:testing` | Doubles de test, jeux de données | `FakeClock`, `TestDispatchers`, `Models`, `FakeEmbeddingEngine`, `TemporaryDatabase`, `SyntheticDatabase` |
 | `:benchmark` | Microbenchmarks des modules `core` (outillage de test, jamais livré) | `InsertCaptureBenchmark`, `LexicalQueryBenchmark` |
-| `:engine:privacy` | Décision de capture, familles et listes d'applications, masquage | `PrivacyGate`, `AppFamilies`, `SensitiveApps`, `Redactor` |
+| `:engine:privacy` | Décision de capture, familles et listes d'applications, masquage | `PrivacyGate`, `AppStatus`, `AppFamilies`, `SensitiveApps`, `Redactor` |
 | `:engine:capture` | Service d'accessibilité, anti-rebond, lecture de l'arbre, orchestration | `SeekMindAccessibilityService`, `Debouncer`, `TreeExtractor`, `CapturePipeline` |
 | `:engine:ocr` | Capture d'écran en RAM, sonde de fenêtre sécurisée, reconnaissance | `ScreenshotSource`, `SecureWindowProbe`, `OcrEngine`, `OcrPolicy`, `ThermalGovernor` (ports dans `core:model`) |
 | `:engine:index` | Normalisation, déduplication, fragments, file et lot d'embeddings | `TextNormalizer`, `SimHash`, `Chunker`, `IngestService`, `EmbeddingWorker` |
@@ -127,6 +127,7 @@ modules `engine`, reliées par Hilt dans `:app`. Signatures complètes dans les 
 | Interface | Implémentée par | Utilisée par | Spec |
 |---|---|---|---|
 | `PrivacyGate` | `engine:privacy` | `engine:capture` | [confidentialite](specs/confidentialite.md) |
+| `AppStatus` (`DefaultPrivacyGate.statusOf`) | `engine:privacy` | `feature:settings` | [confidentialite §3.3](specs/confidentialite.md) |
 | `OcrEngine`, `ScreenshotSource` | `engine:ocr` | `engine:capture` | [ocr](specs/ocr.md) |
 | `CaptureSink` | `engine:index` | `engine:capture` | [indexation](specs/indexation.md) |
 | `EmbeddingEngine`, `ModelCatalog` | `engine:embedding` | `engine:index`, `engine:search`, `feature:settings` | [embeddings](specs/embeddings.md) |

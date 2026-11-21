@@ -85,9 +85,14 @@ object PipelineModule {
         sensitive: SensitiveApps,
     ): AppFamilies = AppFamilies(AndroidPackageFacts(context), FamilyLists.load(context), browsers.packages, sensitive)
 
+    /** The gate of the pipeline is the one Settings → Applications explains (DefaultPrivacyGate.statusOf). */
     @Provides
     @Singleton
-    fun privacyGate(
+    fun privacyGate(gate: DefaultPrivacyGate): PrivacyGate = gate
+
+    @Provides
+    @Singleton
+    fun defaultPrivacyGate(
         @ApplicationContext context: Context,
         browsers: BrowserProfiles,
         settings: SettingsRepository,
@@ -96,7 +101,7 @@ object PipelineModule {
         @ApplicationScope scope: CoroutineScope,
         sensitive: SensitiveApps,
         families: AppFamilies,
-    ): PrivacyGate {
+    ): DefaultPrivacyGate {
         val facts = AndroidPackageFacts(context)
         // The rules live in the database, opened off the main thread on first use.
         val rules = flow {

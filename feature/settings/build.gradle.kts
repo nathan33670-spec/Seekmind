@@ -8,9 +8,13 @@ dependencies {
     implementation(project(":core:model"))
     // The activation by code (docs/specs/monetisation.md §5.4).
     implementation(project(":engine:monetization"))
+    // The effective state of an application and its origin (docs/specs/confidentialite.md §3.3).
+    implementation(project(":engine:privacy"))
     implementation(project(":core:designsystem"))
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    // The file picker of the pack import.
+    implementation(libs.androidx.activity.compose)
 
     testImplementation(libs.junit)
     testImplementation(libs.truth)

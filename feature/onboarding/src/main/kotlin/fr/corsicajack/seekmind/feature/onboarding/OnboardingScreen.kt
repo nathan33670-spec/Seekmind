@@ -64,6 +64,7 @@ fun OnboardingScreen(
     onChooseLock: (Boolean) -> Unit,
     onLeave: () -> Unit,
     modifier: Modifier = Modifier,
+    onChoosePack: (Boolean) -> Unit = {},
 ) {
     // Back from the disclosure is a refusal (docs/05-conformite-play-store.md §4.1).
     BackHandler(enabled = state.step != OnboardingStep.INTRO && state.step != OnboardingStep.DONE, onBack = onLeave)
@@ -87,6 +88,8 @@ fun OnboardingScreen(
             )
 
             OnboardingStep.LOCK -> Lock(onChooseLock)
+
+            OnboardingStep.LANGUAGE_PACK -> LanguagePack(onChoosePack)
 
             OnboardingStep.DONE -> Unit
         }
@@ -235,6 +238,20 @@ private fun Lock(onChoose: (Boolean) -> Unit) {
     }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.onboarding_lock_enable)) }
     TextButton(onClick = { onChoose(false) }) { Text(stringResource(R.string.onboarding_lock_later)) }
 }
+
+/** The multilingual pack, when no language of the phone is French (docs/specs/ui-ux.md §3.1). */
+@Composable
+private fun LanguagePack(onChoose: (Boolean) -> Unit) {
+    Title(stringResource(R.string.onboarding_pack_title))
+    Text(stringResource(R.string.onboarding_pack_text), style = MaterialTheme.typography.bodyLarge)
+    Button(onClick = { onChoose(true) }, modifier = Modifier.fillMaxWidth().testTag(PACK_DOWNLOAD_TAG)) {
+        Text(stringResource(R.string.onboarding_pack_download))
+    }
+    TextButton(onClick = { onChoose(false) }) { Text(stringResource(R.string.onboarding_pack_later)) }
+}
+
+/** Test tag of « Télécharger » on the language pack screen. */
+const val PACK_DOWNLOAD_TAG = "onboarding_pack_download"
 
 private val FAMILY_ORDER = listOf(AppFamily.BROWSERS, AppFamily.MESSAGING, AppFamily.SOCIAL_MEDIA, AppFamily.OTHER)
 private const val ICONS_PER_FAMILY = 3
